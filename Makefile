@@ -18,6 +18,10 @@ STAR := /home/Shared_penticton/software/STAR/source/STAR
 samtools := /usr/local/bin/samtools
 
 ## Path to MultiQC 
+multiqc := 
+
+bedtools := 
+bedGraphToBigWig
 
 ## ------------------------------------------------------------------------------------ ##
 ## Preparation - set paths to reference files
@@ -41,11 +45,22 @@ salmonindex :=
 ## Path to rds file where the tx2gene mapping will be stored
 tx2gene := 
 
+## Path to text file that will be generated to contain reference chromosome lengths
+chromlengthtxt := 
+
 ## ------------------------------------------------------------------------------------ ##
 ## Preparation - list files to process
 ## ------------------------------------------------------------------------------------ ##
 ## List sample IDs (should correspond to the unique parts of FASTQ file names
-samples := 
+PEsamples := 
+SEsamples := 
+samples := PEsamples SEsamples
+
+readlength := 
+
+## Metadata text file. Must contain one column named ID, containing the same values as 
+## samples
+metatxt :=
 
 .PHONY: all
 
@@ -62,6 +77,10 @@ listpackages:
 ## ------------------------------------------------------------------------------------ ##
 ## Reference preparation
 ## ------------------------------------------------------------------------------------ ##
+## Merge cDNA and ncRNA fasta files
+$(txome): $(cdna) $(ncrna)
+	cat $(word 1,$^) $(word 2,$^) > $@
+
 ## Salmon - generate index from merged cDNA and ncRNA files
 $(salmonindex)/hash.bin: $(txome)
 	$(salmon) index -t $< -k 31 -i $(@D) --type quasi
@@ -70,5 +89,156 @@ $(salmonindex)/hash.bin: $(txome)
 tx2gene: $(txome)
 	$(R) "--args transcriptfasta='$(txome)' outrds='$@'" Rscripts/generate_tx2gene.R Rout/generate_tx2gene.Rout
 
+## Generate STAR index
+$(STARindex)/SA: $(genome) $(gtf)
+	$(STAR) --runMode genomeGenerate --runThreadN 20 --genomeDir $(STARindex) \
+	--genomeFastaFiles $(word 1,$^) --sjdbGTFfile $(word 2,$^) --sjdbOverhang $(readlength)
+
+## ------------------------------------------------------------------------------------ ##
+## Quality control
+## ------------------------------------------------------------------------------------ ##
+## FastQC
+define fastqcrule
+FastQC/$(1)_fastqc.zip: FASTQ/$(1).fastq.gz
+	fastqc -o fastqc -t 10 $$<
+endef
+$(foreach S,$(PEsamples),$(eval $(call fastqcrule,$(S)_R1)))
+$(foreach S,$(PEsamples),$(eval $(call fastqcrule,$(S)_R2)))
+$(foreach S,$(SEsamples),$(eval $(call fastqcrule,$(S))))
+
+define fastqcrule2
+FASTQC/$(1)_fastqc.zip: FASTQtrimmed/$(1).fq.gz
+	fastqc -o fastqc -t 10 $$<
+endef
+$(foreach S,$(PEsamples),$(eval $(call fastqcrule2,$(S)_R1_val_1)))
+$(foreach S,$(PEsamples),$(eval $(call fastqcrule2,$(S)_R2_val_2)))
+$(foreach S,$(SEsamples),$(eval $(call fastqcrule2,$(S)_val)))
+
+multiqc/multiqc_report.html: \
+$(addsuffix _fastqc.zip, $(addprefix FastQC/, $(foreach S,$(PEsamples),$(S)_R1))) \
+$(addsuffix _fastqc.zip, $(addprefix FastQC/, $(foreach S,$(PEsamples),$(S)_R2))) \
+$(addsuffix _fastqc.zip, $(addprefix FastQC/, $(foreach S,$(SEsamples),$(S)))) \
+$(addsuffix _val_1_fastqc.zip, $(addprefix FastQC/, $(foreach S,$(PEsamples),$(S)_R1))) \
+$(addsuffix _val_2_fastqc.zip, $(addprefix FastQC/, $(foreach S,$(PEsamples),$(S)_R2))) \
+$(addsuffix _val_fastqc.zip, $(addprefix FastQC/, $(foreach S,$(SEsamples),$(S)))) \
+$(addsuffix _val_1.fq.gz, $(addprefix FASTQtrimmed/, $(foreach S,$(PEsamples),$(S)_R1))) \
+$(addsuffix _val_2.fq.gz, $(addprefix FASTQtrimmed/, $(foreach S,$(PEsamples),$(S)_R2))) \
+$(addsuffix _val.fq.gz, $(addprefix FASTQtrimmed/, $(foreach S,$(SEsamples),$(S))))
+	mkdir -p MultiQC
+	$(multiqc) FastQC FASTQtrimmed -f -o MultiQC
+
 ## ------------------------------------------------------------------------------------ ##
 ## Adapter trimming
+## ------------------------------------------------------------------------------------ ##
+## TrimGalore!
+define PEtrimrule
+FASTQtrimmed/$(1)_R1_val_1.fq.gz: FASTQ/$(1)_R1.fastq.gz FASTQ/$(1)_R2.fastq.gz
+	mkdir -p FASTQtrimmed
+	$(trimgalore) -q 20 --phred33 --length 20 -o FASTQtrimmed --path_to_cutadapt $(cutadapt) \
+	--paired $$(word 1,$$^) $$(word 2,$$^) 
+endef
+$(foreach S,$(PEsamples),$(eval $(call PEtrimrule,$(S))))
+
+define PEtrimrule2
+FASTQtrimmed/$(1)_R2_val_2.fq.gz: FASTQtrimmed/$(1)_R1_val_1.fq.gz
+endef
+$(foreach S,$(PEsamples),$(eval $(call PEtrimrule2,$(S))))
+
+define SEtrimrule
+FASTQtrimmed/$(1)_val.fq.gz: FASTQ/$(1).fastq.gz
+	mkdir -p FASTQtrimmed
+	$(trimgalore) -q 20 --phred33 --length 20 -o FASTQtrimmed --path_to_cutadapt $(cutadapt) \
+	$$(word 1,$$^)
+endef
+$(foreach S,$(SEsamples),$(eval $(call SEtrimrule,$(S))))
+
+## ------------------------------------------------------------------------------------ ##
+## Salmon abundance estimation
+## ------------------------------------------------------------------------------------ ##
+## Estimate abundances with Salmon
+define PEsalmonrule
+salmon/$(1)/quant.sf: $(salmonindex)/hash.bin \
+FASTQtrimmed/$(1)_R1_val_1.fq.gz FASTQtrimmed/$(1)_R2_val_2.fq.gz
+	mkdir -p salmon/$(1)
+	$(salmon) quant -i $$(word 1,$$(^D)) -l A -1 $$(word 2,$$^) -2 $$(word 3,$$^) \
+	-o salmon/$(1) --seqBias -p 10
+endef
+$(foreach S,$(PEsamples),$(eval $(call PEsalmonrule,$(S))))
+
+define SEsalmonrule
+salmon/$(1)/quant.sf: $(salmonindex)/hash.bin FASTQtrimmed/$(1)_val.fq.gz
+	mkdir -p salmon/$(1)
+	$(salmon) quant -i $$(word 1,$$(^D)) -l A -r $$(word 2,$$^) \
+	-o salmon/$(1) --seqBias -p 10
+endef
+$(foreach S,$(SEsamples),$(eval $(call SEsalmonrule,$(S))))
+
+## ------------------------------------------------------------------------------------ ##
+## STAR mapping
+## ------------------------------------------------------------------------------------ ##
+define PEstarrule
+STAR/$(1)/$(1)_Aligned.sortedByCoord.out.bam: $(STARindex)/SA \
+FASTQtrimmed/$(1)_R1_val_1.fq.gz FASTQtrimmed/$(1)_R2_val_2.fq.gz
+	mkdir -p STAR/$(1)
+	$(STAR) --genomeDir $(STARindex) \
+	--readFilesIn $$(word 2,$$^) $$(word 3,$$^) \
+	--runThreadN 24 --outFileNamePrefix STAR/$(1)/$(1)_ \
+	--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c
+endef
+$(foreach S,$(PEsamples),$(eval $(call PEstarrule,$(S))))
+
+define SEstarrule
+STAR/$(1)/$(1)_Aligned.sortedByCoord.out.bam: $(STARindex)/SA \
+FASTQtrimmed/$(1)_val.fq.gz
+	mkdir -p STAR/$(1)
+	$(STAR) --genomeDir $(STARindex) \
+	--readFilesIn $$(word 2,$$^) \
+	--runThreadN 24 --outFileNamePrefix STAR/$(1)/$(1)_ \
+	--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c
+endef
+$(foreach S,$(SEsamples),$(eval $(call SEstarrule,$(S))))
+
+
+define starindexrule
+STAR/$(1)/$(1)_Aligned.sortedByCoord.out.bam.bai: STAR/$(1)/$(1)_Aligned.sortedByCoord.out.bam
+	$(samtools) index $$<
+endef
+$(foreach S,$(samples),$(eval $(call starindexrule,$(S))))
+
+## Get chromosome lengths
+$(chromlengthtxt): STAR/$(word 1,$(samples))/$(word 1,$(samples))_Aligned.sortedByCoord.out.bam
+	$(samtools) view -H $< | grep '@SQ' | cut -f2,3 | sed -e 's/SN://' | sed -e 's/LN://' > $@
+
+## Convert BAM files to bigWig
+define bigwigrule
+STARbigwig/$(1)_Aligned.sortedByCoord.out.bw: $(chromlengthtxt) STAR/$(1)/$(1)_Aligned.sortedByCoord.out.bam
+	mkdir -p STARbigwig	
+	$(bedtools) genomecov -split -ibam $$(word 2,$$^) -bg > STARbigwig/$(1)_Aligned.sortedByCoord.out.bedGraph
+	$(bedGraphToBigWig) STARbigwig/$(1)_Aligned.sortedByCoord.out.bedGraph $$(word 1,$$^) $$@
+	rm -f STARbigwig/$(1)_Aligned.sortedByCoord.out.bedGraph
+endef
+$(foreach S,$(samples),$(eval $(call bigwigrule,$(S))))
+
+## ------------------------------------------------------------------------------------ ##
+## Differential expression
+## ------------------------------------------------------------------------------------ ##
+## edgeR
+output/edgeR_dge.rds: $(tx2gene) $(metatxt) scripts/run_dge_edgeR.R \
+$(foreach S,$(samples),salmon/$(S)/quant.sf) 
+	mkdir -p output
+	mkdir -p Rout
+	$(R) "--args tx2gene='$<' salmondir='salmon' outfile='$@' metafile='$(metatxt)'" scripts/run_dge_edgeR.R Rout/run_dge_edgeR.Rout
+
+## ------------------------------------------------------------------------------------ ##
+## Shiny app
+## ------------------------------------------------------------------------------------ ##
+output/shiny_results.rds: output/edgeR_dge.rds $(gtf) $(tx2gene) $(metatxt) \
+$(chromlengthtxt) scripts/prepare_results_for_shiny.R \
+$(foreach S,$(samples),STARbigwig/$(S)_Aligned.sortedByCoord.out.bw)
+	$(R) "--args edgerres='output/edgeR_dge.rds' gtffile='$(gtf)' chrlengthfile='$(chromlengthtxt)' tx2gene='$(tx2gene)' metafile='$(metatxt)' bigwigdir='STARbigwig' outrds='$@'" scripts/prepare_results_for_shiny.R Rout/prepare_results_for_shiny.Rout
+
+
+
+
+
+
