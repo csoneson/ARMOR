@@ -3,6 +3,16 @@ for (i in 1:length(args)) {
   eval(parse(text = args[[i]]))
 }
 
+## This script performs differential expression analysis with edgeR, based on 
+## abundance estimates from Salmon. It supports testing one or more contrasts. 
+## To be compatible with downstream analysis scripts, the output has to be
+## either:
+## - a data frame with results (e.g., returned by edgeR's topTags(...)$table).
+## There must be one column named "gene" that gives the gene ID.
+## - a named list of such data frames, one for each contrast.
+## To run the script, please modify at least the definition of the design matrix
+## and the contrasts of interest.
+
 suppressPackageStartupMessages(library(tximport))
 suppressPackageStartupMessages(library(edgeR))
 
@@ -15,7 +25,7 @@ print(outrds)
 salmondirs <- list.files(salmondir, full.names = TRUE)
 salmonfiles <- paste0(salmondirs, "/quant.sf")
 names(salmonfiles) <- basename(salmondirs)
-salmonfiles <- salmonfiles[file.exists(salmonfiles)]
+(salmonfiles <- salmonfiles[file.exists(salmonfiles)])
 
 ## Read transcript-to-gene mapping
 tx2gene <- readRDS(tx2gene)
@@ -48,17 +58,17 @@ dge <- dge0[apply(cpms, 1, mean) > 1, ]
 dge <- calcNormFactors(dge)
 print(dim(dge))
 
-## Estimate dispersion and fit model
-dge <- estimateDisp(dge, design = des)
-qlfit <- glmQLFit(dge, design = des)
-
 ## Add gene annotation
 annot <- tx2gene[match(rownames(dge), tx2gene$gene), ]
 rownames(annot) <- annot$gene
 dge$genes <- annot
 
+## Estimate dispersion and fit model
+dge <- estimateDisp(dge, design = des)
+qlfit <- glmQLFit(dge, design = des)
+
 ## Define contrasts. MODIFY
-contrasts <- XXXX
+(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
 
 ## Perform tests
 edgeR_res <- lapply(contrasts, function(cm) {
@@ -66,6 +76,7 @@ edgeR_res <- lapply(contrasts, function(cm) {
   tt <- topTags(qlf, n = Inf, sort.by = "none")$table
   tt <- signif(tt, digits = 3)
   tt$gene <- rownames(tt)
+  tt
 })
 
 saveRDS(list(results = edgeR_res, data = dge0), file = outrds)

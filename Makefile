@@ -79,7 +79,7 @@ chromlengthtxt :=
 ## Ex: SEsamples := S1 S2 S3
 PEsamples := 
 SEsamples := 
-samples := PEsamples SEsamples
+samples := $(PEsamples) $(SEsamples)
 
 ## Provide read length. This affects the generation of the STAR index
 ## Ex: readlength := 126
@@ -90,13 +90,19 @@ readlength :=
 ## Ex: metatxt := metadata/metadata.txt 
 metatxt :=
 
+## Name of column in metadata text file that will be used to color coverage tracks if 
+## results are explored with iResViewer
+## Ex: bwcolorvar := group
+bwcolorvar := 
+
 .PHONY: all
 
 ## ------------------------------------------------------------------------------------ ##
 ## Target definition
 ## ------------------------------------------------------------------------------------ ##
 ## Run all analyses
-all: MultiQC/multiqc_report.html
+all: MultiQC/multiqc_report.html output/shiny_results.rds \
+$(foreach S,$(samples),STARbigwig/$(S)_Aligned.sortedByCoord.bam.bai
 
 ## List all the packages that were used by the R analyses
 listpackages:
@@ -142,7 +148,7 @@ $(foreach S,$(SEsamples),$(eval $(call fastqcrule,$(S))))
 
 ## FastQC, trimmed reads
 define fastqcrule2
-FASTQC/$(1)_fastqc.zip: FASTQtrimmed/$(1).fq.gz
+FastQC/$(1)_fastqc.zip: FASTQtrimmed/$(1).fq.gz
 	mkdir -p $$(@D)
 	fastqc -o $$(@D) -t 10 $$<
 endef
@@ -274,7 +280,13 @@ scripts/prepare_results_for_shiny.R \
 $(foreach S,$(samples),STARbigwig/$(S)_Aligned.sortedByCoord.out.bw)
 	mkdir -p output
 	mkdir -p Rout
-	$(R) "--args edgerres='output/edgeR_dge.rds' gtffile='$(gtf)' tx2gene='$(tx2gene)' metafile='$(metatxt)' bigwigdir='STARbigwig' outrds='$@'" scripts/prepare_results_for_shiny.R Rout/prepare_results_for_shiny.Rout
+	$(R) "--args edgerres='output/edgeR_dge.rds' bwcolorvar='$(bwcolorvar)' gtffile='$(gtf)' tx2gene='$(tx2gene)' metafile='$(metatxt)' bigwigdir='STARbigwig' outrds='$@'" scripts/prepare_results_for_shiny.R Rout/prepare_results_for_shiny.Rout
+
+output/shiny_results_edgeR.rds: output/edgeR_dge.rds $(tx2gene) $(metatxt) \
+scripts/prepare_results_for_shiny.R
+	mkdir -p output
+	mkdir -p Rout
+	$(R) "--args edgerres='output/edgeR_dge.rds' bwcolorvar=NULL gtffile=NULL tx2gene='$(tx2gene)' metafile='$(metatxt)' bigwigdir=NULL outrds='$@'" scripts/prepare_results_for_shiny.R Rout/prepare_results_for_shiny_edgeR.Rout
 
 
 

@@ -30,9 +30,9 @@ genes <- tx2gene %>% dplyr::select(-tx, -tx_biotype) %>% dplyr::distinct()
 edgeRwide <- edgerres$results
 if (class(edgeRwide) == "list" && class(edgeRwide) != "data.frame") {
   for (i in seq_len(length(edgeRwide))) {
-    edgeRwide[[i]]$F <- NULL
     colnames(edgeRwide[[i]]) <- paste0(colnames(edgeRwide[[i]]), ".", names(edgeRwide)[i])
     colnames(edgeRwide[[i]])[grep("logCPM", colnames(edgeRwide[[i]]))] <- "logCPM"
+    colnames(edgeRwide[[i]])[grep("gene", colnames(edgeRwide[[i]]))] <- "gene"
   }
   edgeRwide <- Reduce(function(...) dplyr::full_join(..., by = c("gene", "logCPM")), edgeRwide)
 }
@@ -63,8 +63,12 @@ create_genemodels <- function(gtf_file) {
   
   genemodels
 }
-
-genemodels <- create_genemodels(gtffile)
+  
+if (!is.null(gtffile)) {
+  genemodels <- create_genemodels(gtffile)
+} else {
+  genemodels <- NULL
+}
 
 ## -------------------------------------------------------------------------- ##
 ##                          bigWig files + condition                          ##
@@ -72,12 +76,15 @@ genemodels <- create_genemodels(gtffile)
 ## Vector with bigWig file names (relative to shiny app location) and condition information
 metadata <- read.delim(metafile, header = TRUE, as.is = TRUE)
 
-bwfiles <- paste0("../", bigwigdir, "/", 
-                  list.files(bigwigdir, pattern = "\\.bw$", full.names = FALSE))
-names(bwfiles) <- gsub("\\.bw", "", basename(bwfiles))
-condition <- sapply(names(bwfiles), function(w) {
-  metadata[[bwcolorvar]][match(gsub("_trimmed_Aligned.sortedByCoord.out", "", w), metadata$ID)]
-})
+if (!is.null(bigwigdir)) {
+  bwfiles <- list.files(bigwigdir, pattern = "\\.bw$", full.names = TRUE)
+  names(bwfiles) <- gsub("\\.bw", "", basename(bwfiles))
+  condition <- sapply(names(bwfiles), function(w) {
+    metadata[[bwcolorvar]][match(gsub("_Aligned.sortedByCoord.out", "", w), metadata$ID)]
+  })
+} else {
+  bwfiles <- condition <- NULL
+}
 
 ## -------------------------------------------------------------------------- ##
 ##                              edgeR - MDS                                   ##
@@ -96,10 +103,10 @@ mds <- as.data.frame(mds) %>% tibble::rownames_to_column(var = "ID") %>%
 ## -------------------------------------------------------------------------- ##
 ##                                 Save                                       ##
 ## -------------------------------------------------------------------------- ##
-saveRDS(list(results = list(edgeRwide = edgeRwide), 
+saveRDS(list(results = list(edgeR = edgeRwide), 
              edgeRlong = edgeRlong, gene_models = genemodels,
-             bw_files = bwfiles, condition = condition, pca = pca, 
-             pcavar = pcavar, logcpms = logcpms, metadata = metadata, 
+             bw_files = bwfiles, condition = condition, mds = mds,
+             logcpms = logcpms, metadata = metadata, 
              gene_info = genes),
         file = outrds)
 
