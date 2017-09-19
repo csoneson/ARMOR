@@ -94,13 +94,13 @@ readlength :=
 
 ## Path to metadata text file. This file must have at least one column, named "ID", 
 ## containing the same values as the "samples" variable above.
-## Ex: metatxt := metadata/metadata.txt 
+## Ex: metatxt := metadata.txt 
 metatxt :=
 
-## Name of column in metadata text file that will be used to color coverage tracks if 
-## results are explored with iResViewer
-## Ex: bwcolorvar := group
-bwcolorvar := 
+## Name of column in metadata text file that will be used to color coverage tracks and 
+## abundance values if results are explored with iResViewer
+## Ex: groupvar := group
+groupvar := 
 
 ## Number of cores (for FastQC, Salmon and STAR)
 ## Ex: ncores := 12
@@ -132,9 +132,11 @@ runstar: $(foreach S,$(samples),STAR/$(S)/$(S)_Aligned.sortedByCoord.out.bam.bai
 
 ## List all the packages that were used by the R analyses
 listpackages:
-	$(R) scripts/list_packages.R Rout/list_packages.Rout
+	$(R) "--args Routdir='Rout' outtxt='R_package_versions.txt'" scripts/list_packages.R Rout/list_packages.Rout
 
+## Print the versions of all software packages
 softwareversions:
+	$(R) --version
 	$(salmon) --version
 	$(trimgalore) --version
 	$(cutadapt) --version
@@ -152,7 +154,7 @@ $(txome): $(cdna) $(ncrna)
 	mkdir -p $(@D)
 	cat $(cdna) $(ncrna) > $@
 
-## Salmon - generate index from merged cDNA and ncRNA files
+## Generate Salmon index from merged cDNA and ncRNA files
 $(salmonindex)/hash.bin: $(txome)
 	mkdir -p $(@D)
 	$(salmon) index -t $< -k $(salmonk) -i $(@D) --type quasi
@@ -318,13 +320,13 @@ scripts/prepare_results_for_shiny.R \
 $(foreach S,$(samples),STARbigwig/$(S)_Aligned.sortedByCoord.out.bw)
 	mkdir -p output
 	mkdir -p Rout
-	$(R) "--args edgerres='output/edgeR_dge.rds' bwcolorvar='$(bwcolorvar)' gtffile='$(gtf)' tx2gene='$(tx2gene)' metafile='$(metatxt)' bigwigdir='STARbigwig' outrds='$@'" scripts/prepare_results_for_shiny.R Rout/prepare_results_for_shiny.Rout
+	$(R) "--args edgerres='output/edgeR_dge.rds' groupvar='$(groupvar)' gtffile='$(gtf)' tx2gene='$(tx2gene)' metafile='$(metatxt)' bigwigdir='STARbigwig' outrds='$@'" scripts/prepare_results_for_shiny.R Rout/prepare_results_for_shiny.Rout
 
 output/shiny_results_edgeR.rds: output/edgeR_dge.rds $(tx2gene) $(metatxt) \
 scripts/prepare_results_for_shiny.R
 	mkdir -p output
 	mkdir -p Rout
-	$(R) "--args edgerres='output/edgeR_dge.rds' bwcolorvar='$(bwcolorvar)' gtffile=NULL tx2gene='$(tx2gene)' metafile='$(metatxt)' bigwigdir=NULL outrds='$@'" scripts/prepare_results_for_shiny.R Rout/prepare_results_for_shiny_edgeR.Rout
+	$(R) "--args edgerres='output/edgeR_dge.rds' groupvar='$(groupvar)' gtffile=NULL tx2gene='$(tx2gene)' metafile='$(metatxt)' bigwigdir=NULL outrds='$@'" scripts/prepare_results_for_shiny.R Rout/prepare_results_for_shiny_edgeR.Rout
 
 
 

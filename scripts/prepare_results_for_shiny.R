@@ -8,7 +8,7 @@ print(gtffile)
 print(tx2gene)
 print(metafile)
 print(bigwigdir)
-print(bwcolorvar)
+print(groupvar)
 print(outrds)
 
 suppressPackageStartupMessages(library(dplyr))
@@ -79,7 +79,7 @@ if (!is.null(bigwigdir)) {
   bwfiles <- normalizePath(list.files(bigwigdir, pattern = "\\.bw$", full.names = TRUE))
   names(bwfiles) <- gsub("_Aligned.sortedByCoord.out.bw", "", basename(bwfiles))
   condition <- sapply(names(bwfiles), function(w) {
-    metadata[[bwcolorvar]][match(w, metadata$ID)]
+    metadata[[groupvar]][match(w, metadata$ID)]
   })
   ordr <- order(condition)
   condition <- condition[ordr]
@@ -104,7 +104,7 @@ mds <- as.data.frame(mds) %>% tibble::rownames_to_column(var = "ID") %>%
 
 logcpms <- reshape2::melt(as.matrix(logcpms)) %>%
   dplyr::rename(gene = Var1, sample = Var2) %>%
-  dplyr::mutate(group = metadata[match(sample, metadata$ID), bwcolorvar])
+  dplyr::mutate(group = metadata[match(sample, metadata$ID), groupvar])
 
 ## -------------------------------------------------------------------------- ##
 ##                                 Save                                       ##
@@ -117,7 +117,7 @@ saveRDS(list(wideResults = list(edgeR = edgeRwide),
              dimRed = list(MDS = mds),
              abundances = list(logCPM = logcpms), 
              geneInfo = genes,
-             groupVar = bwcolorvar),
+             groupVar = groupvar),
         file = outrds)
 
 
