@@ -1,6 +1,6 @@
 ## RNA-seq workflow
 
- <span style="color:blue">**Note: This is work in development, and it is provided "as-is", without guarantees of correctness or optimality. Please use responsibly.**</span>
+ <span style="color:blue">**Note: This is work in development, and it is provided "as-is", without guarantees of robustness, correctness or optimality. Please use responsibly.**</span>
 
 This RNA-seq workflow consists of a `Makefile` and a set of R scripts to perform quality control, preprocessing and differential expression analysis of RNA-seq data. The output can be combined with the [`iResViewer`](https://github.com/csoneson/iResViewer) R package to generate a shiny application for browsing and sharing the results.
 

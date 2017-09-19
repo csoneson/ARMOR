@@ -13,8 +13,10 @@ print(outrds)
 
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(tidyr))
+suppressPackageStartupMessages(library(limma))
 suppressPackageStartupMessages(library(edgeR))
 suppressPackageStartupMessages(library(rtracklayer))
+suppressPackageStartupMessages(library(reshape2))
 
 options(ucscChromosomeNames = FALSE)
 
@@ -30,7 +32,7 @@ genes <- tx2gene %>% dplyr::select(-tx, -tx_biotype) %>% dplyr::distinct()
 edgeRwide <- edgerres$results
 if (class(edgeRwide) == "list" && class(edgeRwide) != "data.frame") {
   for (i in seq_len(length(edgeRwide))) {
-    idx <- which(colnames(edgeRwide[[i]]) %in% c("logFC", "F", "PValue", "FDR"))
+    idx <- which(colnames(edgeRwide[[i]]) %in% c("logFC", "F", "PValue", "FDR", "LR"))
     colnames(edgeRwide[[i]])[idx] <- paste0(colnames(edgeRwide[[i]])[idx], ".", names(edgeRwide)[i])
   }
   edgeRwide <- Reduce(function(...) dplyr::full_join(...), edgeRwide)
@@ -43,10 +45,11 @@ edgeRwide <- dplyr::left_join(edgeRwide, genes) %>%
 ## edgeR result table for volcano plots ("long")
 edgeRlong <- edgeRwide %>% 
   tidyr::gather(typecontrast, value, -gene, -symbol, -gene_biotype, -logCPM) %>%
-  dplyr::mutate(typecontrast = gsub("logFC.", "logFC_", typecontrast)) %>%
-  dplyr::mutate(typecontrast = gsub("FDR.", "FDR_", typecontrast)) %>%
-  dplyr::mutate(typecontrast = gsub("PValue.", "PValue_", typecontrast)) %>%
+  dplyr::mutate(typecontrast = gsub("logFC\\.", "logFC_", typecontrast)) %>%
+  dplyr::mutate(typecontrast = gsub("FDR\\.", "FDR_", typecontrast)) %>%
+  dplyr::mutate(typecontrast = gsub("PValue\\.", "PValue_", typecontrast)) %>%
   dplyr::mutate(typecontrast = gsub("F\\.", "F_", typecontrast)) %>%
+  dplyr::mutate(typecontrast = gsub("LR\\.", "LR_", typecontrast)) %>%
   tidyr::separate(typecontrast, into = c("dtype", "contrast"), sep = "_") %>%
   tidyr::spread(key = dtype, value = value) %>%
   dplyr::mutate(mlog10PValue = -log10(PValue))
@@ -78,9 +81,7 @@ metadata <- read.delim(metafile, header = TRUE, as.is = TRUE)
 if (!is.null(bigwigdir)) {
   bwfiles <- normalizePath(list.files(bigwigdir, pattern = "\\.bw$", full.names = TRUE))
   names(bwfiles) <- gsub("_Aligned.sortedByCoord.out.bw", "", basename(bwfiles))
-  condition <- sapply(names(bwfiles), function(w) {
-    metadata[[groupvar]][match(w, metadata$ID)]
-  })
+  metadata[[groupvar]][match(names(bwfiles), metadata$ID)]
   ordr <- order(condition)
   condition <- condition[ordr]
   bwfiles <- bwfiles[ordr]

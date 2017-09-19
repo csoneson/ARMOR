@@ -9,10 +9,11 @@ for (i in 1:length(args)) {
 ## either:
 ## - a data frame with results (e.g., returned by edgeR's topTags(...)$table).
 ## There must be one column named "gene" that gives the gene ID.
-## - a named list of such data frames, one for each contrast.
-## To run the script, please modify at least the definition of the design matrix
-## and the contrasts of interest.
+## - a named list of such data frames, one for each contrast (recommended).
+## To run the script, modify at least the definition of the design matrix and
+## the contrasts of interest.
 
+suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(tximport))
 suppressPackageStartupMessages(library(edgeR))
 
@@ -34,8 +35,10 @@ tx2gene <- readRDS(tx2gene)
 txi <- tximport(files = salmonfiles, type = "salmon", txOut = FALSE, 
                 tx2gene = tx2gene[, c("tx", "gene")])
 
-## Read metadata and reorder in the same order as count matrix
+## Read metadata and reorder in the same order as the count matrix
 metadata <- read.delim(metafile, header = TRUE, as.is = TRUE, sep = "\t")
+stopifnot(all(metadata$ID %in% colnames(txi$counts)))
+stopifnot(all(colnames(txi$counts) %in% metadata$ID))
 metadata <- metadata[match(colnames(txi$counts), metadata$ID), ]
 
 ## Create DGEList and include average transcript length offsets
@@ -47,9 +50,9 @@ dge0 <- DGEList(cts)
 dge0$offset <- t(t(log(normMat)) + o)
 dge0 <- calcNormFactors(dge0)
 
-## Define design. MODIFY
+## Define design. ************** MODIFY ************** 
 stopifnot(all(colnames(dge0) == metadata$ID))
-des <- model.matrix(~ XXXX, data = metadata)
+(des <- model.matrix(~ XXXX, data = metadata))
 
 ## Filter out genes with average CPM below 1
 print(dim(dge0))
@@ -59,7 +62,12 @@ dge <- calcNormFactors(dge)
 print(dim(dge))
 
 ## Add gene annotation
-annot <- tx2gene %>% dplyr::select(-tx, -tx_biotype) %>% distinct()
+annot <- tx2gene %>% dplyr::select(-tx, -tx_biotype, -start, -end) %>% distinct()
+if (any(duplicated(annot$gene))) {
+  stop(paste0("The following genes are represented by multiple rows in the ", 
+              "gene annotation: ", 
+              paste(annot$gene[duplicated(annot$gene)], collapse = ",")))
+}
 annot <- annot[match(rownames(dge), annot$gene), ]
 rownames(annot) <- annot$gene
 dge$genes <- annot
@@ -68,7 +76,7 @@ dge$genes <- annot
 dge <- estimateDisp(dge, design = des)
 qlfit <- glmQLFit(dge, design = des)
 
-## Define contrasts. MODIFY
+## Define contrasts. ************** MODIFY ************** 
 (contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
 
 ## Perform tests
@@ -79,6 +87,18 @@ edgeR_res <- lapply(contrasts, function(cm) {
   tt %>% dplyr::mutate_if(is.numeric, signif3)
 })
 
+## Write results to text files
+if (class(edgeR_res) == "data.frame") {
+  write.table(edgeR_res %>% dplyr::arrange(PValue), 
+              file = gsub("rds$", "txt", outrds), 
+              sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+} else {
+  for (nm in names(edgeR_res)) {
+    write.table(edgeR_res[[nm]] %>% dplyr::arrange(PValue), 
+                file = gsub("\\.rds$", paste0("_", nm, ".txt"), outrds), 
+                sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+  }
+}
 saveRDS(list(results = edgeR_res, data = dge0), file = outrds)
 
 
