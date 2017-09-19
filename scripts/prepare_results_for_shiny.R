@@ -30,14 +30,13 @@ genes <- tx2gene %>% dplyr::select(-tx, -tx_biotype) %>% dplyr::distinct()
 edgeRwide <- edgerres$results
 if (class(edgeRwide) == "list" && class(edgeRwide) != "data.frame") {
   for (i in seq_len(length(edgeRwide))) {
-    colnames(edgeRwide[[i]]) <- paste0(colnames(edgeRwide[[i]]), ".", names(edgeRwide)[i])
-    colnames(edgeRwide[[i]])[grep("logCPM", colnames(edgeRwide[[i]]))] <- "logCPM"
-    colnames(edgeRwide[[i]])[grep("gene", colnames(edgeRwide[[i]]))] <- "gene"
+    idx <- which(colnames(edgeRwide[[i]]) %in% c("logFC", "F", "PValue", "FDR"))
+    colnames(edgeRwide[[i]])[idx] <- paste0(colnames(edgeRwide[[i]])[idx], ".", names(edgeRwide)[i])
   }
-  edgeRwide <- Reduce(function(...) dplyr::full_join(..., by = c("gene", "logCPM")), edgeRwide)
+  edgeRwide <- Reduce(function(...) dplyr::full_join(...), edgeRwide)
 }
 
-edgeRwide <- dplyr::left_join(edgeRwide, genes, by = "gene") %>%
+edgeRwide <- dplyr::left_join(edgeRwide, genes) %>%
   dplyr::select(gene, symbol, gene_biotype, logCPM, everything()) %>%
   dplyr::mutate(gene_biotype = factor(gene_biotype))
 

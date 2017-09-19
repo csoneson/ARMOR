@@ -59,7 +59,8 @@ dge <- calcNormFactors(dge)
 print(dim(dge))
 
 ## Add gene annotation
-annot <- tx2gene[match(rownames(dge), tx2gene$gene), ]
+annot <- tx2gene %>% dplyr::select(-tx, -tx_biotype) %>% distinct()
+annot <- annot[match(rownames(dge), annot$gene), ]
 rownames(annot) <- annot$gene
 dge$genes <- annot
 
@@ -71,12 +72,11 @@ qlfit <- glmQLFit(dge, design = des)
 (contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
 
 ## Perform tests
+signif3 <- function(x) signif(x, digits = 3)
 edgeR_res <- lapply(contrasts, function(cm) {
   qlf <- glmQLFTest(qlfit, contrast = cm)
   tt <- topTags(qlf, n = Inf, sort.by = "none")$table
-  tt <- signif(tt, digits = 3)
-  tt$gene <- rownames(tt)
-  tt
+  tt %>% dplyr::mutate_if(is.numeric, signif3)
 })
 
 saveRDS(list(results = edgeR_res, data = dge0), file = outrds)

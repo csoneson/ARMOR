@@ -1,4 +1,7 @@
 ## RNA-seq workflow
+
+**Note: This is work in development, and is provided "as-is", without guarantees of correctness or optimality. Please use responsibly.**
+
 This RNA-seq workflow consists of a `Makefile` and a set of R scripts to perform quality control, preprocessing and differential expression analysis of RNA-seq data. The output can be combined with the [`iResViewer`](https://github.com/csoneson/iResViewer) R package to generate a shiny application for browsing and sharing the results.
 
 To use the RNA-seq workflow on your own data, you need to first follow the steps below to set up necessary variables and files:
@@ -17,7 +20,7 @@ To use the RNA-seq workflow on your own data, you need to first follow the steps
 - Modify the `Makefile` to add paths to software binaries. The following software is used by the workflow:
 	- [R](https://www.r-project.org/)
 	- [Salmon](https://combine-lab.github.io/salmon/)
-	- [FastQC]()
+	- [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
 	- [TrimGalore!](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/)
 	- [Cutadapt](http://cutadapt.readthedocs.io/en/stable/guide.html)
 	- [STAR](https://github.com/alexdobin/STAR)

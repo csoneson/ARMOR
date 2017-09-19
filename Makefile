@@ -122,13 +122,13 @@ $(foreach S,$(SEsamples),FastQC/$(S)_fastqc.zip)
 ## Trimming and FastQC on trimmed files
 runtrimming: $(foreach S,$(PEsamples),FastQC/$(S)_R1_val_1_fastqc.zip) \
 $(foreach S,$(PEsamples),FastQC/$(S)_R2_val_2_fastqc.zip) \
-$(foreach S,$(SEsamples),FastQC/$(S)_val_fastqc.zip)
+$(foreach S,$(SEsamples),FastQC/$(S)_trimmed_fastqc.zip)
 
 ## Salmon quantification
 runsalmonquant: $(foreach S,$(samples),salmon/$(S)/quant.sf)
 
 ## STAR alignment
-runstar: $(foreach S,$(samples),STAR/$(S)/$(S)_Aligned.sortedByCoord.out.bam.bai
+runstar: $(foreach S,$(samples),STAR/$(S)/$(S)_Aligned.sortedByCoord.out.bam.bai)
 
 ## List all the packages that were used by the R analyses
 listpackages:
@@ -190,7 +190,7 @@ FastQC/$(1)_fastqc.zip: FASTQtrimmed/$(1).fq.gz
 endef
 $(foreach S,$(PEsamples),$(eval $(call fastqcrule2,$(S)_R1_val_1)))
 $(foreach S,$(PEsamples),$(eval $(call fastqcrule2,$(S)_R2_val_2)))
-$(foreach S,$(SEsamples),$(eval $(call fastqcrule2,$(S)_val)))
+$(foreach S,$(SEsamples),$(eval $(call fastqcrule2,$(S)_trimmed)))
 
 MultiQC/multiqc_report.html: \
 $(foreach S,$(PEsamples),FastQC/$(S)_R1_fastqc.zip) \
@@ -198,12 +198,12 @@ $(foreach S,$(PEsamples),FastQC/$(S)_R2_fastqc.zip) \
 $(foreach S,$(SEsamples),FastQC/$(S)_fastqc.zip) \
 $(foreach S,$(PEsamples),FastQC/$(S)_R1_val_1_fastqc.zip) \
 $(foreach S,$(PEsamples),FastQC/$(S)_R2_val_2_fastqc.zip) \
-$(foreach S,$(SEsamples),FastQC/$(S)_val_fastqc.zip) \
+$(foreach S,$(SEsamples),FastQC/$(S)_trimmed_fastqc.zip) \
 $(foreach S,$(PEsamples),FASTQtrimmed/$(S)_R1_val_1.fq.gz) \
 $(foreach S,$(PEsamples),FASTQtrimmed/$(S)_R2_val_2.fq.gz) \
-$(foreach S,$(SEsamples),FASTQtrimmed/$(S)_val.fq.gz) \
+$(foreach S,$(SEsamples),FASTQtrimmed/$(S)_trimmed.fq.gz) \
 $(foreach S,$(samples),salmon/$(S)/quant.sf) \
-$(foreach S,$(samples),STAR/$(S)/$(S)_Aligned.sortedByCoord.out.bam.bai
+$(foreach S,$(samples),STAR/$(S)/$(S)_Aligned.sortedByCoord.out.bam.bai)
 	mkdir -p $(@D)
 	$(multiqc) FastQC FASTQtrimmed salmon STAR -f -o $(@D)
 
@@ -225,7 +225,7 @@ endef
 $(foreach S,$(PEsamples),$(eval $(call PEtrimrule2,$(S))))
 
 define SEtrimrule
-FASTQtrimmed/$(1)_val.fq.gz: FASTQ/$(1).fastq.gz
+FASTQtrimmed/$(1)_trimmed.fq.gz: FASTQ/$(1).fastq.gz
 	mkdir -p $$(@D)
 	$(trimgalore) -q 20 --phred33 --length 20 -o $$(@D) --path_to_cutadapt $(cutadapt) \
 	$$(word 1,$$^)
@@ -246,7 +246,7 @@ endef
 $(foreach S,$(PEsamples),$(eval $(call PEsalmonrule,$(S))))
 
 define SEsalmonrule
-salmon/$(1)/quant.sf: $(salmonindex)/hash.bin FASTQtrimmed/$(1)_val.fq.gz
+salmon/$(1)/quant.sf: $(salmonindex)/hash.bin FASTQtrimmed/$(1)_trimmed.fq.gz
 	mkdir -p $$(@D)
 	$(salmon) quant -i $$(word 1,$$(^D)) -l A -r $$(word 2,$$^) \
 	-o $$(@D) --seqBias -p $(ncores)
@@ -270,7 +270,7 @@ $(foreach S,$(PEsamples),$(eval $(call PEstarrule,$(S))))
 
 define SEstarrule
 STAR/$(1)/$(1)_Aligned.sortedByCoord.out.bam: $(STARindex)/SA \
-FASTQtrimmed/$(1)_val.fq.gz
+FASTQtrimmed/$(1)_trimmed.fq.gz
 	mkdir -p $$(@D)
 	$(STAR) --genomeDir $(STARindex) \
 	--readFilesIn $$(word 2,$$^) \
@@ -324,7 +324,7 @@ output/shiny_results_edgeR.rds: output/edgeR_dge.rds $(tx2gene) $(metatxt) \
 scripts/prepare_results_for_shiny.R
 	mkdir -p output
 	mkdir -p Rout
-	$(R) "--args edgerres='output/edgeR_dge.rds' bwcolorvar=NULL gtffile=NULL tx2gene='$(tx2gene)' metafile='$(metatxt)' bigwigdir=NULL outrds='$@'" scripts/prepare_results_for_shiny.R Rout/prepare_results_for_shiny_edgeR.Rout
+	$(R) "--args edgerres='output/edgeR_dge.rds' bwcolorvar='$(bwcolorvar)' gtffile=NULL tx2gene='$(tx2gene)' metafile='$(metatxt)' bigwigdir=NULL outrds='$@'" scripts/prepare_results_for_shiny.R Rout/prepare_results_for_shiny_edgeR.Rout
 
 
 
