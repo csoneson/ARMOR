@@ -42,10 +42,12 @@ edgeRwide <- dplyr::left_join(edgeRwide, genes, by = "gene") %>%
   dplyr::mutate(gene_biotype = factor(gene_biotype))
 
 ## edgeR result table for volcano plots ("long")
-edgeRlong <- edgeRwide %>% tidyr::gather(typecontrast, value, -gene, -symbol, -gene_biotype, -logCPM) %>%
+edgeRlong <- edgeRwide %>% 
+  tidyr::gather(typecontrast, value, -gene, -symbol, -gene_biotype, -logCPM) %>%
   dplyr::mutate(typecontrast = gsub("logFC.", "logFC_", typecontrast)) %>%
   dplyr::mutate(typecontrast = gsub("FDR.", "FDR_", typecontrast)) %>%
   dplyr::mutate(typecontrast = gsub("PValue.", "PValue_", typecontrast)) %>%
+  dplyr::mutate(typecontrast = gsub("F\\.", "F_", typecontrast)) %>%
   tidyr::separate(typecontrast, into = c("dtype", "contrast"), sep = "_") %>%
   tidyr::spread(key = dtype, value = value) %>%
   dplyr::mutate(mlog10PValue = -log10(PValue))
@@ -59,11 +61,9 @@ create_genemodels <- function(gtf_file) {
   idx <- match(c("transcript_id", "gene_id", "exon_id"), colnames(mcols(genemodels)))
   colnames(mcols(genemodels))[idx] <- c("transcript", "gene", "exon")
   mcols(genemodels)$symbol <- mcols(genemodels)$transcript
-  genemodels <- subset(genemodels, type == "exon")
-  
-  genemodels
+  subset(genemodels, type == "exon")
 }
-  
+
 if (!is.null(gtffile)) {
   genemodels <- create_genemodels(gtffile)
 } else {
@@ -73,15 +73,18 @@ if (!is.null(gtffile)) {
 ## -------------------------------------------------------------------------- ##
 ##                          bigWig files + condition                          ##
 ## -------------------------------------------------------------------------- ##
-## Vector with bigWig file names (relative to shiny app location) and condition information
+## Vector with bigWig file names and condition information
 metadata <- read.delim(metafile, header = TRUE, as.is = TRUE)
 
 if (!is.null(bigwigdir)) {
-  bwfiles <- list.files(bigwigdir, pattern = "\\.bw$", full.names = TRUE)
-  names(bwfiles) <- gsub("\\.bw", "", basename(bwfiles))
+  bwfiles <- normalizePath(list.files(bigwigdir, pattern = "\\.bw$", full.names = TRUE))
+  names(bwfiles) <- gsub("_Aligned.sortedByCoord.out.bw", "", basename(bwfiles))
   condition <- sapply(names(bwfiles), function(w) {
-    metadata[[bwcolorvar]][match(gsub("_Aligned.sortedByCoord.out", "", w), metadata$ID)]
+    metadata[[bwcolorvar]][match(w, metadata$ID)]
   })
+  ordr <- order(condition)
+  condition <- condition[ordr]
+  bwfiles <- bwfiles[ordr]
 } else {
   bwfiles <- condition <- NULL
 }
@@ -89,25 +92,33 @@ if (!is.null(bigwigdir)) {
 ## -------------------------------------------------------------------------- ##
 ##                              edgeR - MDS                                   ##
 ## -------------------------------------------------------------------------- ##
-## Data for PCA
+## Data for MDS
 dge <- edgerres$data
 logcpms <- edgeR::cpm(dge, log = TRUE, prior.count = 2)
 mds <- limma::plotMDS(logcpms, top = 500, labels = NULL, pch = NULL, 
-                      cex = 1, dim.plot = c(1, 2), ndim = 3, 
+                      cex = 1, dim.plot = c(1, 2), ndim = min(7, ncol(logcpms) - 1), 
                       gene.selection = "common", 
                       xlab = NULL, ylab = NULL, plot = FALSE)$cmdscale.out
-colnames(mds) <- c("MDS1", "MDS2", "MDS3")
+colnames(mds) <- paste0("MDS", 1:min(7, ncol(logcpms) - 1))
 mds <- as.data.frame(mds) %>% tibble::rownames_to_column(var = "ID") %>%
   dplyr::full_join(metadata)
+
+logcpms <- reshape2::melt(as.matrix(logcpms)) %>%
+  dplyr::rename(gene = Var1, sample = Var2) %>%
+  dplyr::mutate(group = metadata[match(sample, metadata$ID), bwcolorvar])
 
 ## -------------------------------------------------------------------------- ##
 ##                                 Save                                       ##
 ## -------------------------------------------------------------------------- ##
-saveRDS(list(results = list(edgeR = edgeRwide), 
-             edgeRlong = edgeRlong, gene_models = genemodels,
-             bw_files = bwfiles, condition = condition, mds = mds,
-             logcpms = logcpms, metadata = metadata, 
-             gene_info = genes),
+saveRDS(list(wideResults = list(edgeR = edgeRwide), 
+             longResults = list(edgeR = edgeRlong), 
+             geneModels = genemodels,
+             bwFiles = bwfiles, 
+             bwCond = condition, 
+             dimRed = list(MDS = mds),
+             abundances = list(logCPM = logcpms), 
+             geneInfo = genes,
+             groupVar = bwcolorvar),
         file = outrds)
 
 

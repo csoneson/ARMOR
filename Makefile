@@ -10,6 +10,10 @@ R :=
 ## Ex: salmon := /home/charlotte/software/Salmon-0.8.2_linux_x86_64/bin/salmon
 salmon := 
 
+## Path to FastQC binary
+## Ex: fastqc := fastqc
+fastqc := 
+
 ## Path to TrimGalore! and cutadapt
 ## Ex: trimgalore := /home/charlotte/software/trim_galore_v0.4.4/trim_galore
 ## Ex: cutadapt := /home/charlotte/.local/bin/cutadapt
@@ -62,6 +66,9 @@ txome :=
 ## Path to Salmon index. Will be generated from the merged cDNA and ncRNA fasta files if it doesn't exist
 ## Ex: salmonindex := reference/SalmonIndex/Danio_rerio.GRCz10.cdna.ncrna.sidx_0.8.2
 salmonindex := 
+## k-mer size for Salmon index
+## Ex: salmonk := 31
+salmonk := 
 
 ## Path to rds file where the tx2gene mapping will be stored
 ## Ex: tx2gene := reference/SalmonIndex/Danio_rerio.GRCz10.cdna.ncrna_tx2gene.rds
@@ -75,7 +82,7 @@ chromlengthtxt :=
 ## Preparation - list files to process
 ## ------------------------------------------------------------------------------------ ##
 ## List sample IDs (should correspond to the FASTQ file names (excluding {_R1/2}.fastq.gz). 
-## Usually only one of PEsamples or SEsamples is non-empty.
+## Usually one of PEsamples or SEsamples is empty.
 ## Ex: SEsamples := S1 S2 S3
 PEsamples := 
 SEsamples := 
@@ -95,18 +102,47 @@ metatxt :=
 ## Ex: bwcolorvar := group
 bwcolorvar := 
 
+## Number of cores (for FastQC, Salmon and STAR)
+## Ex: ncores := 12
+ncores := 
+
 .PHONY: all
 
 ## ------------------------------------------------------------------------------------ ##
 ## Target definition
 ## ------------------------------------------------------------------------------------ ##
 ## Run all analyses
-all: MultiQC/multiqc_report.html output/shiny_results.rds \
-$(foreach S,$(samples),STARbigwig/$(S)_Aligned.sortedByCoord.bam.bai
+all: MultiQC/multiqc_report.html output/shiny_results.rds output/shiny_results_edgeR.rds
+
+## FastQC on original (untrimmed) files
+runfastqc: $(foreach S,$(PEsamples),FastQC/$(S)_R1_fastqc.zip) \
+$(foreach S,$(PEsamples),FastQC/$(S)_R2_fastqc.zip) \
+$(foreach S,$(SEsamples),FastQC/$(S)_fastqc.zip)
+
+## Trimming and FastQC on trimmed files
+runtrimming: $(foreach S,$(PEsamples),FastQC/$(S)_R1_val_1_fastqc.zip) \
+$(foreach S,$(PEsamples),FastQC/$(S)_R2_val_2_fastqc.zip) \
+$(foreach S,$(SEsamples),FastQC/$(S)_val_fastqc.zip)
+
+## Salmon quantification
+runsalmonquant: $(foreach S,$(samples),salmon/$(S)/quant.sf)
+
+## STAR alignment
+runstar: $(foreach S,$(samples),STAR/$(S)/$(S)_Aligned.sortedByCoord.out.bam.bai
 
 ## List all the packages that were used by the R analyses
 listpackages:
 	$(R) scripts/list_packages.R Rout/list_packages.Rout
+
+softwareversions:
+	$(salmon) --version
+	$(trimgalore) --version
+	$(cutadapt) --version
+	$(fastqc) --version
+	$(STAR) --version
+	$(samtools) --version
+	$(multiqc) --version
+	$(bedtools) --version
 
 ## ------------------------------------------------------------------------------------ ##
 ## Reference preparation
@@ -119,7 +155,7 @@ $(txome): $(cdna) $(ncrna)
 ## Salmon - generate index from merged cDNA and ncRNA files
 $(salmonindex)/hash.bin: $(txome)
 	mkdir -p $(@D)
-	$(salmon) index -t $< -k 31 -i $(@D) --type quasi
+	$(salmon) index -t $< -k $(salmonk) -i $(@D) --type quasi
 
 ## Generate tx2gene mapping
 $(tx2gene): $(txome)
@@ -130,7 +166,7 @@ $(tx2gene): $(txome)
 ## Generate STAR index
 $(STARindex)/SA: $(genome) $(gtf)
 	mkdir -p $(@D)
-	$(STAR) --runMode genomeGenerate --runThreadN 20 --genomeDir $(STARindex) \
+	$(STAR) --runMode genomeGenerate --runThreadN $(ncores) --genomeDir $(STARindex) \
 	--genomeFastaFiles $(genome) --sjdbGTFfile $(gtf) --sjdbOverhang $(readlength)
 
 ## ------------------------------------------------------------------------------------ ##
@@ -140,7 +176,7 @@ $(STARindex)/SA: $(genome) $(gtf)
 define fastqcrule
 FastQC/$(1)_fastqc.zip: FASTQ/$(1).fastq.gz
 	mkdir -p $$(@D)
-	fastqc -o $$(@D) -t 10 $$<
+	$(fastqc) -o $$(@D) -t $(ncores) $$<
 endef
 $(foreach S,$(PEsamples),$(eval $(call fastqcrule,$(S)_R1)))
 $(foreach S,$(PEsamples),$(eval $(call fastqcrule,$(S)_R2)))
@@ -150,7 +186,7 @@ $(foreach S,$(SEsamples),$(eval $(call fastqcrule,$(S))))
 define fastqcrule2
 FastQC/$(1)_fastqc.zip: FASTQtrimmed/$(1).fq.gz
 	mkdir -p $$(@D)
-	fastqc -o $$(@D) -t 10 $$<
+	$(fastqc) -o $$(@D) -t $(ncores) $$<
 endef
 $(foreach S,$(PEsamples),$(eval $(call fastqcrule2,$(S)_R1_val_1)))
 $(foreach S,$(PEsamples),$(eval $(call fastqcrule2,$(S)_R2_val_2)))
@@ -165,9 +201,11 @@ $(foreach S,$(PEsamples),FastQC/$(S)_R2_val_2_fastqc.zip) \
 $(foreach S,$(SEsamples),FastQC/$(S)_val_fastqc.zip) \
 $(foreach S,$(PEsamples),FASTQtrimmed/$(S)_R1_val_1.fq.gz) \
 $(foreach S,$(PEsamples),FASTQtrimmed/$(S)_R2_val_2.fq.gz) \
-$(foreach S,$(SEsamples),FASTQtrimmed/$(S)_val.fq.gz)
+$(foreach S,$(SEsamples),FASTQtrimmed/$(S)_val.fq.gz) \
+$(foreach S,$(samples),salmon/$(S)/quant.sf) \
+$(foreach S,$(samples),STAR/$(S)/$(S)_Aligned.sortedByCoord.out.bam.bai
 	mkdir -p $(@D)
-	$(multiqc) FastQC FASTQtrimmed -f -o $(@D)
+	$(multiqc) FastQC FASTQtrimmed salmon STAR -f -o $(@D)
 
 ## ------------------------------------------------------------------------------------ ##
 ## Adapter trimming
@@ -203,7 +241,7 @@ salmon/$(1)/quant.sf: $(salmonindex)/hash.bin \
 FASTQtrimmed/$(1)_R1_val_1.fq.gz FASTQtrimmed/$(1)_R2_val_2.fq.gz
 	mkdir -p $$(@D)
 	$(salmon) quant -i $$(word 1,$$(^D)) -l A -1 $$(word 2,$$^) -2 $$(word 3,$$^) \
-	-o $$(@D) --gcBias --seqBias -p 10
+	-o $$(@D) --gcBias --seqBias -p $(ncores)
 endef
 $(foreach S,$(PEsamples),$(eval $(call PEsalmonrule,$(S))))
 
@@ -211,7 +249,7 @@ define SEsalmonrule
 salmon/$(1)/quant.sf: $(salmonindex)/hash.bin FASTQtrimmed/$(1)_val.fq.gz
 	mkdir -p $$(@D)
 	$(salmon) quant -i $$(word 1,$$(^D)) -l A -r $$(word 2,$$^) \
-	-o $$(@D) --seqBias -p 10
+	-o $$(@D) --seqBias -p $(ncores)
 endef
 $(foreach S,$(SEsamples),$(eval $(call SEsalmonrule,$(S))))
 
@@ -225,7 +263,7 @@ FASTQtrimmed/$(1)_R1_val_1.fq.gz FASTQtrimmed/$(1)_R2_val_2.fq.gz
 	mkdir -p $$(@D)
 	$(STAR) --genomeDir $(STARindex) \
 	--readFilesIn $$(word 2,$$^) $$(word 3,$$^) \
-	--runThreadN 20 --outFileNamePrefix $$(@D)/$(1)_ \
+	--runThreadN $(ncores) --outFileNamePrefix $$(@D)/$(1)_ \
 	--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c
 endef
 $(foreach S,$(PEsamples),$(eval $(call PEstarrule,$(S))))
@@ -236,7 +274,7 @@ FASTQtrimmed/$(1)_val.fq.gz
 	mkdir -p $$(@D)
 	$(STAR) --genomeDir $(STARindex) \
 	--readFilesIn $$(word 2,$$^) \
-	--runThreadN 20 --outFileNamePrefix $$(@D)/$(1)_ \
+	--runThreadN $(ncores) --outFileNamePrefix $$(@D)/$(1)_ \
 	--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c
 endef
 $(foreach S,$(SEsamples),$(eval $(call SEstarrule,$(S))))

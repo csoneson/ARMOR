@@ -17,6 +17,7 @@ To use the RNA-seq workflow on your own data, you need to first follow the steps
 - Modify the `Makefile` to add paths to software binaries. The following software is used by the workflow:
 	- [R](https://www.r-project.org/)
 	- [Salmon](https://combine-lab.github.io/salmon/)
+	- [FastQC]()
 	- [TrimGalore!](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/)
 	- [Cutadapt](http://cutadapt.readthedocs.io/en/stable/guide.html)
 	- [STAR](https://github.com/alexdobin/STAR)
