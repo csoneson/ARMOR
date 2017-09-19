@@ -40,7 +40,8 @@ if (class(edgeRwide) == "list" && class(edgeRwide) != "data.frame") {
 
 edgeRwide <- edgeRwide %>% 
   dplyr::select(gene, symbol, gene_biotype, logCPM, everything()) %>%
-  dplyr::mutate(gene_biotype = factor(gene_biotype))
+  dplyr::mutate(gene_biotype = factor(gene_biotype)) %>%
+  dplyr::mutate(strand = factor(strand))
 
 ## edgeR result table for volcano plots ("long")
 edgeRlong <- edgeRwide %>% 
@@ -119,8 +120,7 @@ saveRDS(list(wideResults = list(edgeR = edgeRwide),
              bwCond = condition, 
              dimRed = list(MDS = mds),
              abundances = list(logCPM = logcpms), 
-             geneInfo = genes,
-             groupVar = groupvar),
+             geneInfo = genes),
         file = outrds)
 
 
