@@ -23,7 +23,7 @@ options(ucscChromosomeNames = FALSE)
 edgerres <- readRDS(edgerres)
 tx2gene <- readRDS(tx2gene)
 
-genes <- tx2gene %>% dplyr::select(-tx, -tx_biotype) %>% dplyr::distinct()
+genes <- tx2gene %>% dplyr::select(-tx, -tx_biotype, -start, -end) %>% dplyr::distinct()
 
 ## -------------------------------------------------------------------------- ##
 ##                                 edgeR                                      ##
@@ -38,13 +38,14 @@ if (class(edgeRwide) == "list" && class(edgeRwide) != "data.frame") {
   edgeRwide <- Reduce(function(...) dplyr::full_join(...), edgeRwide)
 }
 
-edgeRwide <- dplyr::left_join(edgeRwide, genes) %>%
+edgeRwide <- edgeRwide %>% 
   dplyr::select(gene, symbol, gene_biotype, logCPM, everything()) %>%
   dplyr::mutate(gene_biotype = factor(gene_biotype))
 
 ## edgeR result table for volcano plots ("long")
 edgeRlong <- edgeRwide %>% 
-  tidyr::gather(typecontrast, value, -gene, -symbol, -gene_biotype, -logCPM) %>%
+  tidyr::gather(typecontrast, value, -gene, -symbol, -gene_biotype, -logCPM, 
+                -chromosome, -strand) %>%
   dplyr::mutate(typecontrast = gsub("logFC\\.", "logFC_", typecontrast)) %>%
   dplyr::mutate(typecontrast = gsub("FDR\\.", "FDR_", typecontrast)) %>%
   dplyr::mutate(typecontrast = gsub("PValue\\.", "PValue_", typecontrast)) %>%
@@ -81,7 +82,8 @@ metadata <- read.delim(metafile, header = TRUE, as.is = TRUE)
 if (!is.null(bigwigdir)) {
   bwfiles <- normalizePath(list.files(bigwigdir, pattern = "\\.bw$", full.names = TRUE))
   names(bwfiles) <- gsub("_Aligned.sortedByCoord.out.bw", "", basename(bwfiles))
-  metadata[[groupvar]][match(names(bwfiles), metadata$ID)]
+  condition <- metadata[[groupvar]][match(names(bwfiles), metadata$ID)]
+  names(condition) <- names(bwfiles)
   ordr <- order(condition)
   condition <- condition[ordr]
   bwfiles <- bwfiles[ordr]

@@ -21,7 +21,6 @@ tx2gene <- data.frame(t(sapply(as.character(names(transcripts)), function(nm) {
   gene_biotype <- gsub("^gene_biotype:", "", a[grep("^gene_biotype:", a)])
   tx_biotype <- gsub("^transcript_biotype:", "", a[grep("^transcript_biotype:", a)])
   position <- gsub("chromosome:", "", a[grep("^chromosome:", a)])
-  description <- gsub("description:", "", a[grep("^description:", a)])
   c(tx = ifelse(length(tx) != 0, tx, NA), 
     gene = ifelse(length(gene) != 0, gene, NA),
     symbol = ifelse(length(symbol) != 0, symbol, NA),
@@ -30,9 +29,7 @@ tx2gene <- data.frame(t(sapply(as.character(names(transcripts)), function(nm) {
     chromosome = ifelse(length(position) != 0, strsplit(position, ":")[[1]][2], NA),
     start = ifelse(length(position) != 0, strsplit(position, ":")[[1]][3], NA),
     end = ifelse(length(position) != 0, strsplit(position, ":")[[1]][4], NA),
-    strand = ifelse(length(position) != 0, strsplit(position, ":")[[1]][5], NA),
-    description = ifelse(length(description) != 0, description, NA)
-  )
+    strand = ifelse(length(position) != 0, strsplit(position, ":")[[1]][5], NA))
 })), stringsAsFactors = FALSE)
 rownames(tx2gene) <- NULL
 

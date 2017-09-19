@@ -160,7 +160,7 @@ $(salmonindex)/hash.bin: $(txome)
 	$(salmon) index -t $< -k $(salmonk) -i $(@D) --type quasi
 
 ## Generate tx2gene mapping
-$(tx2gene): $(txome)
+$(tx2gene): $(txome) scripts/generate_tx2gene.R
 	mkdir -p $(@D)
 	mkdir -p Rout
 	$(R) "--args transcriptfasta='$(txome)' outrds='$@'" scripts/generate_tx2gene.R Rout/generate_tx2gene.Rout
