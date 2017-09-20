@@ -118,7 +118,7 @@ saveRDS(list(wideResults = list(edgeR = edgeRwide),
              geneModels = genemodels,
              bwFiles = bwfiles, 
              bwCond = condition, 
-             dimRed = list(MDS = mds),
+             dimReds = list(MDS = mds),
              abundances = list(logCPM = logcpms), 
              geneInfo = genes),
         file = outrds)
