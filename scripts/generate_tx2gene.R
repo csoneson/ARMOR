@@ -20,7 +20,7 @@ tx2gene <- data.frame(t(sapply(as.character(names(transcripts)), function(nm) {
   symbol <- gsub("^gene_symbol:", "", a[grep("^gene_symbol:", a)])
   gene_biotype <- gsub("^gene_biotype:", "", a[grep("^gene_biotype:", a)])
   tx_biotype <- gsub("^transcript_biotype:", "", a[grep("^transcript_biotype:", a)])
-  position <- gsub("chromosome:", "", a[grep("^chromosome:", a)])
+  position <- gsub("chromosome:|scaffold:", "", a[grep("^chromosome:|^scaffold:", a)])
   c(tx = ifelse(length(tx) != 0, tx, NA), 
     gene = ifelse(length(gene) != 0, gene, NA),
     symbol = ifelse(length(symbol) != 0, symbol, NA),
