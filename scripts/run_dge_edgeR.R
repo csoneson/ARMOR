@@ -22,6 +22,9 @@ print(salmondir)
 print(metafile)
 print(outrds)
 
+## Open pdf file to contain any figure generated below
+pdf(gsub("rds$", "pdf", outrds))
+
 ## List Salmon directories
 salmondirs <- list.files(salmondir, full.names = TRUE)
 salmonfiles <- paste0(salmondirs, "/quant.sf")
@@ -76,6 +79,9 @@ dge$genes <- annot
 dge <- estimateDisp(dge, design = des)
 qlfit <- glmQLFit(dge, design = des)
 
+## Plot dispersions
+plotBCV(dge)
+
 ## Define contrasts. ************** MODIFY ************** 
 (contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
 
@@ -99,8 +105,10 @@ if (class(edgeR_res) == "data.frame") {
                 sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
   }
 }
-saveRDS(list(results = edgeR_res, data = dge0), file = outrds)
 
+dev.off()
+
+saveRDS(list(results = edgeR_res, data = dge0), file = outrds)
 
 sessionInfo()
 date()
