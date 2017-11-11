@@ -1,0 +1,355 @@
+configfile: "config.yaml"
+
+import pandas as pd
+samples = pd.read_table(config["metatxt"])
+
+## ------------------------------------------------------------------------------------ ##
+## Target definitions
+## ------------------------------------------------------------------------------------ ##
+## Run all analyses
+rule all:
+	input:
+		"MultiQC/multiqc_report.html",
+		"output/edgeR_dge.rds",
+		"output/shiny_results.rds",
+		"output/shiny_results_edgeR.rds"
+
+## FastQC on original (untrimmed) files
+rule runfastqc:
+	input:
+ 		expand("FastQC/{sample}_R1_fastqc.zip", sample = samples.ID[samples.type == 'PE'].values.tolist()),
+ 		expand("FastQC/{sample}_R2_fastqc.zip", sample = samples.ID[samples.type == 'PE'].values.tolist()),
+		expand("FastQC/{sample}_fastqc.zip", sample = samples.ID[samples.type == 'SE'].values.tolist())
+
+## Trimming and FastQC on trimmed files
+rule runtrimming:
+	input:
+ 		expand("FastQC/{sample}_R1_val_1_fastqc.zip", sample = samples.ID[samples.type == 'PE'].values.tolist()),
+ 		expand("FastQC/{sample}_R2_val_2_fastqc.zip", sample = samples.ID[samples.type == 'PE'].values.tolist()),
+		expand("FastQC/{sample}_trimmed_fastqc.zip", sample = samples.ID[samples.type == 'SE'].values.tolist())
+
+## Salmon quantification
+rule runsalmonquant:
+	input:
+		expand("salmon/{sample}/quant.sf", sample = samples.ID.values.tolist())
+
+## STAR alignment
+rule runstar:
+	input:
+		expand("STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.ID.values.tolist())
+
+## List all the packages that were used by the R analyses
+rule listpackages:
+	log:
+		"Rout/list_packages.Rout"
+	params:
+		Routdir = "Rout",
+		outtxt = "R_package_versions.txt",
+		script = "scripts/list_packages.R"
+	shell:
+		'''R CMD BATCH --no-restore --no-save "--args Routdir='{params.Routdir}' outtxt='{params.outtxt}'" {input.script} {log}'''
+
+## Print the versions of all software packages
+rule softwareversions:
+	shell:
+		"R --version; salmon --version; trim_galore --version; cutadapt --version; "
+		"fastqc --version; STAR --version; samtools --version; multiqc --version; "
+		"bedtools --version"
+
+## ------------------------------------------------------------------------------------ ##
+## Reference preparation
+## ------------------------------------------------------------------------------------ ##
+## Merge cDNA and ncRNA fasta files
+rule mergefasta:
+	input:
+		cdna = config["cdna"],
+		ncrna = config["ncrna"]
+	output:
+		config["txome"]
+	shell:
+		"cat {input.cdna} {input.ncrna} > {output}"
+
+## Generate Salmon index from merged cDNA and ncRNA files
+rule salmonindex:
+	input:
+		txome = config["txome"]
+	output:
+		config["salmonindex"] + "/hash.bin"
+	log:
+		"logs/salmon_index.log"
+	params:
+		salmonk = config["salmonk"],
+		salmonoutdir = config["salmonindex"]
+	shell:
+		"echo 'Salmon version:\n' > {log}; salmon --version >> {log}; "
+		"salmon index -t {input.txome} -k {params.salmonk} -i {params.salmonoutdir} --type quasi"
+
+## Generate tx2gene mapping
+rule tx2gene:
+	input:
+		txome = config["txome"],
+		script = "scripts/generate_tx2gene.R"
+	output:
+		config["tx2gene"]
+	log:
+		"Rout/generate_tx2gene.Rout"
+	shell:
+		'''R CMD BATCH --no-restore --no-save "--args transcriptfasta='{input.txome}' outrds='{output}'" {input.script} {log}'''
+
+## Generate STAR index
+rule starindex:
+	input:
+		genome = config["genome"],
+		gtf = config["gtf"]
+	output:
+		config["STARindex"] + "/SA",
+		config["STARindex"] + "/chrNameLength.txt"
+	log:
+		"logs/STAR_index.log"
+	params:
+		STARindex = config["STARindex"],
+		readlength = config["readlength"]
+	threads: config["ncores"]
+	shell:
+		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
+		"STAR --runMode genomeGenerate --runThreadN {threads} --genomeDir {params.STARindex} "
+		"--genomeFastaFiles {input.genome} --sjdbGTFfile {input.gtf} --sjdbOverhang {params.readlength}"
+
+## ------------------------------------------------------------------------------------ ##
+## Quality control
+## ------------------------------------------------------------------------------------ ##
+## FastQC, original reads
+rule fastqc:
+	input:
+		fastq = "FASTQ/{sample}.fastq.gz"
+	output:
+		"FastQC/{sample}_fastqc.zip"
+	log:
+		"logs/fastqc_{sample}.log"
+	threads: config["ncores"]
+	shell:
+		"echo 'FastQC version:\n' > {log}; fastqc --version >> {log}; "
+		"fastqc -o FastQC -t {threads} {input.fastq}"
+
+## FastQC, trimmed reads
+rule fastqc2:
+	input:
+		fastq = "FASTQtrimmed/{sample}.fq.gz"
+	output:
+		"FastQC/{sample}_fastqc.zip"
+	log:
+		"logs/fastqc_trimmed_{sample}.log"
+	threads: config["ncores"]
+	shell:
+		"echo 'FastQC version:\n' > {log}; fastqc --version >> {log}; "
+		"fastqc -o FastQC -t {threads} {input.fastq}"
+
+## MultiQC
+rule multiqc:
+	input:
+		expand("FastQC/{sample}_fastqc.zip", sample = samples.ID[samples.type == 'SE'].values.tolist()),
+		expand("FastQC/{sample}_R1_fastqc.zip", sample = samples.ID[samples.type == 'PE'].values.tolist()),
+		expand("FastQC/{sample}_R2_fastqc.zip", sample = samples.ID[samples.type == 'PE'].values.tolist()),
+		expand("FastQC/{sample}_trimmed_fastqc.zip", sample = samples.ID[samples.type == 'SE'].values.tolist()),
+		expand("FastQC/{sample}_R1_val_1_fastqc.zip", sample = samples.ID[samples.type == 'PE'].values.tolist()),
+		expand("FastQC/{sample}_R2_val_2_fastqc.zip", sample = samples.ID[samples.type == 'PE'].values.tolist()),
+		expand("FASTQtrimmed/{sample}_trimmed.fq.gz", sample = samples.ID[samples.type == 'SE'].values.tolist()),
+		expand("FASTQtrimmed/{sample}_R1_val_1.fq.gz", sample = samples.ID[samples.type == 'PE'].values.tolist()),
+		expand("FASTQtrimmed/{sample}_R2_val_2.fq.gz", sample = samples.ID[samples.type == 'PE'].values.tolist()),
+		expand("salmon/{sample}/quant.sf", sample = samples.ID.values.tolist()),
+		expand("STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.ID.values.tolist())
+	output:
+		"MultiQC/multiqc_report.html"
+	log:
+		"logs/multiqc.log"
+	shell:
+		"echo 'MultiQC version:\n' > {log}; multiqc --version >> {log}; "
+		"multiqc FastQC FASTQtrimmed salmon STAR -f -o MultiQC"
+
+
+## ------------------------------------------------------------------------------------ ##
+## Adapter trimming
+## ------------------------------------------------------------------------------------ ##
+# TrimGalore!
+rule trimgaloreSE:
+	input:
+		fastq = "FASTQ/{sample}.fastq.gz"
+	output:
+		"FASTQtrimmed/{sample}_trimmed.fq.gz"
+	log:
+		"logs/trimgalore_{sample}.log"
+	shell:
+		"echo 'TrimGalore! version:\n' > {log}; trim_galore --version >> {log}; "
+		"trim_galore -q 20 --phred33 --length 20 -o FASTQtrimmed --path_to_cutadapt cutadapt {input.fastq}"
+
+rule trimgalorePE:
+	input:
+		fastq1 = "FASTQ/{sample}_R1.fastq.gz",
+		fastq2 = "FASTQ/{sample}_R2.fastq.gz"
+	output:
+		"FASTQtrimmed/{sample}_R1_val_1.fq.gz",
+		"FASTQtrimmed/{sample}_R2_val_2.fq.gz"
+	log:
+		"logs/trimgalore_{sample}.log"
+	shell:
+		"echo 'TrimGalore! version:\n' > {log}; trim_galore --version >> {log}; "
+		"trim_galore -q 20 --phred33 --length 20 -o FASTQtrimmed --path_to_cutadapt cutadapt "
+		"--paired {input.fastq1} {input.fastq2}"
+
+## ------------------------------------------------------------------------------------ ##
+## Salmon abundance estimation
+## ------------------------------------------------------------------------------------ ##
+# Estimate abundances with Salmon
+rule salmonSE:
+	input:
+		index = config["salmonindex"] + "/hash.bin",
+		fastq = "FASTQtrimmed/{sample}_trimmed.fq.gz"
+	output:
+		"salmon/{sample}/quant.sf"
+	log:
+		"logs/salmon_{sample}.log"
+	threads: config["ncores"]
+	params:
+		salmonindex = config["salmonindex"]
+	shell:
+		"echo 'Salmon version:\n' > {log}; salmon --version >> {log}; "
+		"salmon quant -i {params.salmonindex} -l A -r {input.fastq} "
+		"-o salmon/{wildcards.sample} --seqBias -p {threads}"
+
+rule salmonPE:
+	input:
+		index = config["salmonindex"] + "/hash.bin",
+		fastq1 = "FASTQtrimmed/{sample}_R1_val_1.fq.gz",
+		fastq2 = "FASTQtrimmed/{sample}_R2_val_2.fq.gz"
+	output:
+		"salmon/{sample}/quant.sf"
+	log:
+		"logs/salmon_{sample}.log"
+	threads: config["ncores"]
+	params:
+		salmonindex = config["salmonindex"]
+	shell:
+		"echo 'Salmon version:\n' > {log}; salmon --version >> {log}; "
+		"salmon quant -i {params.salmonindex} -l A -1 {input.fastq1} -2 {input.fastq2} "
+		"-o salmon/{wildcards.sample} --seqBias --gcBias -p {threads}"
+
+## ------------------------------------------------------------------------------------ ##
+## STAR mapping
+## ------------------------------------------------------------------------------------ ##
+## Genome mapping with STAR
+rule starSE:
+	input:
+		index = config["STARindex"] + "/SA",
+		fastq = "FASTQtrimmed/{sample}_trimmed.fq.gz"
+	output:
+		"STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
+	threads: config["ncores"]
+	log:
+		"logs/STAR_{sample}.log"
+	params:
+		STARindex = config["STARindex"]
+	shell:
+		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
+		"STAR --genomeDir {params.STARindex} --readFilesIn {input.fastq} "
+		"--runThreadN {threads} --outFileNamePrefix STAR/{wildcards.sample}/{wildcards.sample}_ "
+		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c"
+
+rule starPE:
+	input:
+		index = config["STARindex"] + "/SA",
+		fastq1 = "FASTQtrimmed/{sample}_R1_val_1.fq.gz",
+		fastq2 = "FASTQtrimmed/{sample}_R2_val_2.fq.gz"
+	output:
+		"STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
+	threads: config["ncores"]
+	log:
+		"logs/STAR_{sample}.log"
+	params:
+		STARindex = config["STARindex"]
+	shell:
+		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
+		"STAR --genomeDir {params.STARindex} --readFilesIn {input.fastq1} {input.fastq2} "
+		"--runThreadN {threads} --outFileNamePrefix STAR/{wildcards.sample}/{wildcards.sample}_ "
+		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c"
+
+## Index bam files
+rule staridx:
+	input:
+		bam = "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
+	output:
+		"STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai"
+	log:
+		"logs/samtools_index_{sample}.log"
+	shell:
+		"echo 'samtools version:\n' > {log}; samtools --version >> {log}; "
+		"samtools index {input.bam}"
+
+## Convert BAM files to bigWig
+rule bigwig:
+	input:
+		bam = "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam",
+		chrl = config["STARindex"] + "/chrNameLength.txt"
+	output:
+		"STARbigwig/{sample}_Aligned.sortedByCoord.out.bw"
+	log:
+		"logs/bigwig_{sample}.log"
+	shell:
+		"echo 'bedtools version:\n' > {log}; bedtools --version >> {log}; "
+		"bedtools genomecov -split -ibam {input.bam} -bg > "
+		"STARbigwig/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph; "
+		"bedGraphToBigWig STARbigwig/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph "
+		"{input.chrl} {output}; rm -f STARbigwig/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph"
+
+## ------------------------------------------------------------------------------------ ##
+## Differential expression
+## ------------------------------------------------------------------------------------ ##
+## edgeR
+rule edgeR:
+	input:
+		expand("salmon/{sample}/quant.sf", sample = samples.ID.values.tolist()),
+		tx2gene = config["tx2gene"],
+		metatxt = config["metatxt"],
+		script = "scripts/run_dge_edgeR.R"
+	output:
+		"output/edgeR_dge.rds"
+	log:
+		"Rout/run_dge_edgeR.Rout"
+	params:
+		salmondir = "salmon",
+	shell:
+		'''R CMD BATCH --no-restore --no-save "--args tx2gene='{input.tx2gene}' salmondir='{params.salmondir}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+
+## ------------------------------------------------------------------------------------ ##
+## Shiny app
+## ------------------------------------------------------------------------------------ ##
+rule shiny:
+	input:
+		expand("STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.ID.values.tolist()),
+		rds = "output/edgeR_dge.rds",
+		tx2gene = config["tx2gene"],
+		metatxt = config["metatxt"],
+		gtf = config["gtf"],
+		script = "scripts/prepare_results_for_shiny.R"
+	log: "Rout/shiny_results.Rout"
+	output:
+		"output/shiny_results.rds"
+	params:
+		groupvar = config["groupvar"],
+		bigwigdir = "STARbigwig"
+	shell:
+		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile='{input.gtf}' tx2gene='{input.tx2gene}' metafile='{input.metatxt}' bigwigdir='{params.bigwigdir}' outrds='{output}'" {input.script} {log}'''
+
+rule shinyedgeR:
+	input:
+		rds = "output/edgeR_dge.rds",
+		tx2gene = config["tx2gene"],
+		metatxt = config["metatxt"],
+		script = "scripts/prepare_results_for_shiny.R"
+	log:
+		"Rout/shiny_results_edgeR.Rout"
+	output:
+		"output/shiny_results_edgeR.rds"
+	params:
+		groupvar = config["groupvar"]
+	shell:
+		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile=NULL tx2gene='{input.tx2gene}' metafile='{input.metatxt}' bigwigdir=NULL outrds='{output}'" {input.script} {log}'''
