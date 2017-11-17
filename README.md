@@ -10,7 +10,7 @@ To use the RNA-seq workflow on your own data, you need to first follow the steps
 ##### Input files
 
 - Put the gzipped fastq files in the `FASTQ` directory. The `Snakefile` assumes that these files are named according to the pattern `<sample-name>.fastq.gz` (or `<sample-name>_R1.fastq.gz` and `<sample-name>_R2.fastq.gz` for paired-end data), if this is not the case you need to rename the files or modify the `Snakefile` accordingly.
--  Create a tab-separated metadata text file. This file should have at least two columns: one named `ID`, which contains all the values of `<sample-name>` from the fastq files, and one named `type` which is either SE or PE depending on whether the samples were obtained with a single-end or paired-end protocol. In addition, any number of columns can be included and used later in the analysis. 
+-  Create a tab-separated metadata text file. This file should have at least two columns: one named `ID`, which contains all the values of `<sample-name>` from the fastq files, and one named `type` which is either SE or PE depending on whether the samples were obtained with a single-end or paired-end protocol. In addition, any number of columns can be included and used later in the analysis. All variables required for the differential expression analysis should be included as columns in the metadata text file. 
 
 ##### Include paths to input files in `config.yaml`
 
@@ -21,12 +21,12 @@ To use the RNA-seq workflow on your own data, you need to first follow the steps
 	- cDNA fasta file
 	- ncRNA fasta file
 -  Add the readlength for your RNA-seq reads to `config.yaml`.
--  Add a "group variable" to `config.yaml`. This will be used to color the samples in downstream visualizations.
--  Set the number of cores to use for the tools that support multi-threading.
+-  Add a "group variable" to `config.yaml`. This will be used to color the samples in downstream visualizations, and should correspond to one of the column names in the metadata text file.
+-  Set the maximal number of cores to use for the tools that support multi-threading.
 
 ##### Include paths to software in `envs/environment.yaml`
 
-- The workflow assumes that all the necessary software is in your path. Alternatively, you can set up a `conda` environment, which will contain all necessary software. To create such an environment, named `rnaseqworkflow` (assuming that `conda` is available), do ```conda env create -n rnaseqworkflow --file envs/environment.yaml```Then, before running the workflow, activate the workflow with ```source activate rnaseqworkflow``` 
+- The workflow assumes that all the necessary software is in your path. Alternatively, you can set up a `conda` environment, which will contain all necessary software. First, ensure that `conda` is available and, if necessary, add the channels `r`, `conda-forge` and `bioconda` (see e.g. [here](https://bioconda.github.io/)). Then, to create an environment named `rnaseqworkflow`, do ```conda env create -n rnaseqworkflow --file envs/environment.yaml```. Before running the workflow, activate the workflow with ```source activate rnaseqworkflow``` 
 - If you don't want to use `conda`, make sure that all necessary software is installed. The following software is used by the workflow:
 	- [R](https://www.r-project.org/)
 	- [Salmon](https://combine-lab.github.io/salmon/)
@@ -50,7 +50,7 @@ To use the RNA-seq workflow on your own data, you need to first follow the steps
 	- [rtracklayer](http://bioconductor.org/packages/release/bioc/html/rtracklayer.html)
 
 ##### Set up the correct differential expression analysis
-- The `scripts/run_dge_edgeR.R` script contains the basic code to perform differential expression analysis with [edgeR](https://bioconductor.org/packages/release/bioc/html/edgeR.html). However, you need to modify it in order to perform the proper analysis for your data. As a minimum, define the design and the contrast(s) you would like to use. If you make additional modifications, make sure that the output of the script follows the requirements outlined in `scripts/run_dge_edgeR.R`. 
+- The `scripts/run_dge_edgeR.R` script contains the basic code to perform differential expression analysis with [edgeR](https://bioconductor.org/packages/release/bioc/html/edgeR.html). However, you need to modify it in order to perform the proper analysis for your data. As a minimum, define the design and the contrast(s) you would like to use, based on the variables defined in the metadata text file. If you make additional modifications, make sure that the output of the script follows the requirements outlined in `scripts/run_dge_edgeR.R`. 
 
 ### Running the workflow
 
