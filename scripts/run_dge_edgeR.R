@@ -16,6 +16,7 @@ for (i in 1:length(args)) {
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(tximport))
 suppressPackageStartupMessages(library(edgeR))
+suppressPackageStartupMessages(library(ggplot2))
 
 print(tx2gene)
 print(salmondir)
@@ -93,16 +94,23 @@ edgeR_res <- lapply(contrasts, function(cm) {
   tt %>% dplyr::mutate_if(is.numeric, signif3)
 })
 
-## Write results to text files
+## Write results to text files and make MA plots
 if (class(edgeR_res) == "data.frame") {
   write.table(edgeR_res %>% dplyr::arrange(PValue), 
               file = gsub("rds$", "txt", outrds), 
               sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+  print(ggplot(edgeR_res, aes(x = logCPM, y = logFC, color = FDR <= 0.05)) + 
+          geom_point() + theme_bw() + 
+          scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black")))
 } else {
   for (nm in names(edgeR_res)) {
     write.table(edgeR_res[[nm]] %>% dplyr::arrange(PValue), 
                 file = gsub("\\.rds$", paste0("_", nm, ".txt"), outrds), 
                 sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+    print(ggplot(edgeR_res[[nm]], aes(x = logCPM, y = logFC, color = FDR <= 0.05)) + 
+            geom_point() + theme_bw() + 
+            scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black")) + 
+            ggtitle(nm))
   }
 }
 

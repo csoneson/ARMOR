@@ -46,6 +46,7 @@ To use the RNA-seq workflow on your own data, you need to first follow the steps
 	- [reshape2](https://cran.r-project.org/web/packages/reshape2/index.html)
 	- [tibble](https://cran.r-project.org/web/packages/tibble/index.html)
 	- [dplyr](https://cran.r-project.org/web/packages/dplyr/index.html)
+	- [ggplot2](https://cran.r-project.org/web/packages/ggplot2/index.html)
 	- [tidyr](https://cran.r-project.org/web/packages/tidyr/index.html)
 	- [rtracklayer](http://bioconductor.org/packages/release/bioc/html/rtracklayer.html)
 
