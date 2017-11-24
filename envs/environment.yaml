@@ -16,6 +16,7 @@ dependencies:
 - r-ggplot2
 - r-tidyr
 - r-reshape2
+- r-rjson
 - bioconductor-limma
 - bioconductor-edger
 - bioconductor-tximport
