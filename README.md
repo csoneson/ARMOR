@@ -49,6 +49,7 @@ To use the RNA-seq workflow on your own data, you need to first follow the steps
 	- [ggplot2](https://cran.r-project.org/web/packages/ggplot2/index.html)
 	- [tidyr](https://cran.r-project.org/web/packages/tidyr/index.html)
 	- [rtracklayer](http://bioconductor.org/packages/release/bioc/html/rtracklayer.html)
+	- [DRIMSeq](http://bioconductor.org/packages/release/bioc/html/DRIMSeq.html) (optional)
 
 ##### Set up the correct differential expression analysis
 - The `scripts/run_dge_edgeR.R` script contains the basic code to perform differential expression analysis with [edgeR](https://bioconductor.org/packages/release/bioc/html/edgeR.html). However, you need to modify it in order to perform the proper analysis for your data. As a minimum, define the design and the contrast(s) you would like to use, based on the variables defined in the metadata text file. If you make additional modifications, make sure that the output of the script follows the requirements outlined in `scripts/run_dge_edgeR.R`. 

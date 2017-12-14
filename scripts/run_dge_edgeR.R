@@ -37,7 +37,7 @@ tx2gene <- readRDS(tx2gene)
 
 ## Read Salmon abundances
 txi <- tximport(files = salmonfiles, type = "salmon", txOut = FALSE, 
-                tx2gene = tx2gene[, c("tx", "gene")])
+                tx2gene = tx2gene[, c("tx", "gene")], dropInfReps = TRUE)
 
 ## Read metadata and reorder in the same order as the count matrix
 metadata <- read.delim(metafile, header = TRUE, as.is = TRUE, sep = "\t")

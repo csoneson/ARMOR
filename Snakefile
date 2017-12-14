@@ -7,6 +7,7 @@ samples = pd.read_table(config["metatxt"])
 ## Target definitions
 ## ------------------------------------------------------------------------------------ ##
 ## Run all analyses
+## Add "output/DRIMSeq_dtu.rds" if desired
 rule all:
 	input:
 		"MultiQC/multiqc_report.html",
@@ -314,6 +315,25 @@ rule edgeR:
 		"output/edgeR_dge.rds"
 	log:
 		"Rout/run_dge_edgeR.Rout"
+	params:
+		salmondir = "salmon",
+	shell:
+		'''R CMD BATCH --no-restore --no-save "--args tx2gene='{input.tx2gene}' salmondir='{params.salmondir}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+
+## ------------------------------------------------------------------------------------ ##
+## Differential transcript usage
+## ------------------------------------------------------------------------------------ ##
+## DRIMSeq
+rule DRIMSeq:
+	input:
+		expand("salmon/{sample}/quant.sf", sample = samples.ID.values.tolist()),
+		tx2gene = config["tx2gene"],
+		metatxt = config["metatxt"],
+		script = "scripts/run_dtu_drimseq.R"
+	output:
+		"output/DRIMSeq_dtu.rds"
+	log:
+		"Rout/run_dtu_drimseq.Rout"
 	params:
 		salmondir = "salmon",
 	shell:
