@@ -296,7 +296,7 @@ rule bigwig:
 		"logs/bigwig_{sample}.log"
 	shell:
 		"echo 'bedtools version:\n' > {log}; bedtools --version >> {log}; "
-		"bedtools genomecov -split -ibam {input.bam} -bg > "
+		"bedtools genomecov -split -ibam {input.bam} -bg | sort -k1,1 -k2,2n > "
 		"STARbigwig/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph; "
 		"bedGraphToBigWig STARbigwig/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph "
 		"{input.chrl} {output}; rm -f STARbigwig/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph"
