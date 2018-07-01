@@ -26,7 +26,7 @@ To use the RNA-seq workflow on your own data, you need to first follow the steps
 
 ##### Include paths to software in `envs/environment.yaml`
 
-- The workflow assumes that all the necessary software is in your path. Alternatively, you can set up a `conda` environment, which will contain all necessary software. First, ensure that `conda` is available and, if necessary, add the channels `r`, `conda-forge` and `bioconda` (see e.g. [here](https://bioconda.github.io/)). Then, to create an environment named `rnaseqworkflow`, do ```conda env create -n rnaseqworkflow --file envs/environment.yaml```. Before running the workflow, activate the workflow with ```source activate rnaseqworkflow``` 
+- The workflow assumes that all the necessary software is in your path. Alternatively, you can set up a `conda` environment, which will contain all necessary software. First, ensure that `conda` is available and, if necessary, add the channels `r`, `conda-forge` and `bioconda` (see e.g. [here](https://bioconda.github.io/)). Then, to create an environment named `rnaseqworkflow`, do ```conda env create -n rnaseqworkflow --file envs/environment.yaml``` (note that the environment can be updated after editing `envs/environment.yaml`, in the case where new versions are needed, using ```conda env update -n rnaseqworkflow --file envs/environment.yaml```). Before running the workflow, activate the workflow with ```source activate rnaseqworkflow``` 
 - If you don't want to use `conda`, make sure that all necessary software is installed. The following software is used by the workflow:
 	- [R](https://www.r-project.org/)
 	- [Salmon](https://combine-lab.github.io/salmon/)
