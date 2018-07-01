@@ -2,16 +2,16 @@ channels:
 - r
 - bioconda
 dependencies:
-- samtools=1.3
-- salmon=0.8.2
-- star=2.5.3a
+- samtools=1.8
+- salmon=0.10.2
+- star=2.6.0c
 - fastqc=0.11.7
-- multiqc=1.3
-- trim-galore=0.4.4
-- cutadapt=1.9.1
-- bedtools=2.26.0
-- ucsc-bedgraphtobigwig=332
-- r=3.4.1
+- multiqc=1.6a0
+- trim-galore=0.5.0
+- cutadapt=1.16
+- bedtools=2.27.1
+- ucsc-bedgraphtobigwig=366
+- r=3.4.3
 - r-dplyr
 - r-ggplot2
 - r-tidyr
