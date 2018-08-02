@@ -60,16 +60,6 @@ rule softwareversions:
 ## ------------------------------------------------------------------------------------ ##
 ## Reference preparation
 ## ------------------------------------------------------------------------------------ ##
-## Merge cDNA and ncRNA fasta files
-rule mergefasta:
-	input:
-		cdna = config["cdna"],
-		ncrna = config["ncrna"]
-	output:
-		config["txome"]
-	shell:
-		"cat {input.cdna} {input.ncrna} > {output}"
-
 ## Generate Salmon index from merged cDNA and ncRNA files
 rule salmonindex:
 	input:
@@ -88,14 +78,23 @@ rule salmonindex:
 ## Generate tx2gene mapping
 rule tx2gene:
 	input:
+		expand("salmon/{sample}/quant.sf", sample = samples.ID.values.tolist()),
 		txome = config["txome"],
-		script = "scripts/generate_tx2gene.R"
+		salmonidx = config["salmonindex"],
+		gtf = config["gtf"],
+		script = "scripts/generate_tx2gene_tximeta.R"
 	output:
 		config["tx2gene"]
 	log:
 		"Rout/generate_tx2gene.Rout"
+	params:
+		salmondir = "salmon",
+		flag = config["annotation"],
+		organism = config["organism"],
+		release = str(config["release"]),
+		build = config["build"],		
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args transcriptfasta='{input.txome}' outrds='{output}'" {input.script} {log}'''
+		'''R CMD BATCH --no-restore --no-save "--args transcriptfasta='{input.txome}' salmonidx='{input.salmonidx}' gtf='{input.gtf}' annotation='{params.flag}' organism='{params.organism}' release='{params.release}' build='{params.build}' salmondir='{params.salmondir}' outrds='{output}'" {input.script} {log}'''
 
 ## Generate STAR index
 rule starindex:
