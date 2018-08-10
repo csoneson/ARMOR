@@ -11,9 +11,9 @@ samples = pd.read_table(config["metatxt"])
 rule all:
 	input:
 		"MultiQC/multiqc_report.html",
-		"output/edgeR_dge.rds",
-		"output/shiny_results.rds",
-		"output/shiny_results_edgeR.rds"
+#		"output/edgeR_dge.rds",
+#		"output/shiny_results.rds",
+#		"output/shiny_results_edgeR.rds"
 
 ## FastQC on original (untrimmed) files
 rule runfastqc:
@@ -75,26 +75,22 @@ rule salmonindex:
 		"echo 'Salmon version:\n' > {log}; salmon --version >> {log}; "
 		"salmon index -t {input.txome} -k {params.salmonk} -i {params.salmonoutdir} --type quasi"
 
-## Generate tx2gene mapping
-rule tx2gene:
+## Generate linkedTxome mapping
+rule linkedTxome:
 	input:
-		expand("salmon/{sample}/quant.sf", sample = samples.ID.values.tolist()),
 		txome = config["txome"],
-		salmonidx = config["salmonindex"],
 		gtf = config["gtf"],
-		script = "scripts/generate_tx2gene_tximeta.R"
-	output:
-		config["tx2gene"]
+		salmonidx = config["salmonindex"],
+		script = "scripts/generate_linkedTxome.R"
 	log:
-		"Rout/generate_tx2gene.Rout"
+		"Rout/generate_linkedTxome.Rout"
 	params:
-		salmondir = "salmon",
 		flag = config["annotation"],
 		organism = config["organism"],
 		release = str(config["release"]),
-		build = config["build"],		
+		build = config["build"]		
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args transcriptfasta='{input.txome}' salmonidx='{input.salmonidx}' gtf='{input.gtf}' annotation='{params.flag}' organism='{params.organism}' release='{params.release}' build='{params.build}' salmondir='{params.salmondir}' outrds='{output}'" {input.script} {log}'''
+		'''R CMD BATCH --no-restore --no-save "--args transcriptfasta='{input.txome}' salmonidx='{input.salmonidx}' gtf='{input.gtf}' annotation='{params.flag}' organism='{params.organism}' release='{params.release}' build='{params.build}'" {input.script} {log}'''
 
 ## Generate STAR index
 rule starindex:
@@ -304,71 +300,71 @@ rule bigwig:
 ## Differential expression
 ## ------------------------------------------------------------------------------------ ##
 ## edgeR
-rule edgeR:
-	input:
-		expand("salmon/{sample}/quant.sf", sample = samples.ID.values.tolist()),
-		tx2gene = config["tx2gene"],
-		metatxt = config["metatxt"],
-		script = "scripts/run_dge_edgeR.R"
-	output:
-		"output/edgeR_dge.rds"
-	log:
-		"Rout/run_dge_edgeR.Rout"
-	params:
-		salmondir = "salmon",
-	shell:
-		'''R CMD BATCH --no-restore --no-save "--args tx2gene='{input.tx2gene}' salmondir='{params.salmondir}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+#rule edgeR:
+#	input:
+#		expand("salmon/{sample}/quant.sf", sample = samples.ID.values.tolist()),
+#		tx2gene = config["tx2gene"],
+#		metatxt = config["metatxt"],
+#		script = "scripts/run_dge_edgeR.R"
+#	output:
+#		"output/edgeR_dge.rds"
+#	log:
+#		"Rout/run_dge_edgeR.Rout"
+#	params:
+#		salmondir = "salmon",
+#	shell:
+#		'''R CMD BATCH --no-restore --no-save "--args tx2gene='{input.tx2gene}' salmondir='{params.salmondir}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage
 ## ------------------------------------------------------------------------------------ ##
 ## DRIMSeq
-rule DRIMSeq:
-	input:
-		expand("salmon/{sample}/quant.sf", sample = samples.ID.values.tolist()),
-		tx2gene = config["tx2gene"],
-		metatxt = config["metatxt"],
-		script = "scripts/run_dtu_drimseq.R"
-	output:
-		"output/DRIMSeq_dtu.rds"
-	log:
-		"Rout/run_dtu_drimseq.Rout"
-	params:
-		salmondir = "salmon",
-	shell:
-		'''R CMD BATCH --no-restore --no-save "--args tx2gene='{input.tx2gene}' salmondir='{params.salmondir}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+#rule DRIMSeq:
+#	input:
+#		expand("salmon/{sample}/quant.sf", sample = samples.ID.values.tolist()),
+#		tx2gene = config["tx2gene"],
+#		metatxt = config["metatxt"],
+#		script = "scripts/run_dtu_drimseq.R"
+#	output:
+#		"output/DRIMSeq_dtu.rds"
+#	log:
+#		"Rout/run_dtu_drimseq.Rout"
+#	params:
+#		salmondir = "salmon",
+#	shell:
+#		'''R CMD BATCH --no-restore --no-save "--args tx2gene='{input.tx2gene}' salmondir='{params.salmondir}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Shiny app
 ## ------------------------------------------------------------------------------------ ##
-rule shiny:
-	input:
-		expand("STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.ID.values.tolist()),
-		rds = "output/edgeR_dge.rds",
-		tx2gene = config["tx2gene"],
-		metatxt = config["metatxt"],
-		gtf = config["gtf"],
-		script = "scripts/prepare_results_for_shiny.R"
-	log: "Rout/shiny_results.Rout"
-	output:
-		"output/shiny_results.rds"
-	params:
-		groupvar = config["groupvar"],
-		bigwigdir = "STARbigwig"
-	shell:
-		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile='{input.gtf}' tx2gene='{input.tx2gene}' metafile='{input.metatxt}' bigwigdir='{params.bigwigdir}' outrds='{output}'" {input.script} {log}'''
+#rule shiny:
+#	input:
+#		expand("STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.ID.values.tolist()),
+#		rds = "output/edgeR_dge.rds",
+#		tx2gene = config["tx2gene"],
+#		metatxt = config["metatxt"],
+#		gtf = config["gtf"],
+#		script = "scripts/prepare_results_for_shiny.R"
+#	log: "Rout/shiny_results.Rout"
+#	output:
+#		"output/shiny_results.rds"
+#	params:
+#		groupvar = config["groupvar"],
+#		bigwigdir = "STARbigwig"
+#	shell:
+#		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile='{input.gtf}' tx2gene='{input.tx2gene}' metafile='{input.metatxt}' bigwigdir='{params.bigwigdir}' outrds='{output}'" {input.script} {log}'''
 
-rule shinyedgeR:
-	input:
-		rds = "output/edgeR_dge.rds",
-		tx2gene = config["tx2gene"],
-		metatxt = config["metatxt"],
-		script = "scripts/prepare_results_for_shiny.R"
-	log:
-		"Rout/shiny_results_edgeR.Rout"
-	output:
-		"output/shiny_results_edgeR.rds"
-	params:
-		groupvar = config["groupvar"]
-	shell:
-		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile=NULL tx2gene='{input.tx2gene}' metafile='{input.metatxt}' bigwigdir=NULL outrds='{output}'" {input.script} {log}'''
+#rule shinyedgeR:
+#	input:
+#		rds = "output/edgeR_dge.rds",
+#		tx2gene = config["tx2gene"],
+#		metatxt = config["metatxt"],
+#		script = "scripts/prepare_results_for_shiny.R"
+#	log:
+#		"Rout/shiny_results_edgeR.Rout"
+#	output:
+#		"output/shiny_results_edgeR.rds"
+#	params:
+#		groupvar = config["groupvar"]
+#	shell:
+#		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile=NULL tx2gene='{input.tx2gene}' metafile='{input.metatxt}' bigwigdir=NULL outrds='{output}'" {input.script} {log}'''
