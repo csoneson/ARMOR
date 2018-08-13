@@ -11,33 +11,33 @@ samples = pd.read_table(config["metatxt"])
 rule all:
 	input:
 		"MultiQC/multiqc_report.html",
-#		"output/edgeR_dge.rds",
-#		"output/shiny_results.rds",
-#		"output/shiny_results_edgeR.rds"
+		"output/edgeR_dge.rds",
+		"output/shiny_results.rds",
+		"output/shiny_results_edgeR.rds"
 
 ## FastQC on original (untrimmed) files
 rule runfastqc:
 	input:
- 		expand("FastQC/{sample}_R1_fastqc.zip", sample = samples.ID[samples.type == 'PE'].values.tolist()),
- 		expand("FastQC/{sample}_R2_fastqc.zip", sample = samples.ID[samples.type == 'PE'].values.tolist()),
-		expand("FastQC/{sample}_fastqc.zip", sample = samples.ID[samples.type == 'SE'].values.tolist())
+ 		expand("FastQC/{sample}_R1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+ 		expand("FastQC/{sample}_R2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand("FastQC/{sample}_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist())
 
 ## Trimming and FastQC on trimmed files
 rule runtrimming:
 	input:
- 		expand("FastQC/{sample}_R1_val_1_fastqc.zip", sample = samples.ID[samples.type == 'PE'].values.tolist()),
- 		expand("FastQC/{sample}_R2_val_2_fastqc.zip", sample = samples.ID[samples.type == 'PE'].values.tolist()),
-		expand("FastQC/{sample}_trimmed_fastqc.zip", sample = samples.ID[samples.type == 'SE'].values.tolist())
+ 		expand("FastQC/{sample}_R1_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+ 		expand("FastQC/{sample}_R2_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand("FastQC/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist())
 
 ## Salmon quantification
 rule runsalmonquant:
 	input:
-		expand("salmon/{sample}/quant.sf", sample = samples.ID.values.tolist())
+		expand("salmon/{sample}/quant.sf", sample = samples.names.values.tolist())
 
 ## STAR alignment
 rule runstar:
 	input:
-		expand("STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.ID.values.tolist())
+		expand("STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
 
 ## List all the packages that were used by the R analyses
 rule listpackages:
@@ -143,17 +143,17 @@ rule fastqc2:
 ## MultiQC
 rule multiqc:
 	input:
-		expand("FastQC/{sample}_fastqc.zip", sample = samples.ID[samples.type == 'SE'].values.tolist()),
-		expand("FastQC/{sample}_R1_fastqc.zip", sample = samples.ID[samples.type == 'PE'].values.tolist()),
-		expand("FastQC/{sample}_R2_fastqc.zip", sample = samples.ID[samples.type == 'PE'].values.tolist()),
-		expand("FastQC/{sample}_trimmed_fastqc.zip", sample = samples.ID[samples.type == 'SE'].values.tolist()),
-		expand("FastQC/{sample}_R1_val_1_fastqc.zip", sample = samples.ID[samples.type == 'PE'].values.tolist()),
-		expand("FastQC/{sample}_R2_val_2_fastqc.zip", sample = samples.ID[samples.type == 'PE'].values.tolist()),
-		expand("FASTQtrimmed/{sample}_trimmed.fq.gz", sample = samples.ID[samples.type == 'SE'].values.tolist()),
-		expand("FASTQtrimmed/{sample}_R1_val_1.fq.gz", sample = samples.ID[samples.type == 'PE'].values.tolist()),
-		expand("FASTQtrimmed/{sample}_R2_val_2.fq.gz", sample = samples.ID[samples.type == 'PE'].values.tolist()),
-		expand("salmon/{sample}/quant.sf", sample = samples.ID.values.tolist()),
-		expand("STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.ID.values.tolist())
+		expand("FastQC/{sample}_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()),
+		expand("FastQC/{sample}_R1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand("FastQC/{sample}_R2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand("FastQC/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()),
+		expand("FastQC/{sample}_R1_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand("FastQC/{sample}_R2_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand("FASTQtrimmed/{sample}_trimmed.fq.gz", sample = samples.names[samples.type == 'SE'].values.tolist()),
+		expand("FASTQtrimmed/{sample}_R1_val_1.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand("FASTQtrimmed/{sample}_R2_val_2.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand("salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
+		expand("STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
 	output:
 		"MultiQC/multiqc_report.html"
 	log:
@@ -300,71 +300,68 @@ rule bigwig:
 ## Differential expression
 ## ------------------------------------------------------------------------------------ ##
 ## edgeR
-#rule edgeR:
-#	input:
-#		expand("salmon/{sample}/quant.sf", sample = samples.ID.values.tolist()),
-#		tx2gene = config["tx2gene"],
-#		metatxt = config["metatxt"],
-#		script = "scripts/run_dge_edgeR.R"
-#	output:
-#		"output/edgeR_dge.rds"
-#	log:
-#		"Rout/run_dge_edgeR.Rout"
-#	params:
-#		salmondir = "salmon",
-#	shell:
-#		'''R CMD BATCH --no-restore --no-save "--args tx2gene='{input.tx2gene}' salmondir='{params.salmondir}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+rule edgeR:
+	input:
+		expand("salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
+		metatxt = config["metatxt"],
+		salmonidx = config["salmonindex"],
+		script = "scripts/run_dge_edgeR.R"
+	output:
+		"output/edgeR_dge.rds"
+	log:
+		"Rout/run_dge_edgeR.Rout"
+	params:
+		salmondir = "salmon",
+	shell:
+		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' salmonidx='{input.salmonidx}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage
 ## ------------------------------------------------------------------------------------ ##
 ## DRIMSeq
-#rule DRIMSeq:
-#	input:
-#		expand("salmon/{sample}/quant.sf", sample = samples.ID.values.tolist()),
-#		tx2gene = config["tx2gene"],
-#		metatxt = config["metatxt"],
-#		script = "scripts/run_dtu_drimseq.R"
-#	output:
-#		"output/DRIMSeq_dtu.rds"
-#	log:
-#		"Rout/run_dtu_drimseq.Rout"
-#	params:
-#		salmondir = "salmon",
-#	shell:
-#		'''R CMD BATCH --no-restore --no-save "--args tx2gene='{input.tx2gene}' salmondir='{params.salmondir}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+rule DRIMSeq:
+	input:
+		expand("salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
+		metatxt = config["metatxt"],
+		script = "scripts/run_dtu_drimseq.R"
+	output:
+		"output/DRIMSeq_dtu.rds"
+	log:
+		"Rout/run_dtu_drimseq.Rout"
+	params:
+		salmondir = "salmon",
+	shell:
+		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Shiny app
 ## ------------------------------------------------------------------------------------ ##
-#rule shiny:
-#	input:
-#		expand("STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.ID.values.tolist()),
-#		rds = "output/edgeR_dge.rds",
-#		tx2gene = config["tx2gene"],
-#		metatxt = config["metatxt"],
-#		gtf = config["gtf"],
-#		script = "scripts/prepare_results_for_shiny.R"
-#	log: "Rout/shiny_results.Rout"
-#	output:
-#		"output/shiny_results.rds"
-#	params:
-#		groupvar = config["groupvar"],
-#		bigwigdir = "STARbigwig"
-#	shell:
-#		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile='{input.gtf}' tx2gene='{input.tx2gene}' metafile='{input.metatxt}' bigwigdir='{params.bigwigdir}' outrds='{output}'" {input.script} {log}'''
+rule shiny:
+	input:
+		expand("STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()),
+		rds = "output/edgeR_dge.rds",
+		metatxt = config["metatxt"],
+		gtf = config["gtf"],
+		script = "scripts/prepare_results_for_shiny.R"
+	log: "Rout/shiny_results.Rout"
+	output:
+		"output/shiny_results.rds"
+	params:
+		groupvar = config["groupvar"],
+		bigwigdir = "STARbigwig"
+	shell:
+		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile='{input.gtf}' metafile='{input.metatxt}' bigwigdir='{params.bigwigdir}' outrds='{output}'" {input.script} {log}'''
 
-#rule shinyedgeR:
-#	input:
-#		rds = "output/edgeR_dge.rds",
-#		tx2gene = config["tx2gene"],
-#		metatxt = config["metatxt"],
-#		script = "scripts/prepare_results_for_shiny.R"
-#	log:
-#		"Rout/shiny_results_edgeR.Rout"
-#	output:
-#		"output/shiny_results_edgeR.rds"
-#	params:
-#		groupvar = config["groupvar"]
-#	shell:
-#		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile=NULL tx2gene='{input.tx2gene}' metafile='{input.metatxt}' bigwigdir=NULL outrds='{output}'" {input.script} {log}'''
+rule shinyedgeR:
+	input:
+		rds = "output/edgeR_dge.rds",
+		metatxt = config["metatxt"],
+		script = "scripts/prepare_results_for_shiny.R"
+	log:
+		"Rout/shiny_results_edgeR.Rout"
+	output:
+		"output/shiny_results_edgeR.rds"
+	params:
+		groupvar = config["groupvar"]
+	shell:
+		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile=NULL metafile='{input.metatxt}' bigwigdir=NULL outrds='{output}'" {input.script} {log}'''
