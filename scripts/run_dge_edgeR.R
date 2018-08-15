@@ -21,13 +21,12 @@ suppressPackageStartupMessages(library(edgeR))
 suppressPackageStartupMessages(library(ggplot2))
 
 print(salmondir)
-print(salmonidx)
+print(json)
 print(metafile)
 print(outrds)
 
 ## Load json linkedTxome
-jsonfile <- paste0(salmonidx, ".json")
-loadLinkedTxome(jsonfile)
+loadLinkedTxome(json)
 
 ## Open pdf file to contain any figure generated below
 pdf(gsub("rds$", "pdf", outrds))
