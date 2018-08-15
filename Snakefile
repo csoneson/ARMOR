@@ -70,27 +70,38 @@ rule salmonindex:
 		"logs/salmon_index.log"
 	params:
 		salmonk = config["salmonk"],
-		salmonoutdir = config["salmonindex"]
+		salmonoutdir = config["salmonindex"],
+		anno =  config["annotation"]
 	shell:
-		"echo 'Salmon version:\n' > {log}; salmon --version >> {log}; "
-		"salmon index -t {input.txome} -k {params.salmonk} -i {params.salmonoutdir} --type quasi"
+	  """
+	  if [ {params.anno} == "Gencode" ]; then
+      echo 'Salmon version:\n' > {log}; salmon --version >> {log}; 
+  	  salmon index -t {input.txome} -k {params.salmonk} -i {params.salmonoutdir} --gencode --type quasi
+    
+    else
+  	  echo 'Salmon version:\n' > {log}; salmon --version >> {log};
+      salmon index -t {input.txome} -k {params.salmonk} -i {params.salmonoutdir} --type quasi
+    fi
+    """
 
 ## Generate linkedTxome mapping
 rule linkedTxome:
 	input:
 		txome = config["txome"],
 		gtf = config["gtf"],
-		salmonidx = config["salmonindex"],
+		salmonidx = config["salmonindex"] + "/hash.bin",
 		script = "scripts/generate_linkedTxome.R"
 	log:
 		"Rout/generate_linkedTxome.Rout"
+	output:
+	  config["salmonindex"] + ".json"
 	params:
 		flag = config["annotation"],
 		organism = config["organism"],
 		release = str(config["release"]),
 		build = config["build"]		
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args transcriptfasta='{input.txome}' salmonidx='{input.salmonidx}' gtf='{input.gtf}' annotation='{params.flag}' organism='{params.organism}' release='{params.release}' build='{params.build}'" {input.script} {log}'''
+		'''R CMD BATCH --no-restore --no-save "--args transcriptfasta='{input.txome}' salmonidx='{input.salmonidx}' gtf='{input.gtf}' annotation='{params.flag}' organism='{params.organism}' release='{params.release}' build='{params.build}' output='{output}'" {input.script} {log}'''
 
 ## Generate STAR index
 rule starindex:
@@ -304,7 +315,8 @@ rule edgeR:
 	input:
 		expand("salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
 		metatxt = config["metatxt"],
-		salmonidx = config["salmonindex"],
+		salmonidx = config["salmonindex"] + "/hash.bin",
+		json = config["salmonindex"] + ".json",
 		script = "scripts/run_dge_edgeR.R"
 	output:
 		"output/edgeR_dge.rds"
@@ -313,7 +325,7 @@ rule edgeR:
 	params:
 		salmondir = "salmon",
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' salmonidx='{input.salmonidx}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage
