@@ -15,17 +15,17 @@ organism <- paste(paste(ss[1], ss[2]))
 print(organism)
 print(release)
 print(build)
+print(output)
 
-makeLinkedTxome(indexDir=salmonidx,
+makeLinkedTxome(indexDir=dirname(salmonidx),
                 source=annotation,
                 organism=organism,
                 release=release,
                 genome=build,
                 fasta=transcriptfasta,
                 gtf=gtf,
-                write=TRUE)
-
-#json file will be written to same folder as salmon index, with same name as index
+                write=TRUE, 
+                jsonFile = output)
 
 sessionInfo()
 date()
