@@ -1,6 +1,7 @@
 channels:
 - r
 - bioconda
+- conda-forge
 dependencies:
 - samtools=1.8
 - salmon=0.10.2
@@ -11,7 +12,7 @@ dependencies:
 - cutadapt=1.16
 - bedtools=2.27.1
 - ucsc-bedgraphtobigwig=366
-- r=3.4.3
+- r=3.4.1
 - r-dplyr
 - r-ggplot2
 - r-tidyr

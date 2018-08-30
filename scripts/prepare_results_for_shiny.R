@@ -5,7 +5,6 @@ for (i in 1:length(args)) {
 
 print(edgerres)
 print(gtffile)
-print(tx2gene)
 print(metafile)
 print(bigwigdir)
 print(groupvar)
@@ -21,9 +20,8 @@ suppressPackageStartupMessages(library(reshape2))
 options(ucscChromosomeNames = FALSE)
 
 edgerres <- readRDS(edgerres)
-tx2gene <- readRDS(tx2gene)
 
-genes <- tx2gene %>% dplyr::select(-tx, -tx_biotype, -start, -end) %>% dplyr::distinct()
+genes <- edgerres$data$genes %>% dplyr::select(gene = gene_id, -start, -end, -width) %>% dplyr::distinct()
 
 ## -------------------------------------------------------------------------- ##
 ##                                 edgeR                                      ##
@@ -39,14 +37,15 @@ if (class(edgeRwide) == "list" && class(edgeRwide) != "data.frame") {
 }
 
 edgeRwide <- edgeRwide %>% 
-  dplyr::select(gene, symbol, gene_biotype, logCPM, everything()) %>%
+  dplyr::select(gene = gene_id, symbol, gene_biotype, logCPM, everything()) %>%
   dplyr::mutate(gene_biotype = factor(gene_biotype)) %>%
   dplyr::mutate(strand = factor(strand))
 
 ## edgeR result table for volcano plots ("long")
 edgeRlong <- edgeRwide %>% 
+  dplyr::select(-start, -end, -width, -entrezid, -gene_name, -seq_coord_system) %>%
   tidyr::gather(typecontrast, value, -gene, -symbol, -gene_biotype, -logCPM, 
-                -chromosome, -strand) %>%
+                -seqnames, -strand) %>%
   dplyr::mutate(typecontrast = gsub("logFC\\.", "logFC_", typecontrast)) %>%
   dplyr::mutate(typecontrast = gsub("FDR\\.", "FDR_", typecontrast)) %>%
   dplyr::mutate(typecontrast = gsub("PValue\\.", "PValue_", typecontrast)) %>%
@@ -83,7 +82,7 @@ metadata <- read.delim(metafile, header = TRUE, as.is = TRUE)
 if (!is.null(bigwigdir)) {
   bwfiles <- normalizePath(list.files(bigwigdir, pattern = "\\.bw$", full.names = TRUE))
   names(bwfiles) <- gsub("_Aligned.sortedByCoord.out.bw", "", basename(bwfiles))
-  condition <- metadata[[groupvar]][match(names(bwfiles), metadata$ID)]
+  condition <- metadata[[groupvar]][match(names(bwfiles), metadata$names)]
   names(condition) <- names(bwfiles)
   ordr <- order(condition)
   condition <- condition[ordr]
@@ -103,12 +102,12 @@ mds <- limma::plotMDS(logcpms, top = 500, labels = NULL, pch = NULL,
                       gene.selection = "common", 
                       xlab = NULL, ylab = NULL, plot = FALSE)$cmdscale.out
 colnames(mds) <- paste0("MDS", 1:min(7, ncol(logcpms) - 1))
-mds <- as.data.frame(mds) %>% tibble::rownames_to_column(var = "ID") %>%
+mds <- as.data.frame(mds) %>% tibble::rownames_to_column(var = "names") %>%
   dplyr::full_join(metadata)
 
 logcpms <- reshape2::melt(as.matrix(logcpms)) %>%
   dplyr::rename(gene = Var1, sample = Var2) %>%
-  dplyr::mutate(group = metadata[match(sample, metadata$ID), groupvar])
+  dplyr::mutate(group = metadata[match(sample, metadata$names), groupvar])
 
 ## -------------------------------------------------------------------------- ##
 ##                                 Save                                       ##
