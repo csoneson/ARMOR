@@ -29,8 +29,10 @@ STARindex: reference/STARIndex/Homo_sapiens.GRCh38.93.STAR.idx
 ##--------------------------------------------------------------------------------------------
 readlength: 50
 
-## For single-end RNA-seq only!
-## Mean and standard deviation of the fragment length distribution, for use with Salmon
+## Mean and standard deviation of the fragment length distribution, for use with Salmon. 
+## This is important to specify for single-end reads.
+## For paired-end reads, these values will define the prior, which is then updated 
+## based on the observed fragment lengths.
 fldMean: 250
 fldSD: 25
 
