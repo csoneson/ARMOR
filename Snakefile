@@ -238,10 +238,13 @@ rule salmonPE:
 	threads: config["ncores"]
 	params:
 		salmonindex = config["salmonindex"]
+		fldMean = config["fldMean"]
+		fldSD = config["fldSD"]
 	shell:
 		"echo 'Salmon version:\n' > {log}; salmon --version >> {log}; "
 		"salmon quant -i {params.salmonindex} -l A -1 {input.fastq1} -2 {input.fastq2} "
-		"-o salmon/{wildcards.sample} --seqBias --gcBias -p {threads}"
+		"-o salmon/{wildcards.sample} --seqBias --gcBias "
+		"--fldMean {params.fldMean} --fldSD {params.fldSD} -p {threads}"
 
 ## ------------------------------------------------------------------------------------ ##
 ## STAR mapping
