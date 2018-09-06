@@ -44,17 +44,27 @@ edgeRwide <- edgeRwide %>%
     dplyr::mutate(strand = factor(strand))
 
 ## edgeR result table for volcano plots ("long")
+selC <- setdiff(colnames(edgeRwide), c("gene", "symbol","gene_biotype",
+                                       "logCPM","chromosome","strand"))
+sepSel <- c(".", "_",":", "@", "%", "&")
+chs <- sepSel[!unlist(lapply(seq_along(sepSel), 
+                             FUN = function(x){
+                                 any(grepl(sepSel[x],selC))}))][1]
+
 edgeRlong <- edgeRwide %>% 
     tidyr::gather(typecontrast, value, -gene, -symbol, -gene_biotype, -logCPM, 
                   -chromosome, -strand) %>%
-    dplyr::mutate(typecontrast = gsub("logFC\\.", "logFC_", typecontrast)) %>%
-    dplyr::mutate(typecontrast = gsub("FDR\\.", "FDR_", typecontrast)) %>%
-    dplyr::mutate(typecontrast = gsub("PValue\\.", "PValue_", typecontrast)) %>%
-    dplyr::mutate(typecontrast = gsub("F\\.", "F_", typecontrast)) %>%
-    dplyr::mutate(typecontrast = gsub("LR\\.", "LR_", typecontrast)) %>%
-    tidyr::separate(typecontrast, into = c("dtype", "contrast"), sep = "_") %>%
+    dplyr::mutate(typecontrast = gsub("logFC\\.", paste("logFC",chs,sep=""),
+                                      typecontrast)) %>%
+    dplyr::mutate(typecontrast = gsub("FDR\\.",  paste("FDR",chs,sep=""), 
+                                      typecontrast)) %>%
+    dplyr::mutate(typecontrast = gsub("PValue\\.", paste("PValue",chs,sep=""), typecontrast)) %>%
+    dplyr::mutate(typecontrast = gsub("F\\.", paste("F",chs,sep=""), typecontrast)) %>%
+    dplyr::mutate(typecontrast = gsub("LR\\.", paste("LR",chs,sep=""), typecontrast)) %>%
+    tidyr::separate(typecontrast, into = c("dtype", "contrast"), sep = chs) %>%
     tidyr::spread(key = dtype, value = value) %>%
     dplyr::mutate(mlog10PValue = -log10(PValue))
+
 
 ## -------------------------------------------------------------------------- ##
 ##                             Gene models                                    ##
