@@ -14,7 +14,6 @@ rule all:
 		"output/edgeR_dge.rds",
 		"output/shiny_results_list.rds",
 		"output/shiny_results_sce.rds",
-		"output/shiny_results_se.rds",
 		"output/shiny_results_edgeR.rds"
 
 ## FastQC on original (untrimmed) files
@@ -355,13 +354,12 @@ rule shiny:
 	log: "Rout/shiny_results.Rout"
 	output:
 		outList = "output/shiny_results_list.rds",
-		outSCE = "output/shiny_results_sce.rds",
-		outSE = "output/shiny_results_se.rds"
+		outSCE = "output/shiny_results_sce.rds"
 	params:
 		groupvar = config["groupvar"],
 		bigwigdir = "STARbigwig"
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile='{input.gtf}' tx2gene='{input.tx2gene}' metafile='{input.metatxt}' bigwigdir='{params.bigwigdir}' outList='{output.outList}' outSCE='{output.outSCE}' outSE='{output.outSE}'" {input.script} {log}'''
+		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile='{input.gtf}' tx2gene='{input.tx2gene}' metafile='{input.metatxt}' bigwigdir='{params.bigwigdir}' outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
 
 rule shinyedgeR:
 	input:

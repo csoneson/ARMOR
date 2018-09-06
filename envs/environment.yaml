@@ -25,4 +25,3 @@ dependencies:
 - bioconductor-drimseq
 - bioconductor-S4Vectors
 - bioconductor-SingleCellExperiment
-- bioconductor-SummarizedExperiment
