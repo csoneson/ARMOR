@@ -29,6 +29,11 @@ STARindex: reference/STARIndex/Homo_sapiens.GRCh38.93.STAR.idx
 ##--------------------------------------------------------------------------------------------
 readlength: 50
 
+## For single-end RNA-seq only!
+## Mean and standard deviation of the fragment length distribution, for use with Salmon
+fldMean: 250
+fldSD: 25
+
 ## Path to metadata text file. This file must contain at least the following columns:
 ## ID: the sample identifiers = the names of the FASTQ files (except for the _R1/R2.fastq.gz part)
 ## type: either SE or PE, indicating whether the sample was analyzed via single-end or paired-end sequencing
