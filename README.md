@@ -97,7 +97,7 @@ do.call(iResViewer, c(res, list(appTitle = "myTitle")))
 
 ### Using docker
 
-You can use docker if you cannot/do nott want to install snakemake and all the sofware dependencies. However, you still need to set up the rnaseqworkflow directory as described above (clone the repository, modify the config.yaml, create metadata.txt and put the fastq files in /FASTQ).
+You can use docker if you cannot/do not want to install snakemake and all the sofware dependencies. However, you still need to set up the rnaseqworkflow directory as described above (clone the repository, modify the config.yaml, create metadata.txt and put the fastq files in /FASTQ).
 
 First, you need to build the docker image of the rnaseqworkflow directory with
 
