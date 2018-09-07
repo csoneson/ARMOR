@@ -94,3 +94,42 @@ The title of the shiny application can also be specified:
 ```
 do.call(iResViewer, c(res, list(appTitle = "myTitle")))
 ```
+
+### Using docker
+
+You can use docker if you cannot/do nott want to install snakemake and all the sofware dependencies. However, you still need to set up the rnaseqworkflow directory as described above (clone the repository, modify the config.yaml, create metadata.txt and put the fastq files in /FASTQ).
+
+First, you need to build the docker image of the rnaseqworkflow directory with
+
+```
+docker build -t khembach/rnaseqworkflow .
+```
+Replace `khembach/rnaseqworkflow` with your docker username and the name you want to give the image (username/docker_image_name). Now you can use [`docker run`](https://docs.docker.com/engine/reference/commandline/run/) to start an interactive docker container that has the rnaseqworkflow directory mounted so you can access and modify the data:
+
+```
+docker run --name rnaseqworkflow -it --mount type=bind,source="$(pwd)",target=/rnaseqworkflow khembach/rnaseqworkflow
+```
+
+This creates a new container with the name `rnaseqworkflow`. The current working directory is mounted to `/rnaseqworkflow` inside the container. Navigate to that directory with
+
+```
+cd /rnaseqworkflow
+```
+
+and start the analysis pipeline with
+
+```
+snakemake
+```
+
+as explained above. Alternatively, you can run the docker container in the background and set the working directory inside the container to the mounted target `/rnaseqworkflow`:
+
+```
+docker run --name rnaseqworkflow -dit --mount type=bind,source="$(pwd)",target=/rnaseqworkflow --workdir /rnaseqworkflow khembach/rnaseqworkflow
+```
+
+Then you can execute a command in the running container with [`docker exec`](https://docs.docker.com/engine/reference/commandline/exec/). For example, start the pipeline with
+
+```
+docker exec rnaseqworkflow snakemake
+```
