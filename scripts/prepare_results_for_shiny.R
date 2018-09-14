@@ -18,10 +18,12 @@ suppressPackageStartupMessages(library(rtracklayer))
 suppressPackageStartupMessages(library(reshape2))
 
 options(ucscChromosomeNames = FALSE)
-
 edgerres <- readRDS(edgerres)
 
-genes <- edgerres$data$genes %>% dplyr::select(gene = gene_id, -start, -end, -width) %>% dplyr::distinct()
+genes <- edgerres$data$genes %>% 
+  dplyr::select(gene = gene_id, symbol, gene_biotype, chromosome = seqnames, strand) %>% 
+  dplyr::mutate(strand = ifelse( strand == "-", -1,1)) %>%
+  dplyr::distinct()
 
 ## -------------------------------------------------------------------------- ##
 ##                                 edgeR                                      ##
@@ -37,15 +39,15 @@ if (class(edgeRwide) == "list" && class(edgeRwide) != "data.frame") {
 }
 
 edgeRwide <- edgeRwide %>% 
-  dplyr::select(gene = gene_id, symbol, gene_biotype, logCPM, everything()) %>%
-  dplyr::mutate(gene_biotype = factor(gene_biotype)) %>%
-  dplyr::mutate(strand = factor(strand))
+  dplyr::select(-start, -end, -width, -gene_name, -entrezid, -seq_coord_system) %>%
+  dplyr::select(gene = gene_id, symbol, gene_biotype, logCPM, chromosome = seqnames, strand, everything()) %>% 
+  dplyr::mutate(strand = factor(ifelse( strand == "-", -1,1))) %>%
+  dplyr::mutate(gene_biotype = factor(gene_biotype))
 
 ## edgeR result table for volcano plots ("long")
 edgeRlong <- edgeRwide %>% 
-  dplyr::select(-start, -end, -width, -entrezid, -gene_name, -seq_coord_system) %>%
   tidyr::gather(typecontrast, value, -gene, -symbol, -gene_biotype, -logCPM, 
-                -seqnames, -strand) %>%
+                -chromosome, -strand) %>%
   dplyr::mutate(typecontrast = gsub("logFC\\.", "logFC_", typecontrast)) %>%
   dplyr::mutate(typecontrast = gsub("FDR\\.", "FDR_", typecontrast)) %>%
   dplyr::mutate(typecontrast = gsub("PValue\\.", "PValue_", typecontrast)) %>%

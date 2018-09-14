@@ -39,12 +39,13 @@ names(salmonfiles) <- metadata$names
 coldata <- cbind(metadata, files = salmonfiles, stringsAsFactors=FALSE)
 se <- tximeta(coldata)
 
-#
 ## Create dmDSdata object
-counts <- assays(se)[["counts"]] %>% 
-  tibble::rownames_to_column("feature_id")
+counts <- data.frame(feature_id = rownames(se),
+                     gene_id = rowData(se)$gene_id,
+                     assays(se)[["counts"]],
+                     row.names = NULL)
 
-metadata <- metadata %>% select(sample_id = names, group celline)
+metadata <- metadata %>% select(sample_id = names, group  = celline)
   
 d <- dmDSdata(counts = counts, samples = metadata)
 plotData(d)
