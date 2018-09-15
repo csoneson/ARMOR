@@ -217,8 +217,8 @@ rule salmonSE:
 		"logs/salmon_{sample}.log"
 	threads: config["ncores"]
 	params:
-		salmonindex = config["salmonindex"]
-		fldMean = config["fldMean"]
+		salmonindex = config["salmonindex"],
+		fldMean = config["fldMean"],
 		fldSD = config["fldSD"]
 	shell:
 		"echo 'Salmon version:\n' > {log}; salmon --version >> {log}; "
@@ -237,8 +237,8 @@ rule salmonPE:
 		"logs/salmon_{sample}.log"
 	threads: config["ncores"]
 	params:
-		salmonindex = config["salmonindex"]
-		fldMean = config["fldMean"]
+		salmonindex = config["salmonindex"],
+		fldMean = config["fldMean"],
 		fldSD = config["fldSD"]
 	shell:
 		"echo 'Salmon version:\n' > {log}; salmon --version >> {log}; "
