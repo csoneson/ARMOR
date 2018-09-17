@@ -15,48 +15,54 @@ for (i in 1:length(args)) {
 
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(tximport))
+suppressPackageStartupMessages(library(tximeta))
+suppressPackageStartupMessages(library(SummarizedExperiment))
 suppressPackageStartupMessages(library(edgeR))
 suppressPackageStartupMessages(library(ggplot2))
 
-print(tx2gene)
 print(salmondir)
+print(json)
 print(metafile)
 print(outrds)
+
+## Load json linkedTxome
+loadLinkedTxome(json)
 
 ## Open pdf file to contain any figure generated below
 pdf(gsub("rds$", "pdf", outrds))
 
+## Read metadata
+metadata <- read.delim(metafile, header = TRUE, as.is = TRUE, sep = "\t")
+
 ## List Salmon directories
-salmondirs <- list.files(salmondir, full.names = TRUE)
-salmonfiles <- paste0(salmondirs, "/quant.sf")
-names(salmonfiles) <- basename(salmondirs)
+salmonfiles <- paste0(salmondir,"/",metadata$names, "/quant.sf")
+names(salmonfiles) <- metadata$names
 (salmonfiles <- salmonfiles[file.exists(salmonfiles)])
 
-## Read transcript-to-gene mapping
-tx2gene <- readRDS(tx2gene)
+## Add file column to metadata and import annotated abundances
+coldata <- cbind(metadata, files = salmonfiles, stringsAsFactors=FALSE)
+se <- tximeta(coldata)
 
-## Read Salmon abundances
-txi <- tximport(files = salmonfiles, type = "salmon", txOut = FALSE, 
-                tx2gene = tx2gene[, c("tx", "gene")], dropInfReps = TRUE)
-
-## Read metadata and reorder in the same order as the count matrix
-metadata <- read.delim(metafile, header = TRUE, as.is = TRUE, sep = "\t")
-stopifnot(all(metadata$ID %in% colnames(txi$counts)))
-stopifnot(all(colnames(txi$counts) %in% metadata$ID))
-metadata <- metadata[match(colnames(txi$counts), metadata$ID), ]
+## Summarize to gene level
+sg <- summarizeToGene(se)
 
 ## Create DGEList and include average transcript length offsets
-cts <- txi$counts
-normMat <- txi$length
+cts <- assays(sg)[["counts"]]
+normMat <- assays(sg)[["length"]]
 normMat <- normMat/exp(rowMeans(log(normMat)))
 o <- log(calcNormFactors(cts/normMat)) + log(colSums(cts/normMat))
 dge0 <- DGEList(cts)
 dge0$offset <- t(t(log(normMat)) + o)
 dge0 <- calcNormFactors(dge0)
 
+## Add gene annotation to the DGEList object
+dge0$genes <- as.data.frame(rowRanges(sg))
+
 ## Define design. ************** MODIFY ************** 
-stopifnot(all(colnames(dge0) == metadata$ID))
+stopifnot(all(colnames(dge0) == metadata$name))
 (des <- model.matrix(~ XXXX, data = metadata))
+#e.g.
+#(des <- model.matrix(~ 0 + celline, data = metadata))
 
 ## Filter out genes with average CPM below 1
 print(dim(dge0))
@@ -64,17 +70,6 @@ cpms <- cpm(dge0)
 dge <- dge0[apply(cpms, 1, mean) > 1, ]
 dge <- calcNormFactors(dge)
 print(dim(dge))
-
-## Add gene annotation
-annot <- tx2gene %>% dplyr::select(-tx, -tx_biotype, -start, -end) %>% distinct()
-if (any(duplicated(annot$gene))) {
-  stop(paste0("The following genes are represented by multiple rows in the ", 
-              "gene annotation: ", 
-              paste(annot$gene[duplicated(annot$gene)], collapse = ",")))
-}
-annot <- annot[match(rownames(dge), annot$gene), ]
-rownames(annot) <- annot$gene
-dge$genes <- annot
 
 ## Estimate dispersion and fit model
 dge <- estimateDisp(dge, design = des)
@@ -85,6 +80,8 @@ plotBCV(dge)
 
 ## Define contrasts. ************** MODIFY ************** 
 (contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
+#e.g.
+#(contrasts <- as.data.frame(makeContrasts(contrasts= "cellineN61311-cellineN052611", levels = des)))
 
 ## Perform tests
 signif3 <- function(x) signif(x, digits = 3)

@@ -10,45 +10,43 @@ for (i in 1:length(args)) {
 
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(tximport))
+suppressPackageStartupMessages(library(tximeta))
+suppressPackageStartupMessages(library(SummarizedExperiment))
 suppressPackageStartupMessages(library(edgeR))
 suppressPackageStartupMessages(library(DRIMSeq))
 suppressPackageStartupMessages(library(ggplot2))
 
-print(tx2gene)
 print(salmondir)
+print(json)
 print(metafile)
 print(outrds)
+
+## Load json linkedTxome
+loadLinkedTxome(json)
 
 ## Open pdf file to contain any figure generated below
 pdf(gsub("rds$", "pdf", outrds))
 
+## Read metadata
+metadata <- read.delim(metafile, header = TRUE, as.is = TRUE, sep = "\t")
+
 ## List Salmon directories
-salmondirs <- list.files(salmondir, full.names = TRUE)
-salmonfiles <- paste0(salmondirs, "/quant.sf")
-names(salmonfiles) <- basename(salmondirs)
+salmonfiles <- paste0(salmondir,"/",metadata$names, "/quant.sf")
+names(salmonfiles) <- metadata$names
 (salmonfiles <- salmonfiles[file.exists(salmonfiles)])
 
-## Read transcript-to-gene mapping
-tx2gene <- readRDS(tx2gene)
-
-## Read Salmon abundances
-txi <- tximport(files = salmonfiles, type = "salmon", txOut = TRUE, 
-                dropInfReps = TRUE)
-counts <- as.data.frame(txi$counts) %>% 
-  tibble::rownames_to_column("feature_id") %>%
-  dplyr::left_join(tx2gene %>% dplyr::select(gene, tx), by = c("feature_id" = "tx")) %>%
-  dplyr::rename(gene_id = gene) %>%
-  dplyr::select(gene_id, feature_id, everything())
-
-## Read metadata and reorder in the same order as the count matrix
-metadata <- read.delim(metafile, header = TRUE, as.is = TRUE, sep = "\t")
-stopifnot(all(metadata$ID %in% colnames(counts)))
-stopifnot(all(setdiff(colnames(counts), c("gene_id", "feature_id")) %in% metadata$ID))
-metadata <- metadata[match(setdiff(colnames(counts), c("gene_id", "feature_id")), 
-                           metadata$ID), ] %>%
-  dplyr::rename(sample_id = ID)
+## Add file column to metadata and import annotated abundances
+coldata <- cbind(metadata, files = salmonfiles, stringsAsFactors=FALSE)
+se <- tximeta(coldata)
 
 ## Create dmDSdata object
+counts <- data.frame(feature_id = rownames(se),
+                     gene_id = rowData(se)$gene_id,
+                     assays(se)[["counts"]],
+                     row.names = NULL)
+
+metadata <- metadata %>% select(sample_id = names, group  = celline)
+  
 d <- dmDSdata(counts = counts, samples = metadata)
 plotData(d)
 
