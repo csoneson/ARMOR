@@ -113,8 +113,4 @@ app <- iSEE(sce)
 shiny::runApp(app)
 ```
 
-The title of the shiny application can also be specified:
 
-```
-do.call(iResViewer, c(res, list(appTitle = "myTitle")))
-```
