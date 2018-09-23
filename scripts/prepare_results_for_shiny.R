@@ -1,6 +1,6 @@
 args <- (commandArgs(trailingOnly = TRUE))
 for (i in 1:length(args)) {
-  eval(parse(text = args[[i]]))
+    eval(parse(text = args[[i]]))
 }
 
 print(edgerres)
@@ -21,10 +21,10 @@ suppressPackageStartupMessages(library(reshape2))
 options(ucscChromosomeNames = FALSE)
 edgerres <- readRDS(edgerres)
 
-genes <- edgerres$data$genes %>% 
-  dplyr::select(gene = gene_id, symbol, gene_biotype, chromosome = seqnames, strand) %>% 
-  dplyr::mutate(strand = ifelse( strand == "-", -1,1)) %>%
-  dplyr::distinct()
+genes <- edgerres$data$genes %>%
+    dplyr::select(gene = gene_id, symbol, gene_biotype, chromosome = seqnames, strand) %>%
+    dplyr::mutate(strand = ifelse( strand == "-", -1,1)) %>%
+    dplyr::distinct()
 
 ## -------------------------------------------------------------------------- ##
 ##                                 edgeR                                      ##
@@ -40,11 +40,11 @@ if (class(edgeRwide) == "list" && class(edgeRwide) != "data.frame") {
 }
 
 
-edgeRwide <- edgeRwide %>% 
-  dplyr::select(-start, -end, -width, -gene_name, -entrezid, -seq_coord_system) %>%
-  dplyr::select(gene = gene_id, symbol, gene_biotype, logCPM, chromosome = seqnames, strand, everything()) %>% 
-  dplyr::mutate(strand = factor(ifelse( strand == "-", -1,1))) %>%
-  dplyr::mutate(gene_biotype = factor(gene_biotype))
+edgeRwide <- edgeRwide %>%
+    dplyr::select(-start, -end, -width, -gene_name, -entrezid, -seq_coord_system) %>%
+    dplyr::select(gene = gene_id, symbol, gene_biotype, logCPM, chromosome = seqnames, strand, everything()) %>%
+    dplyr::mutate(strand = factor(ifelse( strand == "-", -1,1))) %>%
+    dplyr::mutate(gene_biotype = factor(gene_biotype))
 
 
 ## edgeR result table for volcano plots ("long")
@@ -75,17 +75,17 @@ edgeRlong <- edgeRwide %>%
 ## -------------------------------------------------------------------------- ##
 ## Gene models from gtf
 create_genemodels <- function(gtf_file) {
-  genemodels <- rtracklayer::import(gtf_file)
-  idx <- match(c("transcript_id", "gene_id", "exon_id"), colnames(mcols(genemodels)))
-  colnames(mcols(genemodels))[idx] <- c("transcript", "gene", "exon")
-  mcols(genemodels)$symbol <- mcols(genemodels)$transcript
-  subset(genemodels, type == "exon")
+    genemodels <- rtracklayer::import(gtf_file)
+    idx <- match(c("transcript_id", "gene_id", "exon_id"), colnames(mcols(genemodels)))
+    colnames(mcols(genemodels))[idx] <- c("transcript", "gene", "exon")
+    mcols(genemodels)$symbol <- mcols(genemodels)$transcript
+    subset(genemodels, type == "exon")
 }
 
 if (!is.null(gtffile)) {
-  genemodels <- create_genemodels(gtffile)
+    genemodels <- create_genemodels(gtffile)
 } else {
-  genemodels <- NULL
+    genemodels <- NULL
 }
 
 ## -------------------------------------------------------------------------- ##
@@ -95,15 +95,16 @@ if (!is.null(gtffile)) {
 metadata <- read.delim(metafile, header = TRUE, as.is = TRUE)
 
 if (!is.null(bigwigdir)) {
-  bwfiles <- normalizePath(list.files(bigwigdir, pattern = "\\.bw$", full.names = TRUE))
-  names(bwfiles) <- gsub("_Aligned.sortedByCoord.out.bw", "", basename(bwfiles))
-  condition <- metadata[[groupvar]][match(names(bwfiles), metadata$names)]
-  names(condition) <- names(bwfiles)
-  ordr <- order(condition)
-  condition <- condition[ordr]
-  bwfiles <- bwfiles[ordr]
+    bwfiles <- normalizePath(list.files(bigwigdir, pattern = "\\.bw$", full.names = TRUE))
+    names(bwfiles) <- gsub("_Aligned.sortedByCoord.out.bw", "", basename(bwfiles))
+    condition <- metadata[[groupvar]][match(names(bwfiles), metadata$names)]
+    names(condition) <- names(bwfiles)
+    ordr <- order(condition)
+    condition <- condition[ordr]
+    bwfiles <- bwfiles[ordr]
 } else {
-  bwfiles <- condition <- NULL
+    # bwfiles <- condition <- NULL
+    bwfiles <- condition <- NA
 }
 
 ## -------------------------------------------------------------------------- ##
@@ -118,11 +119,11 @@ mds <- limma::plotMDS(logcpms, top = 500, labels = NULL, pch = NULL,
                       xlab = NULL, ylab = NULL, plot = FALSE)$cmdscale.out
 colnames(mds) <- paste0("MDS", 1:min(7, ncol(logcpms) - 1))
 mds <- as.data.frame(mds) %>% tibble::rownames_to_column(var = "names") %>%
-  dplyr::full_join(metadata)
+    dplyr::full_join(metadata)
 
 logcpms <- reshape2::melt(as.matrix(logcpms)) %>%
-  dplyr::rename(gene = Var1, sample = Var2) %>%
-  dplyr::mutate(group = metadata[match(sample, metadata$names), groupvar])
+    dplyr::rename(gene = Var1, sample = Var2) %>%
+    dplyr::mutate(group = metadata[match(sample, metadata$names), groupvar])
 
 ## -------------------------------------------------------------------------- ##
 ##                             export - SCE  & SE                             ##
@@ -130,12 +131,10 @@ logcpms <- reshape2::melt(as.matrix(logcpms)) %>%
 library(SingleCellExperiment)
 library(S4Vectors)
 ## row data
-# information about rows
-rData <- tx2gene %>%
-    dplyr::select(-tx, -tx_biotype, -start, -end) %>%
+# information about genes
+rData <- edgerres$data$genes %>%
     dplyr::distinct() %>%
-    dplyr::filter(gene %in% rownames(dge)) %>%
-    dplyr::arrange(match(gene, rownames(dge)))
+    dplyr::arrange(match(gene_id, rownames(dge)))
 rData <- S4Vectors::DataFrame(rData)
 
 # output from edgeR
@@ -156,19 +155,19 @@ resList <- lapply(seq_along(typeContrast), FUN = function(x) {
             dplyr::mutate(gene = geneOUT) %>%
             dplyr::bind_rows(data.x) %>%
             dplyr::arrange(match(gene, rownames(dge)))
-
+        
     } else {
         data.x <- data.x
     }
-
+    
     # use gene column as rownames
     rownames(data.x) <- data.x$gene
     data.f <- data.x %>%
         dplyr::select(-gene)
     data.f <- S4Vectors::DataFrame(data.f)
-
+    
     return(data.f)
-
+    
 })
 names(resList) <- typeContrast
 
@@ -180,29 +179,29 @@ for (i in seq_along(resList)) {
 
 
 ## column data
-cData1 <- data.frame(ID = colnames(dge),
+# bwFiles and bwCond
+cData1 <- data.frame(names = colnames(dge),
                      bwFiles = bwfiles[colnames(dge)],
                      bwCond = condition[colnames(dge)]) %>%
-    dplyr::arrange(match(ID, colnames(dge)))
-cData2 <- mds %>%
-    dplyr::arrange(match(ID, colnames(dge))) %>%
-    dplyr::select(type, group)
-cData3 <- metadata %>%
-    dplyr::arrange(match(ID, colnames(dge))) %>%
-    dplyr::select(-ID, -type, -group)
-
-cData <- dplyr::bind_cols(cData1, cData2, cData3)
-
+    dplyr::arrange(match(names, colnames(dge)))
+# metadata
+cData2 <- metadata %>%
+    dplyr::arrange(match(names, colnames(dge)))
+cData <- dplyr::bind_cols(cData1, cData2)
 cData <- DataFrame(cData)
 
 ## assays data
 logCPM_count <- edgeR::cpm(dge, log = TRUE, prior.count = 2)
-aData <- list(rawCount = dge, logCPM = logCPM_count[rownames(dge), ])
+aData <- list(rawCount = dge$counts,
+              logCPM = logCPM_count[rownames(dge), ])
 
 ## low dimensional representations
 reduceData <- mds %>%
-    dplyr::arrange(match(ID, colnames(dge))) %>%
-    dplyr::select(-ID, -type, -group)
+    dplyr::arrange(match(names, colnames(dge))) %>%
+    dplyr::select(-one_of(colnames(metadata)))
+
+
+
 reduceData <- as.matrix(reduceData)
 
 
@@ -213,10 +212,10 @@ sce <- SingleCellExperiment(assays = aData, rowData = rData,
                             reducedDims = SimpleList(dimReds = reduceData))
 
 
-se <- SummarizedExperiment(assays = aData, rowData = rData,
-                           colData = cData,
-                           metadata = list(geneModels = genemodels,
-                                           geneInfo = genes))
+# se <- SummarizedExperiment(assays = aData, rowData = rData,
+#                            colData = cData,
+#                            metadata = list(geneModels = genemodels,
+#                                            geneInfo = genes))
 
 ## -------------------------------------------------------------------------- ##
 ##                                 Save                                       ##
@@ -229,8 +228,9 @@ saveRDS(list(wideResults = list(edgeR = edgeRwide),
              dimReds = list(MDS = mds),
              abundances = list(logCPM = logcpms),
              geneInfo = genes),
-        file = outrds)
+        file = outList)
 
-
+saveRDS(sce,
+        file = outSCE)
 sessionInfo()
 date()
