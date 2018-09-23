@@ -14,7 +14,8 @@ rule all:
 		"output/edgeR_dge.rds",
 		"output/shiny_results_list.rds",
 		"output/shiny_results_sce.rds",
-		"output/shiny_results_edgeR.rds"
+		"output/shiny_results_list_edgeR.rds",
+		"output/shiny_results_sce_edgeR.rds"
 
 ## FastQC on original (untrimmed) files
 rule runfastqc:
@@ -76,9 +77,9 @@ rule salmonindex:
 	shell:
 	  """
 	  if [ {params.anno} == "Gencode" ]; then
-      echo 'Salmon version:\n' > {log}; salmon --version >> {log}; 
+      echo 'Salmon version:\n' > {log}; salmon --version >> {log};
   	  salmon index -t {input.txome} -k {params.salmonk} -i {params.salmonoutdir} --gencode --type quasi
-    
+
     else
   	  echo 'Salmon version:\n' > {log}; salmon --version >> {log};
       salmon index -t {input.txome} -k {params.salmonk} -i {params.salmonoutdir} --type quasi
@@ -100,7 +101,7 @@ rule linkedTxome:
 		flag = config["annotation"],
 		organism = config["organism"],
 		release = str(config["release"]),
-		build = config["build"]		
+		build = config["build"]
 	shell:
 		'''R CMD BATCH --no-restore --no-save "--args transcriptfasta='{input.txome}' salmonidx='{input.salmonidx}' gtf='{input.gtf}' annotation='{params.flag}' organism='{params.organism}' release='{params.release}' build='{params.build}' output='{output}'" {input.script} {log}'''
 
@@ -370,7 +371,7 @@ rule shiny:
 		groupvar = config["groupvar"],
 		bigwigdir = "STARbigwig"
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile='{input.gtf}' tx2gene='{input.tx2gene}' metafile='{input.metatxt}' bigwigdir='{params.bigwigdir}' outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
+		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile='{input.gtf}' metafile='{input.metatxt}' bigwigdir='{params.bigwigdir}' outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
 
 
 rule shinyedgeR:
@@ -381,8 +382,9 @@ rule shinyedgeR:
 	log:
 		"Rout/shiny_results_edgeR.Rout"
 	output:
-		"output/shiny_results_edgeR.rds"
+		outList = "output/shiny_results_list_edgeR.rds",
+		outSCE = "output/shiny_results_sce_edgeR.rds"
 	params:
 		groupvar = config["groupvar"]
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile=NULL metafile='{input.metatxt}' bigwigdir=NULL outrds='{output}'" {input.script} {log}'''
+		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile=NULL metafile='{input.metatxt}' bigwigdir=NULL outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
