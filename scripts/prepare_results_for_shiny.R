@@ -11,12 +11,16 @@ print(groupvar)
 print(outList)
 print(outSCE)
 
-suppressPackageStartupMessages(library(dplyr))
-suppressPackageStartupMessages(library(tidyr))
-suppressPackageStartupMessages(library(limma))
-suppressPackageStartupMessages(library(edgeR))
-suppressPackageStartupMessages(library(rtracklayer))
-suppressPackageStartupMessages(library(reshape2))
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(tidyr)
+  library(limma)
+  library(edgeR)
+  library(rtracklayer)
+  library(reshape2)
+  library(SingleCellExperiment)
+  library(S4Vectors)
+})
 
 options(ucscChromosomeNames = FALSE)
 edgerres <- readRDS(edgerres)
@@ -31,10 +35,11 @@ genes <- edgerres$data$genes %>%
 ## -------------------------------------------------------------------------- ##
 ## edgeR result table with all contrasts ("wide")
 edgeRwide <- edgerres$results
-if (class(edgeRwide) == "list" && class(edgeRwide) != "data.frame") {
+if (is(edgeRwide, "list")) {
     for (i in seq_len(length(edgeRwide))) {
         idx <- which(colnames(edgeRwide[[i]]) %in% c("logFC", "F", "PValue", "FDR", "LR"))
-        colnames(edgeRwide[[i]])[idx] <- paste0(colnames(edgeRwide[[i]])[idx], ".", names(edgeRwide)[i])
+        colnames(edgeRwide[[i]])[idx] <- 
+          paste0(colnames(edgeRwide[[i]])[idx], ".", names(edgeRwide)[i])
     }
     edgeRwide <- Reduce(function(...) dplyr::full_join(...), edgeRwide)
 }
@@ -42,18 +47,19 @@ if (class(edgeRwide) == "list" && class(edgeRwide) != "data.frame") {
 
 edgeRwide <- edgeRwide %>%
     dplyr::select(-start, -end, -width, -gene_name, -entrezid, -seq_coord_system) %>%
-    dplyr::select(gene = gene_id, symbol, gene_biotype, logCPM, chromosome = seqnames, strand, everything()) %>%
-    dplyr::mutate(strand = factor(ifelse( strand == "-", -1,1))) %>%
+    dplyr::select(gene = gene_id, symbol, gene_biotype, logCPM, 
+                  chromosome = seqnames, strand, everything()) %>%
+    dplyr::mutate(strand = factor(ifelse(strand == "-", -1,1))) %>%
     dplyr::mutate(gene_biotype = factor(gene_biotype))
 
 
 ## edgeR result table for volcano plots ("long")
-selC <- setdiff(colnames(edgeRwide), c("gene", "symbol","gene_biotype",
-                                       "logCPM","chromosome","strand"))
+selC <- setdiff(colnames(edgeRwide), c("gene", "symbol", "gene_biotype",
+                                       "logCPM", "chromosome", "strand"))
 sepSel <- c(".", "_",":", "@", "%", "&")
 chs <- sepSel[!unlist(lapply(seq_along(sepSel),
                              FUN = function(x){
-                                 any(grepl(sepSel[x],selC))}))][1]
+                                 any(grepl(sepSel[x], selC))}))][1]
 
 edgeRlong <- edgeRwide %>%
     tidyr::gather(typecontrast, value, -gene, -symbol, -gene_biotype, -logCPM,
@@ -119,7 +125,7 @@ mds <- limma::plotMDS(logcpms, top = 500, labels = NULL, pch = NULL,
                       xlab = NULL, ylab = NULL, plot = FALSE)$cmdscale.out
 colnames(mds) <- paste0("MDS", 1:min(7, ncol(logcpms) - 1))
 mds <- as.data.frame(mds) %>% tibble::rownames_to_column(var = "names") %>%
-    dplyr::full_join(metadata)
+    dplyr::full_join(metadata, by = "names")
 
 logcpms <- reshape2::melt(as.matrix(logcpms)) %>%
     dplyr::rename(gene = Var1, sample = Var2) %>%
@@ -128,8 +134,6 @@ logcpms <- reshape2::melt(as.matrix(logcpms)) %>%
 ## -------------------------------------------------------------------------- ##
 ##                             export - SCE  & SE                             ##
 ## -------------------------------------------------------------------------- ##
-library(SingleCellExperiment)
-library(S4Vectors)
 ## row data
 # information about genes
 rData <- edgerres$data$genes %>%
@@ -167,7 +171,6 @@ resList <- lapply(seq_along(typeContrast), FUN = function(x) {
     data.f <- S4Vectors::DataFrame(data.f)
     
     return(data.f)
-    
 })
 names(resList) <- typeContrast
 
@@ -176,7 +179,6 @@ for (i in seq_along(resList)) {
     tc.i <- typeContrast[i]
     rData[[tc.i]] <- resList[[i]]
 }
-
 
 ## column data
 # bwFiles and bwCond
@@ -196,26 +198,17 @@ aData <- list(rawCount = dge$counts,
               logCPM = logCPM_count[rownames(dge), ])
 
 ## low dimensional representations
-reduceData <- mds %>%
+reducedData <- mds %>%
     dplyr::arrange(match(names, colnames(dge))) %>%
     dplyr::select(-one_of(colnames(metadata)))
 
-
-
-reduceData <- as.matrix(reduceData)
-
+reducedData <- as.matrix(reducedData)
 
 sce <- SingleCellExperiment(assays = aData, rowData = rData,
                             colData = cData,
                             metadata = list(geneModels = genemodels,
                                             geneInfo = genes),
-                            reducedDims = SimpleList(dimReds = reduceData))
-
-
-# se <- SummarizedExperiment(assays = aData, rowData = rData,
-#                            colData = cData,
-#                            metadata = list(geneModels = genemodels,
-#                                            geneInfo = genes))
+                            reducedDims = SimpleList(dimReds = reducedData))
 
 ## -------------------------------------------------------------------------- ##
 ##                                 Save                                       ##
@@ -232,5 +225,6 @@ saveRDS(list(wideResults = list(edgeR = edgeRwide),
 
 saveRDS(sce,
         file = outSCE)
+
 sessionInfo()
 date()
