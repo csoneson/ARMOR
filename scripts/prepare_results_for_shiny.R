@@ -35,7 +35,7 @@ genes <- edgerres$data$genes %>%
 ## -------------------------------------------------------------------------- ##
 ## edgeR result table with all contrasts ("wide")
 edgeRwide <- edgerres$results
-if (class(edgeRwide) == "list" && class(edgeRwide) != "data.frame") {
+if (is(edgeRwide, "list")) {
     for (i in seq_len(length(edgeRwide))) {
         idx <- which(colnames(edgeRwide[[i]]) %in% c("logFC", "F", "PValue", "FDR", "LR"))
         colnames(edgeRwide[[i]])[idx] <- paste0(colnames(edgeRwide[[i]])[idx], ".", names(edgeRwide)[i])
