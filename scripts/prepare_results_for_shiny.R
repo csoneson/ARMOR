@@ -11,12 +11,16 @@ print(groupvar)
 print(outList)
 print(outSCE)
 
-suppressPackageStartupMessages(library(dplyr))
-suppressPackageStartupMessages(library(tidyr))
-suppressPackageStartupMessages(library(limma))
-suppressPackageStartupMessages(library(edgeR))
-suppressPackageStartupMessages(library(rtracklayer))
-suppressPackageStartupMessages(library(reshape2))
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(tidyr)
+  library(limma)
+  library(edgeR)
+  library(rtracklayer)
+  library(reshape2)
+  library(SingleCellExperiment)
+  library(S4Vectors)
+})
 
 options(ucscChromosomeNames = FALSE)
 edgerres <- readRDS(edgerres)
@@ -128,8 +132,6 @@ logcpms <- reshape2::melt(as.matrix(logcpms)) %>%
 ## -------------------------------------------------------------------------- ##
 ##                             export - SCE  & SE                             ##
 ## -------------------------------------------------------------------------- ##
-library(SingleCellExperiment)
-library(S4Vectors)
 ## row data
 # information about genes
 rData <- edgerres$data$genes %>%
