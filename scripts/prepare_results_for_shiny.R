@@ -133,7 +133,7 @@ library(S4Vectors)
 ## row data
 # information about genes
 rData <- edgerres$data$genes %>%
-    dplyr::distinct() %>%
+#    dplyr::distinct() %>%
     dplyr::arrange(match(gene_id, rownames(dge)))
 rData <- S4Vectors::DataFrame(rData)
 
