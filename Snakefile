@@ -14,6 +14,17 @@ rule all:
 		"output/edgeR_dge.rds",
 		"output/shiny_results.rds",
 		"output/shiny_results_edgeR.rds"
+		
+## Install tximeta (or other packages from a repository needed by the user)		
+rule gitinstall:
+	input:
+		script = "scripts/install_git.R"
+	output:
+		"Rout/gitinstall_state.txt"
+	log:
+		"Rout/install_git.Rout"
+	shell:
+		'''R CMD BATCH --no-restore --no-save "--args outtxt='{output}' " {input.script} {log}'''
 
 ## FastQC on original (untrimmed) files
 rule runfastqc:
@@ -90,7 +101,8 @@ rule linkedTxome:
 		txome = config["txome"],
 		gtf = config["gtf"],
 		salmonidx = config["salmonindex"] + "/hash.bin",
-		script = "scripts/generate_linkedTxome.R"
+		script = "scripts/generate_linkedTxome.R",
+		install = "Rout/gitinstall_state.txt"
 	log:
 		"Rout/generate_linkedTxome.Rout"
 	output:
