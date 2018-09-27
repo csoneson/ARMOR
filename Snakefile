@@ -10,26 +10,26 @@ samples = pd.read_table(config["metatxt"])
 ## Add "output/DRIMSeq_dtu.rds" if desired
 rule all:
 	input:
-		config["MultiQC"]+"/multiqc_report.html",
-		config["output"]+"/edgeR_dge.rds",
-		config["output"]+"/shiny_results_list.rds",
-		config["output"]+"/shiny_results_sce.rds",
-		config["output"]+"/shiny_results_list_edgeR.rds",
-		config["output"]+"/shiny_results_sce_edgeR.rds"
+		config["output"]+config["MultiQC"]+"/multiqc_report.html",
+		config["output"]+config["outputR"]+"/edgeR_dge.rds",
+		config["output"]+config["outputR"]+"/shiny_results_list.rds",
+		config["output"]+config["outputR"]+"/shiny_results_sce.rds",
+		config["output"]+config["outputR"]+"/shiny_results_list_edgeR.rds",
+		config["output"]+config["outputR"]+"/shiny_results_sce_edgeR.rds"
 
 ## FastQC on original (untrimmed) files
 rule runfastqc:
 	input:
- 		expand(config["FastQC"]+"/{sample}_R1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
- 		expand(config["FastQC"]+"/{sample}_R2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(config["FastQC"]+"/{sample}_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist())
+ 		expand(config["output"]+config["FastQC"]+"/{sample}_R1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+ 		expand(config["output"]+config["FastQC"]+"/{sample}_R2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(config["output"]+config["FastQC"]+"/{sample}_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist())
 
 ## Trimming and FastQC on trimmed files
 rule runtrimming:
 	input:
- 		expand(config["FastQC"]+"/{sample}_R1_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
- 		expand(config["FastQC"]+"/{sample}_R2_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(config["FastQC"]+"/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist())
+ 		expand(config["output"]+config["FastQC"]+"/{sample}_R1_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+ 		expand(config["output"]+config["FastQC"]+"/{sample}_R2_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(config["output"]+config["FastQC"]+"/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist())
 
 ## Salmon quantification
 rule runsalmonquant:
@@ -39,12 +39,12 @@ rule runsalmonquant:
 ## STAR alignment
 rule runstar:
 	input:
-		expand(config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
+		expand(config["output"]+config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
 
 ## List all the packages that were used by the R analyses
 rule listpackages:
 	log:
-		config["Rout"]+"/list_packages.Rout"
+		config["output"]+config["Rout"]+"/list_packages.Rout"
 	params:
 		Routdir = "Rout",
 		outtxt = "R_package_versions.txt",
@@ -69,7 +69,7 @@ rule salmonindex:
 	output:
 		config["salmonindex"] + "/hash.bin"
 	log:
-		config["logs"]+"/salmon_index.log"
+		config["output"]+config["logs"]+"/salmon_index.log"
 	params:
 		salmonk = config["salmonk"],
 		salmonoutdir = config["salmonindex"],
@@ -94,7 +94,7 @@ rule linkedTxome:
 		salmonidx = config["salmonindex"] + "/hash.bin",
 		script = "scripts/generate_linkedTxome.R"
 	log:
-		config["Rout"]+"/generate_linkedTxome.Rout"
+		config["output"]+config["Rout"]+"/generate_linkedTxome.Rout"
 	output:
 	  config["salmonindex"] + ".json"
 	params:
@@ -114,7 +114,7 @@ rule starindex:
 		config["STARindex"] + "/SA",
 		config["STARindex"] + "/chrNameLength.txt"
 	log:
-		config["logs"]+"/STAR_index.log"
+		config["output"]+config["logs"]+"/STAR_index.log"
 	params:
 		STARindex = config["STARindex"],
 		readlength = config["readlength"]
@@ -132,9 +132,9 @@ rule fastqc:
 	input:
 		fastq = config["FASTQ"]+"/{sample}.fastq.gz"
 	output:
-		config["FastQC"]+"/{sample}_fastqc.zip"
+		config["output"]+config["FastQC"]+"/{sample}_fastqc.zip"
 	log:
-		config["logs"]+"/fastqc_{sample}.log"
+		config["output"]+config["logs"]+"/fastqc_{sample}.log"
 	threads: config["ncores"]
 	shell:
 		"echo 'FastQC version:\n' > {log}; fastqc --version >> {log}; "
@@ -143,11 +143,11 @@ rule fastqc:
 ## FastQC, trimmed reads
 rule fastqc2:
 	input:
-		fastq = config["FASTQtrimmed"]+"/{sample}.fq.gz"
+		fastq = config["output"]+config["FASTQtrimmed"]+"/{sample}.fq.gz"
 	output:
-		config["FastQC"]+"/{sample}_fastqc.zip"
+		config["output"]+config["FastQC"]+"/{sample}_fastqc.zip"
 	log:
-		config["logs"]+"/fastqc_trimmed_{sample}.log"
+		config["output"]+config["logs"]+"/fastqc_trimmed_{sample}.log"
 	threads: config["ncores"]
 	shell:
 		"echo 'FastQC version:\n' > {log}; fastqc --version >> {log}; "
@@ -156,21 +156,21 @@ rule fastqc2:
 ## MultiQC
 rule multiqc:
 	input:
-		expand(config["FastQC"]+"/{sample}_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()),
-		expand(config["FastQC"]+"/{sample}_R1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(config["FastQC"]+"/{sample}_R2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(config["FastQC"]+"/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()),
-		expand(config["FastQC"]+"/{sample}_R1_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(config["FastQC"]+"/{sample}_R2_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(config["FASTQtrimmed"]+"/{sample}_trimmed.fq.gz", sample = samples.names[samples.type == 'SE'].values.tolist()),
-		expand(config["FASTQtrimmed"]+"/{sample}_R1_val_1.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(config["FASTQtrimmed"]+"/{sample}_R2_val_2.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(config["output"]+config["FastQC"]+"/{sample}_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()),
+		expand(config["output"]+config["FastQC"]+"/{sample}_R1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(config["output"]+config["FastQC"]+"/{sample}_R2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(config["output"]+config["FastQC"]+"/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()),
+		expand(config["output"]+config["FastQC"]+"/{sample}_R1_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(config["output"]+config["FastQC"]+"/{sample}_R2_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(config["output"]+config["FASTQtrimmed"]+"/{sample}_trimmed.fq.gz", sample = samples.names[samples.type == 'SE'].values.tolist()),
+		expand(config["output"]+config["FASTQtrimmed"]+"/{sample}_R1_val_1.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(config["output"]+config["FASTQtrimmed"]+"/{sample}_R2_val_2.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()),
 		expand("salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
-		expand(config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
+		expand(config["output"]+config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
 	output:
-		config["MultiQC"]+"/multiqc_report.html"
+		config["output"]+config["MultiQC"]+"/multiqc_report.html"
 	log:
-		config["logs"]+"/multiqc.log"
+		config["output"]+config["logs"]+"/multiqc.log"
 	shell:
 		"echo 'MultiQC version:\n' > {log}; multiqc --version >> {log}; "
 		"multiqc FastQC FASTQtrimmed salmon STAR -f -o MultiQC"
@@ -184,9 +184,9 @@ rule trimgaloreSE:
 	input:
 		fastq = config["FASTQ"]+"/{sample}.fastq.gz"
 	output:
-		config["FASTQtrimmed"]+"/{sample}_trimmed.fq.gz"
+		config["output"]+config["FASTQtrimmed"]+"/{sample}_trimmed.fq.gz"
 	log:
-		config["logs"]+"/trimgalore_{sample}.log"
+		config["output"]+config["logs"]+"/trimgalore_{sample}.log"
 	shell:
 		"echo 'TrimGalore! version:\n' > {log}; trim_galore --version >> {log}; "
 		"trim_galore -q 20 --phred33 --length 20 -o FASTQtrimmed --path_to_cutadapt cutadapt {input.fastq}"
@@ -196,10 +196,10 @@ rule trimgalorePE:
 		fastq1 = config["FASTQ"]+"/{sample}_R1.fastq.gz",
 		fastq2 = config["FASTQ"]+"/{sample}_R2.fastq.gz"
 	output:
-		config["FASTQtrimmed"]+"/{sample}_R1_val_1.fq.gz",
-		config["FASTQtrimmed"]+"/{sample}_R2_val_2.fq.gz"
+		config["output"]+config["FASTQtrimmed"]+"/{sample}_R1_val_1.fq.gz",
+		config["output"]+config["FASTQtrimmed"]+"/{sample}_R2_val_2.fq.gz"
 	log:
-		config["logs"]+"/trimgalore_{sample}.log"
+		config["output"]+config["logs"]+"/trimgalore_{sample}.log"
 	shell:
 		"echo 'TrimGalore! version:\n' > {log}; trim_galore --version >> {log}; "
 		"trim_galore -q 20 --phred33 --length 20 -o FASTQtrimmed --path_to_cutadapt cutadapt "
@@ -212,11 +212,11 @@ rule trimgalorePE:
 rule salmonSE:
 	input:
 		index = config["salmonindex"] + "/hash.bin",
-		fastq = config["FASTQtrimmed"]+"/{sample}_trimmed.fq.gz"
+		fastq = config["output"]+config["FASTQtrimmed"]+"/{sample}_trimmed.fq.gz"
 	output:
-		config["salmon"]+"/{sample}/quant.sf"
+		config["output"]+config["output_salmon"]+"/{sample}/quant.sf"
 	log:
-		config["logs"]+"/salmon_{sample}.log"
+		config["output"]+config["logs"]+"/salmon_{sample}.log"
 	threads: config["ncores"]
 	params:
 		salmonindex = config["salmonindex"],
@@ -231,12 +231,12 @@ rule salmonSE:
 rule salmonPE:
 	input:
 		index = config["salmonindex"] + "/hash.bin",
-		fastq1 = config["FASTQtrimmed"]+"/{sample}_R1_val_1.fq.gz",
-		fastq2 = config["FASTQtrimmed"]+"/{sample}_R2_val_2.fq.gz"
+		fastq1 = config["output"]+config["FASTQtrimmed"]+"/{sample}_R1_val_1.fq.gz",
+		fastq2 = config["output"]+config["FASTQtrimmed"]+"/{sample}_R2_val_2.fq.gz"
 	output:
-		config["salmon"]+"/{sample}/quant.sf"
+		config["output"]+config["output_salmon"]+"/{sample}/quant.sf"
 	log:
-		config["logs"]+"/salmon_{sample}.log"
+		config["output"]+config["logs"]+"/salmon_{sample}.log"
 	threads: config["ncores"]
 	params:
 		salmonindex = config["salmonindex"],
@@ -255,12 +255,12 @@ rule salmonPE:
 rule starSE:
 	input:
 		index = config["STARindex"] + "/SA",
-		fastq = config["FASTQtrimmed"]+"/{sample}_trimmed.fq.gz"
+		fastq = config["output"]+config["FASTQtrimmed"]+"/{sample}_trimmed.fq.gz"
 	output:
-		config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
+		config["output"]+config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
 	threads: config["ncores"]
 	log:
-		config["logs"]+"/STAR_{sample}.log"
+		config["output"]+config["logs"]+"/STAR_{sample}.log"
 	params:
 		STARindex = config["STARindex"]
 	shell:
@@ -272,13 +272,13 @@ rule starSE:
 rule starPE:
 	input:
 		index = config["STARindex"] + "/SA",
-		fastq1 = config["FASTQtrimmed"]+"/{sample}_R1_val_1.fq.gz",
-		fastq2 = config["FASTQtrimmed"]+"/{sample}_R2_val_2.fq.gz"
+		fastq1 = config["output"]+config["FASTQtrimmed"]+"/{sample}_R1_val_1.fq.gz",
+		fastq2 = config["output"]+config["FASTQtrimmed"]+"/{sample}_R2_val_2.fq.gz"
 	output:
-		config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
+		config["output"]+config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
 	threads: config["ncores"]
 	log:
-		config["logs"]+"/STAR_{sample}.log"
+		config["output"]+config["logs"]+"/STAR_{sample}.log"
 	params:
 		STARindex = config["STARindex"]
 	shell:
@@ -290,11 +290,11 @@ rule starPE:
 ## Index bam files
 rule staridx:
 	input:
-		bam = config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
+		bam = config["output"]+config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
 	output:
-		config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai"
+		config["output"]+config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai"
 	log:
-		config["logs"]+"/samtools_index_{sample}.log"
+		config["output"]+config["logs"]+"/samtools_index_{sample}.log"
 	shell:
 		"echo 'samtools version:\n' > {log}; samtools --version >> {log}; "
 		"samtools index {input.bam}"
@@ -302,12 +302,12 @@ rule staridx:
 ## Convert BAM files to bigWig
 rule bigwig:
 	input:
-		bam = config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam",
+		bam = config["output"]+config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam",
 		chrl = config["STARindex"] + "/chrNameLength.txt"
 	output:
-		config["STARbigwig"]+"/{sample}_Aligned.sortedByCoord.out.bw"
+		config["output"]+config["STARbigwig"]+"/{sample}_Aligned.sortedByCoord.out.bw"
 	log:
-		config["logs"]+"/bigwig_{sample}.log"
+		config["output"]+config["logs"]+"/bigwig_{sample}.log"
 	shell:
 		"echo 'bedtools version:\n' > {log}; bedtools --version >> {log}; "
 		"bedtools genomecov -split -ibam {input.bam} -bg | sort -k1,1 -k2,2n > "
@@ -321,15 +321,15 @@ rule bigwig:
 ## edgeR
 rule edgeR:
 	input:
-		expand(config["salmon"]+"/{sample}/quant.sf", sample = samples.names.values.tolist()),
+		expand(config["output"]+config["output_salmon"]+"/{sample}/quant.sf", sample = samples.names.values.tolist()),
 		metatxt = config["metatxt"],
 		salmonidx = config["salmonindex"] + "/hash.bin",
 		json = config["salmonindex"] + ".json",
 		script = "scripts/run_dge_edgeR.R"
 	output:
-		config["output"]+"/edgeR_dge.rds"
+		config["output"]+config["outputR"]+"/edgeR_dge.rds"
 	log:
-		config["Rout"]+"/run_dge_edgeR.Rout"
+		config["output"]+config["Rout"]+"/run_dge_edgeR.Rout"
 	params:
 		salmondir = "salmon",
 	shell:
@@ -341,13 +341,13 @@ rule edgeR:
 ## DRIMSeq
 rule DRIMSeq:
 	input:
-		expand(config["salmon"]+"/{sample}/quant.sf", sample = samples.names.values.tolist()),
+		expand(config["output"]+config["output_salmon"]+"/{sample}/quant.sf", sample = samples.names.values.tolist()),
 		metatxt = config["metatxt"],
 		script = "scripts/run_dtu_drimseq.R"
 	output:
-		config["output"]+"/DRIMSeq_dtu.rds"
+		config["output"]+config["outputR"]+"/DRIMSeq_dtu.rds"
 	log:
-		config["Rout"]+"/run_dtu_drimseq.Rout"
+		config["output"]+config["Rout"]+"/run_dtu_drimseq.Rout"
 	params:
 		salmondir = "salmon",
 	shell:
@@ -358,15 +358,15 @@ rule DRIMSeq:
 ## ------------------------------------------------------------------------------------ ##
 rule shiny:
 	input:
-		expand(config["STARbigwig"]+"/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()),
-		rds = config["output"]+"/edgeR_dge.rds",
+		expand(config["output"]+config["STARbigwig"]+"/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()),
+		rds = config["output"]+config["outputR"]+"/edgeR_dge.rds",
 		metatxt = config["metatxt"],
 		gtf = config["gtf"],
 		script = "scripts/prepare_results_for_shiny.R"
-	log: config["Rout"]+"/shiny_results.Rout"
+	log: config["output"]+config["Rout"]+"/shiny_results.Rout"
 	output:
-		outList = config["output"]+"/shiny_results_list.rds",
-		outSCE = config["output"]+"/shiny_results_sce.rds"
+		outList = config["output"]+config["outputR"]+"/shiny_results_list.rds",
+		outSCE = config["output"]+config["outputR"]+"/shiny_results_sce.rds"
 	params:
 		groupvar = config["groupvar"],
 		bigwigdir = "STARbigwig"
@@ -376,14 +376,14 @@ rule shiny:
 
 rule shinyedgeR:
 	input:
-		rds = config["output"]+"/edgeR_dge.rds",
+		rds = config["output"]+config["outputR"]+"/edgeR_dge.rds",
 		metatxt = config["metatxt"],
 		script = "scripts/prepare_results_for_shiny.R"
 	log:
-		config["Rout"]+"/shiny_results_edgeR.Rout"
+		config["output"]+config["Rout"]+"/shiny_results_edgeR.Rout"
 	output:
-		outList = config["output"]+"/shiny_results_list_edgeR.rds",
-		outSCE = config["output"]+"/shiny_results_sce_edgeR.rds"
+		outList = config["output"]+config["outputR"]+"/shiny_results_list_edgeR.rds",
+		outSCE = config["output"]+config["outputR"]+"/shiny_results_sce_edgeR.rds"
 	params:
 		groupvar = config["groupvar"]
 	shell:
