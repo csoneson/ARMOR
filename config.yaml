@@ -57,11 +57,11 @@ FASTQ: FASTQ
 ##---------------------------------------------------------------------------------------------
 output: output
 
-## Paths to subfolders under the main folder (Results)
+## Paths to subfolders under the main folder (output)
 ## If one prefer to save one of the output results, such as FASTQtrimmed subfolder, elsewhere,
 ## it could be done by changing the corresponding directory below.
-## Note: the default directory of these subfolders is under the folder (Results). 
-## For example, to put FASTQtrimmed to the same top directory as the (Results) folder.
+## Note: the default directory of these subfolders is under the folder (output). 
+## For example, to put FASTQtrimmed to the same top directory as the (output) folder.
 ##              FASTQtrimmed: ../FASTQtrimmed
 ##              to put Rout in the same directory as outputR
 ##              Rout:/outputR
