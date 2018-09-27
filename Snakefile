@@ -214,7 +214,7 @@ rule salmonSE:
 		index = config["salmonindex"] + "/hash.bin",
 		fastq = config["output"]+config["FASTQtrimmed"]+"/{sample}_trimmed.fq.gz"
 	output:
-		config["output"]+config["output_salmon"]+"/{sample}/quant.sf"
+		config["output"]+config["dir_salmon"]+"/{sample}/quant.sf"
 	log:
 		config["output"]+config["logs"]+"/salmon_{sample}.log"
 	threads: config["ncores"]
@@ -234,7 +234,7 @@ rule salmonPE:
 		fastq1 = config["output"]+config["FASTQtrimmed"]+"/{sample}_R1_val_1.fq.gz",
 		fastq2 = config["output"]+config["FASTQtrimmed"]+"/{sample}_R2_val_2.fq.gz"
 	output:
-		config["output"]+config["output_salmon"]+"/{sample}/quant.sf"
+		config["output"]+config["dir_salmon"]+"/{sample}/quant.sf"
 	log:
 		config["output"]+config["logs"]+"/salmon_{sample}.log"
 	threads: config["ncores"]
@@ -321,7 +321,7 @@ rule bigwig:
 ## edgeR
 rule edgeR:
 	input:
-		expand(config["output"]+config["output_salmon"]+"/{sample}/quant.sf", sample = samples.names.values.tolist()),
+		expand(config["output"]+config["dir_salmon"]+"/{sample}/quant.sf", sample = samples.names.values.tolist()),
 		metatxt = config["metatxt"],
 		salmonidx = config["salmonindex"] + "/hash.bin",
 		json = config["salmonindex"] + ".json",
@@ -341,7 +341,7 @@ rule edgeR:
 ## DRIMSeq
 rule DRIMSeq:
 	input:
-		expand(config["output"]+config["output_salmon"]+"/{sample}/quant.sf", sample = samples.names.values.tolist()),
+		expand(config["output"]+config["dir_salmon"]+"/{sample}/quant.sf", sample = samples.names.values.tolist()),
 		metatxt = config["metatxt"],
 		script = "scripts/run_dtu_drimseq.R"
 	output:
