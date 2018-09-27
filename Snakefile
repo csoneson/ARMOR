@@ -39,7 +39,7 @@ rule runsalmonquant:
 ## STAR alignment
 rule runstar:
 	input:
-		expand(config["output"]+config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
+		expand(config["output"]+config["dir_STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
 
 ## List all the packages that were used by the R analyses
 rule listpackages:
@@ -166,7 +166,7 @@ rule multiqc:
 		expand(config["output"]+config["FASTQtrimmed"]+"/{sample}_R1_val_1.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()),
 		expand(config["output"]+config["FASTQtrimmed"]+"/{sample}_R2_val_2.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()),
 		expand("salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
-		expand(config["output"]+config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
+		expand(config["output"]+config["dir_STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
 	output:
 		config["output"]+config["MultiQC"]+"/multiqc_report.html"
 	log:
@@ -257,7 +257,7 @@ rule starSE:
 		index = config["STARindex"] + "/SA",
 		fastq = config["output"]+config["FASTQtrimmed"]+"/{sample}_trimmed.fq.gz"
 	output:
-		config["output"]+config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
+		config["output"]+config["dir_STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
 	threads: config["ncores"]
 	log:
 		config["output"]+config["logs"]+"/STAR_{sample}.log"
@@ -275,7 +275,7 @@ rule starPE:
 		fastq1 = config["output"]+config["FASTQtrimmed"]+"/{sample}_R1_val_1.fq.gz",
 		fastq2 = config["output"]+config["FASTQtrimmed"]+"/{sample}_R2_val_2.fq.gz"
 	output:
-		config["output"]+config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
+		config["output"]+config["dir_STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
 	threads: config["ncores"]
 	log:
 		config["output"]+config["logs"]+"/STAR_{sample}.log"
@@ -290,9 +290,9 @@ rule starPE:
 ## Index bam files
 rule staridx:
 	input:
-		bam = config["output"]+config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
+		bam = config["output"]+config["dir_STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
 	output:
-		config["output"]+config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai"
+		config["output"]+config["dir_STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai"
 	log:
 		config["output"]+config["logs"]+"/samtools_index_{sample}.log"
 	shell:
@@ -302,7 +302,7 @@ rule staridx:
 ## Convert BAM files to bigWig
 rule bigwig:
 	input:
-		bam = config["output"]+config["STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam",
+		bam = config["output"]+config["dir_STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam",
 		chrl = config["STARindex"] + "/chrNameLength.txt"
 	output:
 		config["output"]+config["STARbigwig"]+"/{sample}_Aligned.sortedByCoord.out.bw"
