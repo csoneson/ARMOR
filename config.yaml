@@ -63,13 +63,15 @@ Results: Results
 ## Note: the default directory of these subfolders is under the folder (Results). 
 ## For example, to put FASTQtrimmed to the same top directory as the (Results) folder.
 ##              FASTQtrimmed: ../FASTQtrimmed
+##              to put Rout in the same directory as outputR
+##              Rout:/outputR
 FastQC: /FastQC
 MultiQC: /MultiQC
 FASTQtrimmed: /FASTQtrimmed
 salmon: /salmon
 STAR: /STAR
 STARbigwig: /STARbigwig
-output: /output
+outputR: /outputR
 Rout: /Rout
 logs: /logs
 
