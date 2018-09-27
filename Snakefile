@@ -165,7 +165,7 @@ rule multiqc:
 		expand(config["output"]+config["FASTQtrimmed"]+"/{sample}_trimmed.fq.gz", sample = samples.names[samples.type == 'SE'].values.tolist()),
 		expand(config["output"]+config["FASTQtrimmed"]+"/{sample}_R1_val_1.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()),
 		expand(config["output"]+config["FASTQtrimmed"]+"/{sample}_R2_val_2.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand("salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
+		expand(config["output"]+config["dir_salmon"]+"/{sample}/quant.sf", sample = samples.names.values.tolist()),
 		expand(config["output"]+config["dir_STAR"]+"/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
 	output:
 		config["output"]+config["MultiQC"]+"/multiqc_report.html"
