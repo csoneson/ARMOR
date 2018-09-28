@@ -42,6 +42,9 @@ To use the RNA-seq workflow on your own data, first clone this repository to you
 
 	```source activate rnaseqworkflow``` 
 
+- Instead of manually activating a `conda` environment before running the workflow,
+Snakemake can do that for you if you run it with the parameter `--use-conda`. The rules in the Snakefile have a `conda` directive where the `envs/environment.yaml` file is specified. When executed with `--use-conda`, Snakemake will automatically create a `conda` environment from the `envs/environment.yaml` file and activate it before executing the corresponding rules (see section "Running the workflow").
+
 - If you don't want to use `conda`, make sure that all necessary software is installed. The following software is used by the workflow:
 	- [R](https://www.r-project.org/)
 	- [Salmon](https://combine-lab.github.io/salmon/)
@@ -72,11 +75,17 @@ To use the RNA-seq workflow on your own data, first clone this repository to you
 
 ### Running the workflow
 
-If all the instructions above have been followed, the workflow can be run from the command line by simply typing 
+If all the instructions above have been followed, and you have all necessary software in your path or an active `conda` environment, the workflow can be run from the command line by simply typing 
 
 ```snakemake```
 
-This will generate all necessary output directories and run the analysis for the indicated samples. If you want to use multiple cores, just do
+This will generate all necessary output directories and run the analysis for the indicated samples. Alternatively, if you run
+
+```snakemake --use-conda```
+
+Snakemake will create a `conda` environment from the `envs/environment.yaml` file and it will activate the environment before executing all rules with the `conda` directive.
+
+If you want to use multiple cores, just do
 
 ```snakemake --cores 12```
 
