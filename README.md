@@ -113,4 +113,7 @@ app <- iSEE(sce)
 shiny::runApp(app)
 ```
 
+### Interactive R sessions
+
+Note that this repository includes an `.Renviron` file witch is used to automatically configure R on startup. This is useful when you have an active conda environment and you want to explore your data in an interactive R session (started in the rnaseqworkflow directory). The `.Renviron` file removes any user specific library paths on startup, ensuring that you will only have access to R packages that are installed in the active conda environment.
 
