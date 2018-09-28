@@ -29,8 +29,8 @@ dependencies:
 - bioconductor-biostrings
 - bioconductor-rtracklayer
 - bioconductor-drimseq
+- bioconductor-S4Vectors
+- bioconductor-SingleCellExperiment
 - bioconductor-biocinstaller
 - bioconductor-biocfilecache
 - bioconductor-ensembldb
-
-
