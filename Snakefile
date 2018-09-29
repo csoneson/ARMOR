@@ -177,13 +177,13 @@ rule multiqc:
 	    MultiQC = config["output"]+"/MultiQC",
 	    FastQC = config["output"]+"/FastQC",
 	    FASTQtrimmed = config["output"]+"/FASTQtrimmed",
-	    salmon = config["output"]+"/salmon",
-	    STAR = config["output"]+"/STAR" 
+	    salmondir = config["output"]+"/salmon",
+	    STARdir = config["output"]+"/STAR" 
 	log:
 		config["output"]+"/logs/multiqc.log"
 	shell:
 		"echo 'MultiQC version:\n' > {log}; multiqc --version >> {log}; "
-		"multiqc {params.FastQC} {params.FASTQtrimmed} {params.salmon} {params.STAR} -f -o {params.MultiQC}"
+		"multiqc {params.FastQC} {params.FASTQtrimmed} {params.salmondir} {params.STARdir} -f -o {params.MultiQC}"
 
 
 ## ------------------------------------------------------------------------------------ ##
@@ -236,11 +236,11 @@ rule salmonSE:
 		salmonindex = config["salmonindex"],
 		fldMean = config["fldMean"],
 		fldSD = config["fldSD"],
-		salmon = config["output"]+"/salmon"
+		salmondir = config["output"]+"/salmon"
 	shell:
 		"echo 'Salmon version:\n' > {log}; salmon --version >> {log}; "
 		"salmon quant -i {params.salmonindex} -l A -r {input.fastq} "
-		"-o {params.salmon}/{wildcards.sample} --seqBias --gcBias "
+		"-o {params.salmondir}/{wildcards.sample} --seqBias --gcBias "
 		"--fldMean {params.fldMean} --fldSD {params.fldSD} -p {threads}"
 
 rule salmonPE:
@@ -257,11 +257,11 @@ rule salmonPE:
 		salmonindex = config["salmonindex"],
 		fldMean = config["fldMean"],
 		fldSD = config["fldSD"],
-		salmon = config["output"]+"/salmon"
+		salmondir = config["output"]+"/salmon"
 	shell:
 		"echo 'Salmon version:\n' > {log}; salmon --version >> {log}; "
 		"salmon quant -i {params.salmonindex} -l A -1 {input.fastq1} -2 {input.fastq2} "
-		"-o {params.salmon}/{wildcards.sample} --seqBias --gcBias "
+		"-o {params.salmondir}/{wildcards.sample} --seqBias --gcBias "
 		"--fldMean {params.fldMean} --fldSD {params.fldSD} -p {threads}"
 
 ## ------------------------------------------------------------------------------------ ##
@@ -279,11 +279,11 @@ rule starSE:
 		config["output"]+"/logs/STAR_{sample}.log"
 	params:
 		STARindex = config["STARindex"],
-		STAR = config["output"] +"/STAR"
+		STARdir = config["output"] +"/STAR"
 	shell:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
 		"STAR --genomeDir {params.STARindex} --readFilesIn {input.fastq} "
-		"--runThreadN {threads} --outFileNamePrefix {params.STAR}/{wildcards.sample}/{wildcards.sample}_ "
+		"--runThreadN {threads} --outFileNamePrefix {params.STARdir}/{wildcards.sample}/{wildcards.sample}_ "
 		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c"
 
 rule starPE:
@@ -298,11 +298,11 @@ rule starPE:
 		config["output"]+"/logs/STAR_{sample}.log"
 	params:
 		STARindex = config["STARindex"],
-		STAR = config["output"] +"/STAR"
+		STARdir = config["output"] +"/STAR"
 	shell:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
 		"STAR --genomeDir {params.STARindex} --readFilesIn {input.fastq1} {input.fastq2} "
-		"--runThreadN {threads} --outFileNamePrefix {params.STAR}/{wildcards.sample}/{wildcards.sample}_ "
+		"--runThreadN {threads} --outFileNamePrefix {params.STARdir}/{wildcards.sample}/{wildcards.sample}_ "
 		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c"
 
 ## Index bam files
@@ -351,9 +351,9 @@ rule edgeR:
 	log:
 		config["output"]+"/Rout/run_dge_edgeR.Rout"
 	params:
-		salmon = config["output"]+"/salmon",
+		salmondir = config["output"]+"/salmon",
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmon}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage
@@ -369,9 +369,9 @@ rule DRIMSeq:
 	log:
 		config["output"]+"/Rout/run_dtu_drimseq.Rout"
 	params:
-		salmon = config["output"]+"/salmon",
+		salmondir = config["output"]+"/salmon",
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmon}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Shiny app
