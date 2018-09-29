@@ -34,12 +34,12 @@ rule runtrimming:
 ## Salmon quantification
 rule runsalmonquant:
 	input:
-		expand(config["output"]+"/dir_salmon/{sample}/quant.sf", sample = samples.names.values.tolist())
+		expand(config["output"]+"/salmon/{sample}/quant.sf", sample = samples.names.values.tolist())
 
 ## STAR alignment
 rule runstar:
 	input:
-		expand(config["output"]+"/dir_STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
+		expand(config["output"]+"/STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
 
 ## List all the packages that were used by the R analyses
 rule listpackages:
@@ -169,21 +169,21 @@ rule multiqc:
 		expand(config["output"] +"/FASTQtrimmed/{sample}_trimmed.fq.gz", sample = samples.names[samples.type == 'SE'].values.tolist()),
 		expand(config["output"] +"/FASTQtrimmed/{sample}_R1_val_1.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()),
 		expand(config["output"] +"/FASTQtrimmed/{sample}_R2_val_2.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(config["output"]+"/dir_salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
-		expand(config["output"]+"/dir_STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
+		expand(config["output"]+"/salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
+		expand(config["output"]+"/STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
 	output:
 		config["output"]+"/MultiQC/multiqc_report.html"
 	params:
 	    MultiQC = config["output"]+"/MultiQC",
 	    FastQC = config["output"]+"/FastQC",
 	    FASTQtrimmed = config["output"]+"/FASTQtrimmed",
-	    dir_salmon = config["output"]+"/dir_salmon",
-	    dir_STAR = config["output"]+"/dir_STAR" 
+	    salmon = config["output"]+"/salmon",
+	    STAR = config["output"]+"/STAR" 
 	log:
 		config["output"]+"/logs/multiqc.log"
 	shell:
 		"echo 'MultiQC version:\n' > {log}; multiqc --version >> {log}; "
-		"multiqc {params.FastQC} {params.FASTQtrimmed} {params.dir_salmon} {params.dir_STAR} -f -o {params.MultiQC}"
+		"multiqc {params.FastQC} {params.FASTQtrimmed} {params.salmon} {params.STAR} -f -o {params.MultiQC}"
 
 
 ## ------------------------------------------------------------------------------------ ##
@@ -228,7 +228,7 @@ rule salmonSE:
 		index = config["salmonindex"] + "/hash.bin",
 		fastq = config["output"] +"/FASTQtrimmed/{sample}_trimmed.fq.gz"
 	output:
-		config["output"]+"/dir_salmon/{sample}/quant.sf"
+		config["output"]+"/salmon/{sample}/quant.sf"
 	log:
 		config["output"]+"/logs/salmon_{sample}.log"
 	threads: config["ncores"]
@@ -236,11 +236,11 @@ rule salmonSE:
 		salmonindex = config["salmonindex"],
 		fldMean = config["fldMean"],
 		fldSD = config["fldSD"],
-		dir_salmon = config["output"]+"/dir_salmon"
+		salmon = config["output"]+"/salmon"
 	shell:
 		"echo 'Salmon version:\n' > {log}; salmon --version >> {log}; "
 		"salmon quant -i {params.salmonindex} -l A -r {input.fastq} "
-		"-o {params.dir_salmon}/{wildcards.sample} --seqBias --gcBias "
+		"-o {params.salmon}/{wildcards.sample} --seqBias --gcBias "
 		"--fldMean {params.fldMean} --fldSD {params.fldSD} -p {threads}"
 
 rule salmonPE:
@@ -249,7 +249,7 @@ rule salmonPE:
 		fastq1 = config["output"] +"/FASTQtrimmed/{sample}_R1_val_1.fq.gz",
 		fastq2 = config["output"] +"/FASTQtrimmed/{sample}_R2_val_2.fq.gz"
 	output:
-		config["output"]+"/dir_salmon/{sample}/quant.sf"
+		config["output"]+"/salmon/{sample}/quant.sf"
 	log:
 		config["output"]+"/logs/salmon_{sample}.log"
 	threads: config["ncores"]
@@ -257,11 +257,11 @@ rule salmonPE:
 		salmonindex = config["salmonindex"],
 		fldMean = config["fldMean"],
 		fldSD = config["fldSD"],
-		dir_salmon = config["output"]+"/dir_salmon"
+		salmon = config["output"]+"/salmon"
 	shell:
 		"echo 'Salmon version:\n' > {log}; salmon --version >> {log}; "
 		"salmon quant -i {params.salmonindex} -l A -1 {input.fastq1} -2 {input.fastq2} "
-		"-o {params.dir_salmon}/{wildcards.sample} --seqBias --gcBias "
+		"-o {params.salmon}/{wildcards.sample} --seqBias --gcBias "
 		"--fldMean {params.fldMean} --fldSD {params.fldSD} -p {threads}"
 
 ## ------------------------------------------------------------------------------------ ##
@@ -273,17 +273,17 @@ rule starSE:
 		index = config["STARindex"] + "/SA",
 		fastq = config["output"] +"/FASTQtrimmed/{sample}_trimmed.fq.gz"
 	output:
-		config["output"]+"/dir_STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
+		config["output"]+"/STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
 	threads: config["ncores"]
 	log:
 		config["output"]+"/logs/STAR_{sample}.log"
 	params:
 		STARindex = config["STARindex"],
-		dir_STAR = config["output"] +"/dir_STAR"
+		STAR = config["output"] +"/STAR"
 	shell:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
 		"STAR --genomeDir {params.STARindex} --readFilesIn {input.fastq} "
-		"--runThreadN {threads} --outFileNamePrefix {params.dir_STAR}/{wildcards.sample}/{wildcards.sample}_ "
+		"--runThreadN {threads} --outFileNamePrefix {params.STAR}/{wildcards.sample}/{wildcards.sample}_ "
 		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c"
 
 rule starPE:
@@ -292,25 +292,25 @@ rule starPE:
 		fastq1 = config["output"] +"/FASTQtrimmed/{sample}_R1_val_1.fq.gz",
 		fastq2 = config["output"] +"/FASTQtrimmed/{sample}_R2_val_2.fq.gz"
 	output:
-		config["output"]+"/dir_STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
+		config["output"]+"/STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
 	threads: config["ncores"]
 	log:
 		config["output"]+"/logs/STAR_{sample}.log"
 	params:
 		STARindex = config["STARindex"],
-		dir_STAR = config["output"] +"/dir_STAR"
+		STAR = config["output"] +"/STAR"
 	shell:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
 		"STAR --genomeDir {params.STARindex} --readFilesIn {input.fastq1} {input.fastq2} "
-		"--runThreadN {threads} --outFileNamePrefix {params.dir_STAR}/{wildcards.sample}/{wildcards.sample}_ "
+		"--runThreadN {threads} --outFileNamePrefix {params.STAR}/{wildcards.sample}/{wildcards.sample}_ "
 		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c"
 
 ## Index bam files
 rule staridx:
 	input:
-		bam = config["output"]+"/dir_STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
+		bam = config["output"]+"/STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
 	output:
-		config["output"]+"/dir_STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai"
+		config["output"]+"/STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai"
 	log:
 		config["output"]+"/logs/samtools_index_{sample}.log"
 	shell:
@@ -320,20 +320,20 @@ rule staridx:
 ## Convert BAM files to bigWig
 rule bigwig:
 	input:
-		bam = config["output"]+"/dir_STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam",
+		bam = config["output"]+"/STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam",
 		chrl = config["STARindex"] + "/chrNameLength.txt"
 	output:
 		config["output"]+"/STARbigwig/{sample}_Aligned.sortedByCoord.out.bw"
 	params:
-	    dir_STARbigwig = config["output"]+"/STARbigwig"
+	    STARbigwig = config["output"]+"/STARbigwig"
 	log:
 		config["output"]+"/logs/bigwig_{sample}.log"
 	shell:
 		"echo 'bedtools version:\n' > {log}; bedtools --version >> {log}; "
 		"bedtools genomecov -split -ibam {input.bam} -bg | sort -k1,1 -k2,2n > "
-		"{params.dir_STARbigwig}/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph; "
-		"bedGraphToBigWig {params.dir_STARbigwig}/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph "
-		"{input.chrl} {output}; rm -f {params.dir_STARbigwig}/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph"
+		"{params.STARbigwig}/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph; "
+		"bedGraphToBigWig {params.STARbigwig}/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph "
+		"{input.chrl} {output}; rm -f {params.STARbigwig}/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph"
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential expression
@@ -341,7 +341,7 @@ rule bigwig:
 ## edgeR
 rule edgeR:
 	input:
-		expand(config["output"]+"/dir_salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
+		expand(config["output"]+"/salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
 		metatxt = config["metatxt"],
 		salmonidx = config["salmonindex"] + "/hash.bin",
 		json = config["salmonindex"] + ".json",
@@ -351,9 +351,9 @@ rule edgeR:
 	log:
 		config["output"]+"/Rout/run_dge_edgeR.Rout"
 	params:
-		dir_salmon = config["output"]+"/dir_salmon",
+		salmon = config["output"]+"/salmon",
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.dir_salmon}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmon}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage
@@ -361,7 +361,7 @@ rule edgeR:
 ## DRIMSeq
 rule DRIMSeq:
 	input:
-		expand(config["output"]+"/dir_salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
+		expand(config["output"]+"/salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
 		metatxt = config["metatxt"],
 		script = "scripts/run_dtu_drimseq.R"
 	output:
@@ -369,9 +369,9 @@ rule DRIMSeq:
 	log:
 		config["output"]+"/Rout/run_dtu_drimseq.Rout"
 	params:
-		dir_salmon = config["output"]+"/dir_salmon",
+		salmon = config["output"]+"/salmon",
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.dir_salmon}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmon}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Shiny app
