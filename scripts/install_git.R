@@ -15,25 +15,25 @@ print(outtxt)
 #Change TAR environment variable (for ubuntu 16.04, should be tested in mac)
 options(unzip = "internal")
 
-#Package name to be checked/installed
-pkg <- c("tximeta") # <--- Add your package name here 
+#Repo of package to be checked/installed
+pkg <- c("mikelove/tximeta") # <--- Add repo(s) of your package(s) here 
 
 #Check if package is installed
-new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+new.pkg <- pkg[!(basename(pkg) %in% installed.packages()[, "Package"])]
 
 if (length(new.pkg)){ 
   
   #Install package from repository
-  t <- install_github("mikelove/tximeta")
+  status <- install_github(new.pkg)
   
-  if(t) {
+  if(status) {
   
   #Send output to .txt file  
   sink(outtxt)
-  cat(sprintf("Package %s installation successful", pkg))
+  cat(sprintf("%s installation successful", new.pkg))
   sink()
   } else{
-    stop("Installation failed")
+    stop(sprintf("%s installation failed", new.pkg))
     
     # If the installation fails, it is most likely because there are dependencies 
     # that have not been added through the environment.yaml file. For this
@@ -43,7 +43,7 @@ if (length(new.pkg)){
 
 } else {
   sink(outtxt)
-  print("Package %s already installed")
+  cat(sprintf("%s already installed", new.pkg))
   sink()
 }
 
