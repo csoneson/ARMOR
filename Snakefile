@@ -304,8 +304,8 @@ rule salmonSE:
 rule salmonPE:
 	input:
 		index = config["salmonindex"] + "/hash.bin",
-		fastq1 = outputdir+"FASTQtrimmed/{sample}_R1_val_1.fq.gz",
-		fastq2 = outputdir+"FASTQtrimmed/{sample}_R2_val_2.fq.gz"
+		fastq1 = outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz",
+		fastq2 = outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz"
 	output:
 		outputdir + "salmon/{sample}/quant.sf"
 	log:
