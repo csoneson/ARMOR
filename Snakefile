@@ -24,7 +24,7 @@ print(outputdir)
 ## Run all analyses
 ## Add "output/DRIMSeq_dtu.rds" if desired
 rule all:
-	input:
+  input:
 		outputdir + "MultiQC/multiqc_report.html",
 		outputdir + "outputR/edgeR_dge.rds",
 		outputdir + "outputR/shiny_results_list.rds",
@@ -35,20 +35,20 @@ rule all:
 ## FastQC on original (untrimmed) files
 rule runfastqc:
 	input:
- 		expand(outputdir + "FastQC/{sample}_R1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
- 		expand(outputdir + "FastQC/{sample}_R2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist())
+    expand(outputdir + "FastQC/{sample}_R1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+    expand(outputdir + "FastQC/{sample}_R2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+    expand(outputdir + "FastQC/{sample}_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist())
 
 ## Trimming and FastQC on trimmed files
 rule runtrimming:
 	input:
- 		expand(outputdir + "FastQC/{sample}_R1_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
- 		expand(outputdir + "FastQC/{sample}_R2_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist())
+    expand(outputdir + "FastQC/{sample}_R1_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+    expand(outputdir + "FastQC/{sample}_R2_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+    expand(outputdir + "FastQC/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist())
 
 ## Salmon quantification
 rule runsalmonquant:
-	input:
+  input:
 		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist())
 
 ## STAR alignment
@@ -96,13 +96,13 @@ rule salmonindex:
 	conda:
 		"envs/environment.yaml"
 	shell:
-	  """
-	  if [ {params.anno} == "Gencode" ]; then
+    """
+    if [ {params.anno} == "Gencode" ]; then
       echo 'Salmon version:\n' > {log}; salmon --version >> {log};
-  	  salmon index -t {input.txome} -k {params.salmonk} -i {params.salmonoutdir} --gencode --type quasi
+      salmon index -t {input.txome} -k {params.salmonk} -i {params.salmonoutdir} --gencode --type quasi
 
     else
-  	  echo 'Salmon version:\n' > {log}; salmon --version >> {log};
+      echo 'Salmon version:\n' > {log}; salmon --version >> {log};
       salmon index -t {input.txome} -k {params.salmonk} -i {params.salmonoutdir} --type quasi
     fi
     """
@@ -117,7 +117,7 @@ rule linkedTxome:
 	log:
 		outputdir + "Rout/generate_linkedTxome.Rout"
 	output:
-	  config["salmonindex"] + ".json"
+    config["salmonindex"] + ".json"
 	params:
 		flag = config["annotation"],
 		organism = config["organism"],
@@ -144,7 +144,7 @@ rule starindex:
 	conda:
 		"envs/environment.yaml"
 	threads: 
-	  config["ncores"]
+    config["ncores"]
 	shell:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
 		"STAR --runMode genomeGenerate --runThreadN {threads} --genomeDir {params.STARindex} "
@@ -160,13 +160,13 @@ rule fastqc:
 	output:
 		outputdir + "FastQC/{sample}_fastqc.zip"
 	params:
-	  FastQC = outputdir + "FastQC"
+    FastQC = outputdir + "FastQC"
 	log:
 		outputdir + "logs/fastqc_{sample}.log"
 	conda:
 		"envs/environment.yaml"
 	threads: 
-	  config["ncores"]
+    config["ncores"]
 	shell:
 		"echo 'FastQC version:\n' > {log}; fastqc --version >> {log}; "
 		"fastqc -o {params.FastQC} -t {threads} {input.fastq}"
@@ -184,7 +184,7 @@ rule fastqc2:
 	conda:
 		"envs/environment.yaml"
 	threads: 
-	  config["ncores"]
+    config["ncores"]
 	shell:
 		"echo 'FastQC version:\n' > {log}; fastqc --version >> {log}; "
 		"fastqc -o {params.FastQC} -t {threads} {input.fastq}"
@@ -206,11 +206,11 @@ rule multiqc:
 	output:
 		outputdir + "MultiQC/multiqc_report.html"
 	params:
-	  MultiQCdir = outputdir + "MultiQC",
-	  FastQCdir = outputdir + "FastQC",
-	  FASTQtrimmeddir = outputdir + "FASTQtrimmed",
-	  salmondir = outputdir + "salmon",
-	  STARdir = outputdir + "STAR" 
+    MultiQCdir = outputdir + "MultiQC",
+    FastQCdir = outputdir + "FastQC",
+    FASTQtrimmeddir = outputdir + "FASTQtrimmed",
+    salmondir = outputdir + "salmon",
+    STARdir = outputdir + "STAR" 
 	log:
 		outputdir + "logs/multiqc.log"
 	conda:
@@ -245,7 +245,7 @@ rule trimgalorePE:
 		fastq2 = config["FASTQ"] + "/{sample}_R2.fastq.gz"
 	output:
 	  outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz",
-		outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz"
+	  outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz"
 	params:
 	  FASTQtrimmeddir = outputdir + "FASTQtrimmed"
 	log:
