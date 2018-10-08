@@ -3,6 +3,21 @@ configfile: "config.yaml"
 import pandas as pd
 samples = pd.read_table(config["metatxt"])
 
+## Sanitize output directory
+import re
+def getpath(str):
+	if str in ['', '.', './']:
+		return ''
+	if str.startswith('.'):
+		regex = re.compile('^\./?')
+		str = regex.sub('', str)
+	if not str.endswith('/'):
+		str += '/'
+	return str
+
+outputdir = getpath(config["output"])
+print(outputdir)
+
 ## ------------------------------------------------------------------------------------ ##
 ## Target definitions
 ## ------------------------------------------------------------------------------------ ##
@@ -10,43 +25,50 @@ samples = pd.read_table(config["metatxt"])
 ## Add "output/DRIMSeq_dtu.rds" if desired
 rule all:
 	input:
-		config["output"]+"/MultiQC/multiqc_report.html",
-		config["output"]+"/outputR/edgeR_dge.rds",
-		config["output"]+"/outputR/shiny_results_list.rds",
-		config["output"]+"/outputR/shiny_results_sce.rds",
-		config["output"]+"/outputR/shiny_results_list_edgeR.rds",
-		config["output"]+"/outputR/shiny_results_sce_edgeR.rds"
+		outputdir + "MultiQC/multiqc_report.html",
+		outputdir + "outputR/edgeR_dge.rds",
+		outputdir + "outputR/shiny_results_list.rds",
+		outputdir + "outputR/shiny_results_sce.rds",
+		outputdir + "outputR/shiny_results_list_edgeR.rds",
+		outputdir + "outputR/shiny_results_sce_edgeR.rds"
 
 ## FastQC on original (untrimmed) files
 rule runfastqc:
 	input:
- 		expand(config["output"]+"/FastQC/{sample}_R1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
- 		expand(config["output"]+"/FastQC/{sample}_R2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(config["output"]+"/FastQC/{sample}_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist())
+ 		expand(outputdir + "FastQC/{sample}_R1_fastqc.zip", 
+ 		sample = samples.names[samples.type == 'PE'].values.tolist()),
+ 		expand(outputdir + "FastQC/{sample}_R2_fastqc.zip", 
+ 		sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_fastqc.zip", 
+		sample = samples.names[samples.type == 'SE'].values.tolist())
 
 ## Trimming and FastQC on trimmed files
 rule runtrimming:
 	input:
- 		expand(config["output"]+"/FastQC/{sample}_R1_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
- 		expand(config["output"]+"/FastQC/{sample}_R2_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(config["output"]+"/FastQC/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist())
+ 		expand(outputdir + "FastQC/{sample}_R1_val_1_fastqc.zip", 
+ 		sample = samples.names[samples.type == 'PE'].values.tolist()),
+ 		expand(outputdir + "FastQC/{sample}_R2_val_2_fastqc.zip",
+ 		sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_trimmed_fastqc.zip", 
+		sample = samples.names[samples.type == 'SE'].values.tolist())
 
 ## Salmon quantification
 rule runsalmonquant:
 	input:
-		expand(config["output"]+"/salmon/{sample}/quant.sf", sample = samples.names.values.tolist())
+		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist())
 
 ## STAR alignment
 rule runstar:
 	input:
-		expand(config["output"]+"/STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
+		expand(outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", 
+		sample = samples.names.values.tolist())
 
 ## List all the packages that were used by the R analyses
 rule listpackages:
 	log:
-		config["output"]+"/Rout/list_packages.Rout"
+		outputdir + "Rout/list_packages.Rout"
 	params:
-		Routdir = "Rout",
+		Routdir = outputdir + "Rout",
 		outtxt = "R_package_versions.txt",
 		script = "scripts/list_packages.R"
 	conda:
@@ -73,11 +95,11 @@ rule salmonindex:
 	output:
 		config["salmonindex"] + "/hash.bin"
 	log:
-		config["output"]+"/logs/salmon_index.log"
+		outputdir + "logs/salmon_index.log"
 	params:
 		salmonk = config["salmonk"],
 		salmonoutdir = config["salmonindex"],
-		anno =  config["annotation"]
+		anno = config["annotation"]
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -100,7 +122,7 @@ rule linkedTxome:
 		salmonidx = config["salmonindex"] + "/hash.bin",
 		script = "scripts/generate_linkedTxome.R"
 	log:
-		config["output"]+"/Rout/generate_linkedTxome.Rout"
+		outputdir + "Rout/generate_linkedTxome.Rout"
 	output:
 	  config["salmonindex"] + ".json"
 	params:
@@ -122,13 +144,14 @@ rule starindex:
 		config["STARindex"] + "/SA",
 		config["STARindex"] + "/chrNameLength.txt"
 	log:
-		config["output"]+"/logs/STAR_index.log"
+		outputdir + "logs/STAR_index.log"
 	params:
 		STARindex = config["STARindex"],
 		readlength = config["readlength"]
 	conda:
 		"envs/environment.yaml"
-	threads: config["ncores"]
+	threads: 
+	  config["ncores"]
 	shell:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
 		"STAR --runMode genomeGenerate --runThreadN {threads} --genomeDir {params.STARindex} "
@@ -140,16 +163,17 @@ rule starindex:
 ## FastQC, original reads
 rule fastqc:
 	input:
-		fastq = config["FASTQ"]+"/{sample}.fastq.gz"
+		fastq = config["FASTQ"] + "/{sample}.fastq.gz"
 	output:
-		config["output"]+"/FastQC/{sample}_fastqc.zip"
+		outputdir + "FastQC/{sample}_fastqc.zip"
 	params:
-	    FastQC = config["output"]+"/FastQC"
+	  FastQC = outputdir + "FastQC"
 	log:
-		config["output"]+"/logs/fastqc_{sample}.log"
+		outputdir + "logs/fastqc_{sample}.log"
 	conda:
 		"envs/environment.yaml"
-	threads: config["ncores"]
+	threads: 
+	  config["ncores"]
 	shell:
 		"echo 'FastQC version:\n' > {log}; fastqc --version >> {log}; "
 		"fastqc -o {params.FastQC} -t {threads} {input.fastq}"
@@ -157,16 +181,17 @@ rule fastqc:
 ## FastQC, trimmed reads
 rule fastqc2:
 	input:
-		fastq = config["output"] +"/FASTQtrimmed/{sample}.fq.gz"
+		fastq = outputdir + "FASTQtrimmed/{sample}.fq.gz"
 	output:
-		config["output"]+"/FastQC/{sample}_fastqc.zip"
+		outputdir + "FastQC/{sample}_fastqc.zip"
 	params:
-	    FastQC = config["output"]+"/FastQC"
+    FastQC = outputdir + "FastQC"
 	log:
-		config["output"]+"/logs/fastqc_trimmed_{sample}.log"
+		outputdir + "logs/fastqc_trimmed_{sample}.log"
 	conda:
 		"envs/environment.yaml"
-	threads: config["ncores"]
+	threads: 
+	  config["ncores"]
 	shell:
 		"echo 'FastQC version:\n' > {log}; fastqc --version >> {log}; "
 		"fastqc -o {params.FastQC} -t {threads} {input.fastq}"
@@ -174,32 +199,42 @@ rule fastqc2:
 ## MultiQC
 rule multiqc:
 	input:
-		expand(config["output"]+"/FastQC/{sample}_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()),
-		expand(config["output"]+"/FastQC/{sample}_R1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(config["output"]+"/FastQC/{sample}_R2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(config["output"]+"/FastQC/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()),
-		expand(config["output"]+"/FastQC/{sample}_R1_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(config["output"]+"/FastQC/{sample}_R2_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(config["output"] +"/FASTQtrimmed/{sample}_trimmed.fq.gz", sample = samples.names[samples.type == 'SE'].values.tolist()),
-		expand(config["output"] +"/FASTQtrimmed/{sample}_R1_val_1.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(config["output"] +"/FASTQtrimmed/{sample}_R2_val_2.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(config["output"]+"/salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
-		expand(config["output"]+"/STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
+		expand(outputdir + "FastQC/{sample}_fastqc.zip", 
+		sample = samples.names[samples.type == 'SE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_R1_fastqc.zip", 
+		sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_R2_fastqc.zip", 
+		sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_trimmed_fastqc.zip", 
+		sample = samples.names[samples.type == 'SE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_R1_val_1_fastqc.zip", 
+		sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_R2_val_2_fastqc.zip", 
+		sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz", 
+		sample = samples.names[samples.type == 'SE'].values.tolist()),
+		expand(outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz", 
+		sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz", 
+		sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
+		expand(outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", 
+		sample = samples.names.values.tolist())
 	output:
-		config["output"]+"/MultiQC/multiqc_report.html"
+		outputdir + "MultiQC/multiqc_report.html"
 	params:
-	    MultiQC = config["output"]+"/MultiQC",
-	    FastQC = config["output"]+"/FastQC",
-	    FASTQtrimmed = config["output"]+"/FASTQtrimmed",
-	    salmondir = config["output"]+"/salmon",
-	    STARdir = config["output"]+"/STAR" 
+	  MultiQCdir = outputdir + "MultiQC",
+	  FastQCdir = outputdir + "FastQC",
+	  FASTQtrimmeddir = outputdir + "FASTQtrimmed",
+	  salmondir = outputdir + "salmon",
+	  STARdir = outputdir + "STAR" 
 	log:
-		config["output"]+"/logs/multiqc.log"
+		outputdir + "logs/multiqc.log"
 	conda:
 		"envs/environment.yaml"
 	shell:
 		"echo 'MultiQC version:\n' > {log}; multiqc --version >> {log}; "
-		"multiqc {params.FastQC} {params.FASTQtrimmed} {params.salmondir} {params.STARdir} -f -o {params.MultiQC}"
+		"multiqc {params.FastQCdir} {params.FASTQtrimmeddir} {params.salmondir} {params.STARdir} -f -o {params.MultiQCdir}"
 
 
 ## ------------------------------------------------------------------------------------ ##
@@ -208,35 +243,35 @@ rule multiqc:
 # TrimGalore!
 rule trimgaloreSE:
 	input:
-		fastq = config["FASTQ"]+"/{sample}.fastq.gz"
+		fastq = config["FASTQ"] + "/{sample}.fastq.gz"
 	output:
-		config["output"] +"/FASTQtrimmed/{sample}_trimmed.fq.gz"
+		outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz"
 	params:
-	    FASTQtrimmed = config["output"] + "/FASTQtrimmed"
+	  FASTQtrimmeddir = outputdir + "FASTQtrimmed"
 	log:
-		config["output"]+"/logs/trimgalore_{sample}.log"
+		outputdir + "logs/trimgalore_{sample}.log"
 	conda:
 		"envs/environment.yaml"
 	shell:
 		"echo 'TrimGalore! version:\n' > {log}; trim_galore --version >> {log}; "
-		"trim_galore -q 20 --phred33 --length 20 -o {params.FASTQtrimmed} --path_to_cutadapt cutadapt {input.fastq}"
+		"trim_galore -q 20 --phred33 --length 20 -o {params.FASTQtrimmeddir} --path_to_cutadapt cutadapt {input.fastq}"
 
 rule trimgalorePE:
 	input:
-		fastq1 = config["FASTQ"]+"/{sample}_R1.fastq.gz",
-		fastq2 = config["FASTQ"]+"/{sample}_R2.fastq.gz"
+		fastq1 = config["FASTQ"] + "/{sample}_R1.fastq.gz",
+		fastq2 = config["FASTQ"] + "/{sample}_R2.fastq.gz"
 	output:
-	    config["output"] +"/FASTQtrimmed/{sample}_R1_val_1.fq.gz",
-		config["output"] +"/FASTQtrimmed/{sample}_R2_val_2.fq.gz"
+	  outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz",
+		outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz"
 	params:
-	    FASTQtrimmed = config["output"] + "/FASTQtrimmed"
+	  FASTQtrimmeddir = outputdir + "FASTQtrimmed"
 	log:
-		config["output"]+"/logs/trimgalore_{sample}.log"
+		outputdir + "logs/trimgalore_{sample}.log"
 	conda:
 		"envs/environment.yaml"
 	shell:
 		"echo 'TrimGalore! version:\n' > {log}; trim_galore --version >> {log}; "
-		"trim_galore -q 20 --phred33 --length 20 -o {params.FASTQtrimmed} --path_to_cutadapt cutadapt "
+		"trim_galore -q 20 --phred33 --length 20 -o {params.FASTQtrimmeddir} --path_to_cutadapt cutadapt "
 		"--paired {input.fastq1} {input.fastq2}"
 
 ## ------------------------------------------------------------------------------------ ##
@@ -246,17 +281,18 @@ rule trimgalorePE:
 rule salmonSE:
 	input:
 		index = config["salmonindex"] + "/hash.bin",
-		fastq = config["output"] +"/FASTQtrimmed/{sample}_trimmed.fq.gz"
+		fastq = outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz"
 	output:
-		config["output"]+"/salmon/{sample}/quant.sf"
+		outputdir + "salmon/{sample}/quant.sf"
 	log:
-		config["output"]+"/logs/salmon_{sample}.log"
-	threads: config["ncores"]
+		outputdir + "logs/salmon_{sample}.log"
+	threads: 
+	  config["ncores"]
 	params:
 		salmonindex = config["salmonindex"],
 		fldMean = config["fldMean"],
 		fldSD = config["fldSD"],
-		salmondir = config["output"]+"/salmon"
+		salmondir = outputdir + "salmon"
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -268,18 +304,19 @@ rule salmonSE:
 rule salmonPE:
 	input:
 		index = config["salmonindex"] + "/hash.bin",
-		fastq1 = config["output"] +"/FASTQtrimmed/{sample}_R1_val_1.fq.gz",
-		fastq2 = config["output"] +"/FASTQtrimmed/{sample}_R2_val_2.fq.gz"
+		fastq1 = outputdir+"FASTQtrimmed/{sample}_R1_val_1.fq.gz",
+		fastq2 = outputdir+"FASTQtrimmed/{sample}_R2_val_2.fq.gz"
 	output:
-		config["output"]+"/salmon/{sample}/quant.sf"
+		outputdir + "salmon/{sample}/quant.sf"
 	log:
-		config["output"]+"/logs/salmon_{sample}.log"
-	threads: config["ncores"]
+		outputdir + "logs/salmon_{sample}.log"
+	threads: 
+	  config["ncores"]
 	params:
 		salmonindex = config["salmonindex"],
 		fldMean = config["fldMean"],
 		fldSD = config["fldSD"],
-		salmondir = config["output"]+"/salmon"
+		salmondir = outputdir + "salmon"
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -295,15 +332,16 @@ rule salmonPE:
 rule starSE:
 	input:
 		index = config["STARindex"] + "/SA",
-		fastq = config["output"] +"/FASTQtrimmed/{sample}_trimmed.fq.gz"
+		fastq = outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz"
 	output:
-		config["output"]+"/STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
-	threads: config["ncores"]
+		outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
+	threads: 
+	  config["ncores"]
 	log:
-		config["output"]+"/logs/STAR_{sample}.log"
+		outputdir + "logs/STAR_{sample}.log"
 	params:
 		STARindex = config["STARindex"],
-		STARdir = config["output"] +"/STAR"
+		STARdir = outputdir + "STAR"
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -315,16 +353,17 @@ rule starSE:
 rule starPE:
 	input:
 		index = config["STARindex"] + "/SA",
-		fastq1 = config["output"] +"/FASTQtrimmed/{sample}_R1_val_1.fq.gz",
-		fastq2 = config["output"] +"/FASTQtrimmed/{sample}_R2_val_2.fq.gz"
+		fastq1 = outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz",
+		fastq2 = outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz"
 	output:
-		config["output"]+"/STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
-	threads: config["ncores"]
+		outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
+	threads: 
+	  config["ncores"]
 	log:
-		config["output"]+"/logs/STAR_{sample}.log"
+		outputdir + "logs/STAR_{sample}.log"
 	params:
 		STARindex = config["STARindex"],
-		STARdir = config["output"] +"/STAR"
+		STARdir = outputdir + "STAR"
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -336,11 +375,11 @@ rule starPE:
 ## Index bam files
 rule staridx:
 	input:
-		bam = config["output"]+"/STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
+		bam = outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
 	output:
-		config["output"]+"/STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai"
+		outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai"
 	log:
-		config["output"]+"/logs/samtools_index_{sample}.log"
+		outputdir + "logs/samtools_index_{sample}.log"
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -350,22 +389,22 @@ rule staridx:
 ## Convert BAM files to bigWig
 rule bigwig:
 	input:
-		bam = config["output"]+"/STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam",
+		bam = outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam",
 		chrl = config["STARindex"] + "/chrNameLength.txt"
 	output:
-		config["output"]+"/STARbigwig/{sample}_Aligned.sortedByCoord.out.bw"
+		outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw"
 	params:
-	    STARbigwig = config["output"]+"/STARbigwig"
+	  STARbigwigdir = outputdir + "STARbigwig"
 	log:
-		config["output"]+"/logs/bigwig_{sample}.log"
+		outputdir + "logs/bigwig_{sample}.log"
 	conda:
 		"envs/environment.yaml"
 	shell:
 		"echo 'bedtools version:\n' > {log}; bedtools --version >> {log}; "
 		"bedtools genomecov -split -ibam {input.bam} -bg | sort -k1,1 -k2,2n > "
-		"{params.STARbigwig}/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph; "
-		"bedGraphToBigWig {params.STARbigwig}/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph "
-		"{input.chrl} {output}; rm -f {params.STARbigwig}/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph"
+		"{params.STARbigwigdir}/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph; "
+		"bedGraphToBigWig {params.STARbigwigdir}/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph "
+		"{input.chrl} {output}; rm -f {params.STARbigwigdir}/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph"
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential expression
@@ -373,17 +412,17 @@ rule bigwig:
 ## edgeR
 rule edgeR:
 	input:
-		expand(config["output"]+"/salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
+		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
 		metatxt = config["metatxt"],
 		salmonidx = config["salmonindex"] + "/hash.bin",
 		json = config["salmonindex"] + ".json",
 		script = "scripts/run_dge_edgeR.R"
 	output:
-		config["output"]+"/outputR/edgeR_dge.rds"
+		outputdir + "outputR/edgeR_dge.rds"
 	log:
-		config["output"]+"/Rout/run_dge_edgeR.Rout"
+		outputdir + "Rout/run_dge_edgeR.Rout"
 	params:
-		salmondir = config["output"]+"/salmon"
+		salmondir = outputdir + "salmon"
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -395,15 +434,15 @@ rule edgeR:
 ## DRIMSeq
 rule DRIMSeq:
 	input:
-		expand(config["output"]+"/salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
+		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
 		metatxt = config["metatxt"],
 		script = "scripts/run_dtu_drimseq.R"
 	output:
-		config["output"]+"/outputR/DRIMSeq_dtu.rds"
+		outputdir + "outputR/DRIMSeq_dtu.rds"
 	log:
-		config["output"]+"/Rout/run_dtu_drimseq.Rout"
+		outputdir + "Rout/run_dtu_drimseq.Rout"
 	params:
-		salmondir = config["output"]+"/salmon"
+		salmondir = outputdir + "salmon"
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -414,15 +453,17 @@ rule DRIMSeq:
 ## ------------------------------------------------------------------------------------ ##
 rule shiny:
 	input:
-		expand(config["output"]+"/STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()),
-		rds = config["output"]+"/outputR/edgeR_dge.rds",
+		expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", 
+		sample = samples.names.values.tolist()),
+		rds = outputdir + "outputR/edgeR_dge.rds",
 		metatxt = config["metatxt"],
 		gtf = config["gtf"],
 		script = "scripts/prepare_results_for_shiny.R"
-	log: config["output"]+"/Rout/shiny_results.Rout"
+	log: 
+	  outputdir + "Rout/shiny_results.Rout"
 	output:
-		outList = config["output"]+"/outputR/shiny_results_list.rds",
-		outSCE = config["output"]+"/outputR/shiny_results_sce.rds"
+		outList = outputdir + "outputR/shiny_results_list.rds",
+		outSCE = outputdir + "outputR/shiny_results_sce.rds"
 	params:
 		groupvar = config["groupvar"],
 		bigwigdir = "STARbigwig"
@@ -434,14 +475,14 @@ rule shiny:
 
 rule shinyedgeR:
 	input:
-		rds = config["output"]+"/outputR/edgeR_dge.rds",
+		rds = outputdir + "outputR/edgeR_dge.rds",
 		metatxt = config["metatxt"],
 		script = "scripts/prepare_results_for_shiny.R"
 	log:
-		config["output"]+"/Rout/shiny_results_edgeR.Rout"
+		outputdir + "Rout/shiny_results_edgeR.Rout"
 	output:
-		outList = config["output"]+"/outputR/shiny_results_list_edgeR.rds",
-		outSCE = config["output"]+"/outputR/shiny_results_sce_edgeR.rds"
+		outList = outputdir + "outputR/shiny_results_list_edgeR.rds",
+		outSCE = outputdir + "outputR/shiny_results_sce_edgeR.rds"
 	params:
 		groupvar = config["groupvar"]
 	conda:
