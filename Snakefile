@@ -6,14 +6,14 @@ samples = pd.read_table(config["metatxt"])
 ## Sanitize output directory
 import re
 def getpath(str):
-	if str in ['', '.', './']:
-		return ''
-	if str.startswith('.'):
-		regex = re.compile('^\./?')
-		str = regex.sub('', str)
+  if str in ['', '.', './']:
+    return ''
+  if str.startswith('.'):
+    regex = re.compile('^\./?')
+    str = regex.sub('', str)
 	if not str.endswith('/'):
-		str += '/'
-	return str
+    str += '/'
+  return str
 
 outputdir = getpath(config["output"])
 print(outputdir)
@@ -35,22 +35,16 @@ rule all:
 ## FastQC on original (untrimmed) files
 rule runfastqc:
 	input:
- 		expand(outputdir + "FastQC/{sample}_R1_fastqc.zip", 
- 		sample = samples.names[samples.type == 'PE'].values.tolist()),
- 		expand(outputdir + "FastQC/{sample}_R2_fastqc.zip", 
- 		sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_fastqc.zip", 
-		sample = samples.names[samples.type == 'SE'].values.tolist())
+ 		expand(outputdir + "FastQC/{sample}_R1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+ 		expand(outputdir + "FastQC/{sample}_R2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist())
 
 ## Trimming and FastQC on trimmed files
 rule runtrimming:
 	input:
- 		expand(outputdir + "FastQC/{sample}_R1_val_1_fastqc.zip", 
- 		sample = samples.names[samples.type == 'PE'].values.tolist()),
- 		expand(outputdir + "FastQC/{sample}_R2_val_2_fastqc.zip",
- 		sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_trimmed_fastqc.zip", 
-		sample = samples.names[samples.type == 'SE'].values.tolist())
+ 		expand(outputdir + "FastQC/{sample}_R1_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+ 		expand(outputdir + "FastQC/{sample}_R2_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist())
 
 ## Salmon quantification
 rule runsalmonquant:
@@ -60,8 +54,7 @@ rule runsalmonquant:
 ## STAR alignment
 rule runstar:
 	input:
-		expand(outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", 
-		sample = samples.names.values.tolist())
+		expand(outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
 
 ## List all the packages that were used by the R analyses
 rule listpackages:
@@ -199,27 +192,17 @@ rule fastqc2:
 ## MultiQC
 rule multiqc:
 	input:
-		expand(outputdir + "FastQC/{sample}_fastqc.zip", 
-		sample = samples.names[samples.type == 'SE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_R1_fastqc.zip", 
-		sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_R2_fastqc.zip", 
-		sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_trimmed_fastqc.zip", 
-		sample = samples.names[samples.type == 'SE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_R1_val_1_fastqc.zip", 
-		sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_R2_val_2_fastqc.zip", 
-		sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz", 
-		sample = samples.names[samples.type == 'SE'].values.tolist()),
-		expand(outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz", 
-		sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz", 
-		sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_R1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_R2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_R1_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_R2_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz", sample = samples.names[samples.type == 'SE'].values.tolist()),
+		expand(outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()),
 		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
-		expand(outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", 
-		sample = samples.names.values.tolist())
+		expand(outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
 	output:
 		outputdir + "MultiQC/multiqc_report.html"
 	params:
@@ -453,8 +436,7 @@ rule DRIMSeq:
 ## ------------------------------------------------------------------------------------ ##
 rule shiny:
 	input:
-		expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", 
-		sample = samples.names.values.tolist()),
+		expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()),
 		rds = outputdir + "outputR/edgeR_dge.rds",
 		metatxt = config["metatxt"],
 		gtf = config["gtf"],
