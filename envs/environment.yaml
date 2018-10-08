@@ -18,7 +18,7 @@ dependencies:
 - r-tidyr
 - r-reshape2
 - r-rjson
-- r-devtools
+- r-remotes
 - r-r6=2.2.2
 - r-glue=1.2.0
 - r-tibble=1.4.2

@@ -8,7 +8,7 @@ for (i in 1:length(args)) {
 ## Here we demonstrate the installation of the package 'tximeta', which is 
 ## necessary to run the workflow:
 
-suppressPackageStartupMessages(library(devtools))
+suppressPackageStartupMessages(library(remotes))
 
 print(outtxt)
 
@@ -24,16 +24,18 @@ new.pkg <- pkg[!(basename(pkg) %in% installed.packages()[, "Package"])]
 if (length(new.pkg)){ 
   
   #Install package from repository
-  status <- install_github(new.pkg)
+  install_github(new.pkg, dependencies = F)
+  failed <- new.pkg[!(basename(new.pkg) %in% installed.packages()[, "Package"])]
   
-  if(status) {
+  if(length(failed)) {
   
-  #Send output to .txt file  
-  sink(outtxt)
-  cat(sprintf("%s installation successful", new.pkg))
-  sink()
+    #Send output to .txt file  
+    stop(sprintf("%s installation failed", failed))
+  
   } else{
-    stop(sprintf("%s installation failed", new.pkg))
+    sink(outtxt)
+    cat(sprintf("%s installation successful", new.pkg))
+    sink()  
     
     # If the installation fails, it is most likely because there are dependencies 
     # that have not been added through the environment.yaml file. For this
