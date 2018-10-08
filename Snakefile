@@ -11,7 +11,7 @@ def getpath(str):
   if str.startswith('.'):
     regex = re.compile('^\./?')
     str = regex.sub('', str)
-	if not str.endswith('/'):
+  if not str.endswith('/'):
     str += '/'
   return str
 
@@ -25,7 +25,7 @@ print(outputdir)
 ## Add "output/DRIMSeq_dtu.rds" if desired
 rule all:
   input:
-		outputdir + "MultiQC/multiqc_report.html",
+		getpath(config["output"]) + "MultiQC/multiqc_report.html",
 		outputdir + "outputR/edgeR_dge.rds",
 		outputdir + "outputR/shiny_results_list.rds",
 		outputdir + "outputR/shiny_results_sce.rds",
