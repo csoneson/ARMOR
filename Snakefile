@@ -14,12 +14,20 @@ def getpath(str):
 	if not str.endswith('/'):
 		str += '/'
 	return str
-
+import re
+def getfile(str):
+	if str in ['', '.', './']:
+		return ''
+	if str.startswith('./'):
+		regex = re.compile('^\./?')
+		str = regex.sub('', str)
+	return str
+	
 outputdir = getpath(config["output"])
 FASTQdir = getpath(config["FASTQ"])
-txomedir = getpath(config["txome"])
-genomedir = getpath(config["genome"])
-gtfdir = getpath(config["gtf"])
+txomedir = getfile(config["txome"])
+genomedir = getfile(config["genome"])
+gtfdir = getfile(config["gtf"])
 print(outputdir)
 print(FASTQdir)
 print(txomedir)
@@ -163,7 +171,7 @@ rule starindex:
 ## FastQC, original reads
 rule fastqc:
 	input:
-		fastq = FASTQdir + "/{sample}.fastq.gz"
+		fastq = FASTQdir + "{sample}.fastq.gz"
 	output:
 		outputdir + "FastQC/{sample}_fastqc.zip"
 	params:
@@ -233,7 +241,7 @@ rule multiqc:
 # TrimGalore!
 rule trimgaloreSE:
 	input:
-		fastq = FASTQdir + "/{sample}.fastq.gz"
+		fastq = FASTQdir + "{sample}.fastq.gz"
 	output:
 		outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz"
 	params:
@@ -248,8 +256,8 @@ rule trimgaloreSE:
 
 rule trimgalorePE:
 	input:
-		fastq1 = FASTQdir + "/{sample}_R1.fastq.gz",
-		fastq2 = FASTQdir + "/{sample}_R2.fastq.gz"
+		fastq1 = FASTQdir + "{sample}_R1.fastq.gz",
+		fastq2 = FASTQdir + "{sample}_R2.fastq.gz"
 	output:
 		outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz",
 		outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz"
