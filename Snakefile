@@ -15,26 +15,12 @@ def getpath(str):
 		str += '/'
 	return str
 
-import re
-def getfile(str):
-	if str in ['', '.', './']:
-		return ''
-	if str.startswith('./'):
-		regex = re.compile('^\./?')
-		str = regex.sub('', str)
-	return str
-	
 outputdir = getpath(config["output"])
 FASTQdir = getpath(config["FASTQ"])
-txomedir = getfile(config["txome"])
-genomedir = getfile(config["genome"])
-gtfdir = getfile(config["gtf"])
 
 print(outputdir)
 print(FASTQdir)
-print(txomedir)
-print(genomedir)
-print(gtfdir)
+
 
 ## ------------------------------------------------------------------------------------ ##
 ## Target definitions
@@ -102,7 +88,7 @@ rule softwareversions:
 ## Generate Salmon index from merged cDNA and ncRNA files
 rule salmonindex:
 	input:
-		txome = txomedir
+		txome = config["txome"]
 	output:
 		config["salmonindex"] + "/hash.bin"
 	log:
@@ -128,8 +114,8 @@ rule salmonindex:
 ## Generate linkedTxome mapping
 rule linkedTxome:
 	input:
-		txome = txomedir,
-		gtf = gtfdir,
+		txome = config["txome"],
+		gtf = config["gtf"],
 		salmonidx = config["salmonindex"] + "/hash.bin",
 		script = "scripts/generate_linkedTxome.R"
 	log:
@@ -149,8 +135,8 @@ rule linkedTxome:
 ## Generate STAR index
 rule starindex:
 	input:
-		genome = genomedir,
-		gtf = gtfdir
+		genome = config["genome"],
+		gtf = config["gtf"]
 	output:
 		config["STARindex"] + "/SA",
 		config["STARindex"] + "/chrNameLength.txt"
@@ -457,7 +443,7 @@ rule shiny:
 		expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()),
 		rds = outputdir + "outputR/edgeR_dge.rds",
 		metatxt = config["metatxt"],
-		gtf = gtfdir,
+		gtf = config["gtf"],
 		script = "scripts/prepare_results_for_shiny.R"
 	log: 
 		outputdir + "Rout/shiny_results.Rout"
