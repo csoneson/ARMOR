@@ -96,16 +96,16 @@ rule salmonindex:
 	conda:
 		"envs/environment.yaml"
 	shell:
-	"""
-	if [ {params.anno} == "Gencode" ]; then
-		echo 'Salmon version:\n' > {log}; salmon --version >> {log};
-		salmon index -t {input.txome} -k {params.salmonk} -i {params.salmonoutdir} --gencode --type quasi
+    """
+    if [ {params.anno} == "Gencode" ]; then
+      echo 'Salmon version:\n' > {log}; salmon --version >> {log};
+      salmon index -t {input.txome} -k {params.salmonk} -i {params.salmonoutdir} --gencode --type quasi
 
-	else
-		echo 'Salmon version:\n' > {log}; salmon --version >> {log};
-		salmon index -t {input.txome} -k {params.salmonk} -i {params.salmonoutdir} --type quasi
-	fi
-	"""
+    else
+      echo 'Salmon version:\n' > {log}; salmon --version >> {log};
+      salmon index -t {input.txome} -k {params.salmonk} -i {params.salmonoutdir} --type quasi
+    fi
+    """
 
 ## Generate linkedTxome mapping
 rule linkedTxome:
