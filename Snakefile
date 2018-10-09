@@ -16,6 +16,7 @@ def getpath(str):
 	return str
 
 outputdir = getpath(config["output"])
+FASTQdir = getpath(config["FASTQ"])
 print(outputdir)
 
 ## ------------------------------------------------------------------------------------ ##
@@ -156,7 +157,7 @@ rule starindex:
 ## FastQC, original reads
 rule fastqc:
 	input:
-		fastq = config["FASTQ"] + "/{sample}.fastq.gz"
+		fastq = FASTQdir + "/{sample}.fastq.gz"
 	output:
 		outputdir + "FastQC/{sample}_fastqc.zip"
 	params:
@@ -226,7 +227,7 @@ rule multiqc:
 # TrimGalore!
 rule trimgaloreSE:
 	input:
-		fastq = config["FASTQ"] + "/{sample}.fastq.gz"
+		fastq = FASTQdir + "/{sample}.fastq.gz"
 	output:
 		outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz"
 	params:
@@ -241,8 +242,8 @@ rule trimgaloreSE:
 
 rule trimgalorePE:
 	input:
-		fastq1 = config["FASTQ"] + "/{sample}_R1.fastq.gz",
-		fastq2 = config["FASTQ"] + "/{sample}_R2.fastq.gz"
+		fastq1 = FASTQdir + "/{sample}_R1.fastq.gz",
+		fastq2 = FASTQdir + "/{sample}_R2.fastq.gz"
 	output:
 		outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz",
 		outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz"
