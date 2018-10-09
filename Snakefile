@@ -8,7 +8,7 @@ import re
 def getpath(str):
 	if str in ['', '.', './']:
 		return ''
-	if str.startswith('.'):
+	if str.startswith('./'):
 		regex = re.compile('^\./?')
 		str = regex.sub('', str)
 	if not str.endswith('/'):
