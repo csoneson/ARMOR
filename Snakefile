@@ -17,8 +17,14 @@ def getpath(str):
 
 outputdir = getpath(config["output"])
 FASTQdir = getpath(config["FASTQ"])
+txomedir = getpath(config["txome"])
+genomedir = getpath(config["genome"])
+gtfdir = getpath(config["gtf"])
 print(outputdir)
-
+print(FASTQdir)
+print(txomedir)
+print(genomedir)
+print(gtfdir)
 ## ------------------------------------------------------------------------------------ ##
 ## Target definitions
 ## ------------------------------------------------------------------------------------ ##
@@ -85,7 +91,7 @@ rule softwareversions:
 ## Generate Salmon index from merged cDNA and ncRNA files
 rule salmonindex:
 	input:
-		txome = config["txome"]
+		txome = txomedir
 	output:
 		config["salmonindex"] + "/hash.bin"
 	log:
@@ -111,8 +117,8 @@ rule salmonindex:
 ## Generate linkedTxome mapping
 rule linkedTxome:
 	input:
-		txome = config["txome"],
-		gtf = config["gtf"],
+		txome = txomedir,
+		gtf = gtfdir,
 		salmonidx = config["salmonindex"] + "/hash.bin",
 		script = "scripts/generate_linkedTxome.R"
 	log:
@@ -132,8 +138,8 @@ rule linkedTxome:
 ## Generate STAR index
 rule starindex:
 	input:
-		genome = config["genome"],
-		gtf = config["gtf"]
+		genome = genomedir,
+		gtf = gtfdir
 	output:
 		config["STARindex"] + "/SA",
 		config["STARindex"] + "/chrNameLength.txt"
@@ -440,7 +446,7 @@ rule shiny:
 		expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()),
 		rds = outputdir + "outputR/edgeR_dge.rds",
 		metatxt = config["metatxt"],
-		gtf = config["gtf"],
+		gtf = gtfdir,
 		script = "scripts/prepare_results_for_shiny.R"
 	log: 
 		outputdir + "Rout/shiny_results.Rout"
