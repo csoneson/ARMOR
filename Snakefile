@@ -14,6 +14,7 @@ def getpath(str):
 	if not str.endswith('/'):
 		str += '/'
 	return str
+
 import re
 def getfile(str):
 	if str in ['', '.', './']:
@@ -28,11 +29,13 @@ FASTQdir = getpath(config["FASTQ"])
 txomedir = getfile(config["txome"])
 genomedir = getfile(config["genome"])
 gtfdir = getfile(config["gtf"])
+
 print(outputdir)
 print(FASTQdir)
 print(txomedir)
 print(genomedir)
 print(gtfdir)
+
 ## ------------------------------------------------------------------------------------ ##
 ## Target definitions
 ## ------------------------------------------------------------------------------------ ##
