@@ -49,11 +49,15 @@ rule listpackages:
 		Routdir = "Rout",
 		outtxt = "R_package_versions.txt",
 		script = "scripts/list_packages.R"
+	conda:
+		"envs/environment.yaml"
 	shell:
 		'''R CMD BATCH --no-restore --no-save "--args Routdir='{params.Routdir}' outtxt='{params.outtxt}'" {input.script} {log}'''
 
 ## Print the versions of all software packages
 rule softwareversions:
+	conda:
+		"envs/environment.yaml"
 	shell:
 		"R --version; salmon --version; trim_galore --version; cutadapt --version; "
 		"fastqc --version; STAR --version; samtools --version; multiqc --version; "
@@ -74,6 +78,8 @@ rule salmonindex:
 		salmonk = config["salmonk"],
 		salmonoutdir = config["salmonindex"],
 		anno =  config["annotation"]
+	conda:
+		"envs/environment.yaml"
 	shell:
 	  """
 	  if [ {params.anno} == "Gencode" ]; then
@@ -102,6 +108,8 @@ rule linkedTxome:
 		organism = config["organism"],
 		release = str(config["release"]),
 		build = config["build"]
+	conda:
+		"envs/environment.yaml"
 	shell:
 		'''R CMD BATCH --no-restore --no-save "--args transcriptfasta='{input.txome}' salmonidx='{input.salmonidx}' gtf='{input.gtf}' annotation='{params.flag}' organism='{params.organism}' release='{params.release}' build='{params.build}' output='{output}'" {input.script} {log}'''
 
@@ -118,6 +126,8 @@ rule starindex:
 	params:
 		STARindex = config["STARindex"],
 		readlength = config["readlength"]
+	conda:
+		"envs/environment.yaml"
 	threads: config["ncores"]
 	shell:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
@@ -137,6 +147,8 @@ rule fastqc:
 	    FastQC = config["output"]+"/FastQC"
 	log:
 		config["output"]+"/logs/fastqc_{sample}.log"
+	conda:
+		"envs/environment.yaml"
 	threads: config["ncores"]
 	shell:
 		"echo 'FastQC version:\n' > {log}; fastqc --version >> {log}; "
@@ -152,6 +164,8 @@ rule fastqc2:
 	    FastQC = config["output"]+"/FastQC"
 	log:
 		config["output"]+"/logs/fastqc_trimmed_{sample}.log"
+	conda:
+		"envs/environment.yaml"
 	threads: config["ncores"]
 	shell:
 		"echo 'FastQC version:\n' > {log}; fastqc --version >> {log}; "
@@ -181,6 +195,8 @@ rule multiqc:
 	    STARdir = config["output"]+"/STAR" 
 	log:
 		config["output"]+"/logs/multiqc.log"
+	conda:
+		"envs/environment.yaml"
 	shell:
 		"echo 'MultiQC version:\n' > {log}; multiqc --version >> {log}; "
 		"multiqc {params.FastQC} {params.FASTQtrimmed} {params.salmondir} {params.STARdir} -f -o {params.MultiQC}"
@@ -199,6 +215,8 @@ rule trimgaloreSE:
 	    FASTQtrimmed = config["output"] + "/FASTQtrimmed"
 	log:
 		config["output"]+"/logs/trimgalore_{sample}.log"
+	conda:
+		"envs/environment.yaml"
 	shell:
 		"echo 'TrimGalore! version:\n' > {log}; trim_galore --version >> {log}; "
 		"trim_galore -q 20 --phred33 --length 20 -o {params.FASTQtrimmed} --path_to_cutadapt cutadapt {input.fastq}"
@@ -214,6 +232,8 @@ rule trimgalorePE:
 	    FASTQtrimmed = config["output"] + "/FASTQtrimmed"
 	log:
 		config["output"]+"/logs/trimgalore_{sample}.log"
+	conda:
+		"envs/environment.yaml"
 	shell:
 		"echo 'TrimGalore! version:\n' > {log}; trim_galore --version >> {log}; "
 		"trim_galore -q 20 --phred33 --length 20 -o {params.FASTQtrimmed} --path_to_cutadapt cutadapt "
@@ -237,6 +257,8 @@ rule salmonSE:
 		fldMean = config["fldMean"],
 		fldSD = config["fldSD"],
 		salmondir = config["output"]+"/salmon"
+	conda:
+		"envs/environment.yaml"
 	shell:
 		"echo 'Salmon version:\n' > {log}; salmon --version >> {log}; "
 		"salmon quant -i {params.salmonindex} -l A -r {input.fastq} "
@@ -258,6 +280,8 @@ rule salmonPE:
 		fldMean = config["fldMean"],
 		fldSD = config["fldSD"],
 		salmondir = config["output"]+"/salmon"
+	conda:
+		"envs/environment.yaml"
 	shell:
 		"echo 'Salmon version:\n' > {log}; salmon --version >> {log}; "
 		"salmon quant -i {params.salmonindex} -l A -1 {input.fastq1} -2 {input.fastq2} "
@@ -280,6 +304,8 @@ rule starSE:
 	params:
 		STARindex = config["STARindex"],
 		STARdir = config["output"] +"/STAR"
+	conda:
+		"envs/environment.yaml"
 	shell:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
 		"STAR --genomeDir {params.STARindex} --readFilesIn {input.fastq} "
@@ -299,6 +325,8 @@ rule starPE:
 	params:
 		STARindex = config["STARindex"],
 		STARdir = config["output"] +"/STAR"
+	conda:
+		"envs/environment.yaml"
 	shell:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
 		"STAR --genomeDir {params.STARindex} --readFilesIn {input.fastq1} {input.fastq2} "
@@ -313,6 +341,8 @@ rule staridx:
 		config["output"]+"/STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai"
 	log:
 		config["output"]+"/logs/samtools_index_{sample}.log"
+	conda:
+		"envs/environment.yaml"
 	shell:
 		"echo 'samtools version:\n' > {log}; samtools --version >> {log}; "
 		"samtools index {input.bam}"
@@ -328,6 +358,8 @@ rule bigwig:
 	    STARbigwig = config["output"]+"/STARbigwig"
 	log:
 		config["output"]+"/logs/bigwig_{sample}.log"
+	conda:
+		"envs/environment.yaml"
 	shell:
 		"echo 'bedtools version:\n' > {log}; bedtools --version >> {log}; "
 		"bedtools genomecov -split -ibam {input.bam} -bg | sort -k1,1 -k2,2n > "
@@ -351,7 +383,9 @@ rule edgeR:
 	log:
 		config["output"]+"/Rout/run_dge_edgeR.Rout"
 	params:
-		salmondir = config["output"]+"/salmon",
+		salmondir = config["output"]+"/salmon"
+	conda:
+		"envs/environment.yaml"
 	shell:
 		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
 
@@ -369,7 +403,9 @@ rule DRIMSeq:
 	log:
 		config["output"]+"/Rout/run_dtu_drimseq.Rout"
 	params:
-		salmondir = config["output"]+"/salmon",
+		salmondir = config["output"]+"/salmon"
+	conda:
+		"envs/environment.yaml"
 	shell:
 		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
 
@@ -390,6 +426,8 @@ rule shiny:
 	params:
 		groupvar = config["groupvar"],
 		bigwigdir = "STARbigwig"
+	conda:
+		"envs/environment.yaml"
 	shell:
 		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile='{input.gtf}' metafile='{input.metatxt}' bigwigdir='{params.bigwigdir}' outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
 
@@ -406,5 +444,7 @@ rule shinyedgeR:
 		outSCE = config["output"]+"/outputR/shiny_results_sce_edgeR.rds"
 	params:
 		groupvar = config["groupvar"]
+	conda:
+		"envs/environment.yaml"
 	shell:
 		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile=NULL metafile='{input.metatxt}' bigwigdir=NULL outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
