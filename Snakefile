@@ -26,7 +26,7 @@ print(FASTQdir)
 ## Target definitions
 ## ------------------------------------------------------------------------------------ ##
 ## Run all analyses
-## Add "output/DRIMSeq_dtu.rds" if desired
+## Add outputdir + "outputR/DRIMSeq_dtu.rds" if desired
 rule all:
 	input:
 		outputdir + "MultiQC/multiqc_report.html",
@@ -41,9 +41,9 @@ rule gitinstall:
 	input:
 		script = "scripts/install_git.R"
 	output:
-		"Rout/gitinstall_state.txt"
+		outputdir + "Rout/gitinstall_state.txt"
 	log:
-		"Rout/install_git.Rout"
+		outputdir + "Rout/install_git.Rout"
 	shell:
 		'''R CMD BATCH --no-restore --no-save "--args outtxt='{output}' " {input.script} {log}'''
 
@@ -435,6 +435,8 @@ rule DRIMSeq:
 	input:
 		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
 		metatxt = config["metatxt"],
+		salmonidx = config["salmonindex"] + "/hash.bin",
+		json = config["salmonindex"] + ".json",
 		script = "scripts/run_dtu_drimseq.R"
 	output:
 		outputdir + "outputR/DRIMSeq_dtu.rds"
@@ -445,7 +447,7 @@ rule DRIMSeq:
 	conda:
 		"envs/environment.yaml"
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Shiny app
