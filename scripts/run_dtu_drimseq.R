@@ -41,7 +41,7 @@ se <- tximeta(coldata)
 
 ## Create dmDSdata object
 counts <- data.frame(feature_id = rownames(se),
-                     gene_id = rowData(se)$gene_id,
+                     gene_id = unlist(rowData(se)$gene_id),
                      assays(se)[["counts"]],
                      row.names = NULL)
 
