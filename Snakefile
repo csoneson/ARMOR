@@ -129,7 +129,7 @@ rule linkedTxome:
 		gtf = config["gtf"],
 		salmonidx = config["salmonindex"] + "/hash.bin",
 		script = "scripts/generate_linkedTxome.R",
-		install = "Rout/gitinstall_state.txt"
+		install = outputdir + "Rout/gitinstall_state.txt"
 	log:
 		outputdir + "Rout/generate_linkedTxome.Rout"
 	output:
