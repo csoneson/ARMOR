@@ -41,9 +41,9 @@ rule gitinstall:
 	input:
 		script = "scripts/install_git.R"
 	output:
-		"Rout/gitinstall_state.txt"
+	    outputdir + "Rout/gitinstall_state.txt"
 	log:
-		"Rout/install_git.Rout"
+		outputdir + "Rout/install_git.Rout"
 	shell:
 		'''R CMD BATCH --no-restore --no-save "--args outtxt='{output}' " {input.script} {log}'''
 
