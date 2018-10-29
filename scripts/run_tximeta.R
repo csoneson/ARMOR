@@ -28,20 +28,21 @@ names(salmonfiles) <- metadata$names
 (salmonfiles <- salmonfiles[file.exists(salmonfiles)])
 
 ## Add file column to metadata and import annotated abundances
+## In transcript level
 coldata <- cbind(metadata, files = salmonfiles, stringsAsFactors=FALSE)
-se <- tximeta(coldata)
+st <- tximeta(coldata)
 
 ## Summarize to gene level
-sg <- summarizeToGene(se)
+sg <- summarizeToGene(st)
 
 ## Add gene information, e.g. gene_name, entrezid, ... to se
-rowData(se) <- rowData(se) %>%
+rowData(st) <- rowData(st) %>%
     data.frame() %>%
     left_join(data.frame(rowData(sg))) %>%
     DataFrame()
 
 
-saveRDS(list(se = se, sg = sg), file = outrds)
+saveRDS(list(st = st, sg = sg), file = outrds)
 
 sessionInfo()
 date()
