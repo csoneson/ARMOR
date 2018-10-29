@@ -411,6 +411,7 @@ rule bigwig:
 ## tximeta
 rule tximeta:
 	input:
+	    outputdir + "Rout/gitinstall_state.txt",
 		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
 		metatxt = config["metatxt"],
 		salmonidx = config["salmonindex"] + "/hash.bin",
@@ -434,6 +435,7 @@ rule tximeta:
 ## edgeR
 rule edgeR:
 	input:
+	    outputdir + "Rout/gitinstall_state.txt",
 		rds = outputdir + "outputR/tximeta_se.rds",
 		script = "scripts/run_dge_edgeR.R"
 	output:
@@ -451,6 +453,7 @@ rule edgeR:
 ## DRIMSeq
 rule DRIMSeq:
 	input:
+	    outputdir + "Rout/gitinstall_state.txt",
 		rds = outputdir + "outputR/tximeta_se.rds",
 		script = "scripts/run_dtu_drimseq.R"
 	output:
@@ -467,6 +470,7 @@ rule DRIMSeq:
 ## ------------------------------------------------------------------------------------ ##
 rule shiny:
 	input:
+	    outputdir + "Rout/gitinstall_state.txt",
 		expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()),
 		rds = outputdir + "outputR/edgeR_dge.rds",
 		metatxt = config["metatxt"],
@@ -488,6 +492,7 @@ rule shiny:
 
 rule shinyedgeR:
 	input:
+	    outputdir + "Rout/gitinstall_state.txt",
 		rds = outputdir + "outputR/edgeR_dge.rds",
 		metatxt = config["metatxt"],
 		script = "scripts/prepare_results_for_shiny.R"
