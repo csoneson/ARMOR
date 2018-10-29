@@ -451,19 +451,16 @@ rule edgeR:
 ## DRIMSeq
 rule DRIMSeq:
 	input:
-		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
-		metatxt = config["metatxt"],
+		rds = outputdir + "outputR/tximeta_se.rds",
 		script = "scripts/run_dtu_drimseq.R"
 	output:
 		outputdir + "outputR/DRIMSeq_dtu.rds"
 	log:
 		outputdir + "Rout/run_dtu_drimseq.Rout"
-	params:
-		salmondir = outputdir + "salmon"
 	conda:
 		"envs/environment.yaml"
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+		'''R CMD BATCH --no-restore --no-save "--args se='{input.rds}' outrds='{output}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Shiny app
