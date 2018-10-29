@@ -28,7 +28,7 @@ pdf(gsub("rds$", "pdf", outrds))
 ## Load the SummarizedExperiment object obtained from tximeta
 se <- readRDS(se)
 
-## Use the quantification of transcripts on the gene level
+## Use the quantification on the gene level
 sg <- se$sg
 
 ## Create DGEList and include average transcript length offsets
