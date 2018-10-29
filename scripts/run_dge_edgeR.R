@@ -20,31 +20,16 @@ suppressPackageStartupMessages(library(SummarizedExperiment))
 suppressPackageStartupMessages(library(edgeR))
 suppressPackageStartupMessages(library(ggplot2))
 
-print(salmondir)
-print(json)
-print(metafile)
-print(outrds)
-
-## Load json linkedTxome
-loadLinkedTxome(json)
+print(se)
 
 ## Open pdf file to contain any figure generated below
 pdf(gsub("rds$", "pdf", outrds))
 
-## Read metadata
-metadata <- read.delim(metafile, header = TRUE, as.is = TRUE, sep = "\t")
+## Load the SummarizedExperiment object obtained from tximeta
+se <- readRDS(se)
 
-## List Salmon directories
-salmonfiles <- paste0(salmondir,"/",metadata$names, "/quant.sf")
-names(salmonfiles) <- metadata$names
-(salmonfiles <- salmonfiles[file.exists(salmonfiles)])
-
-## Add file column to metadata and import annotated abundances
-coldata <- cbind(metadata, files = salmonfiles, stringsAsFactors=FALSE)
-se <- tximeta(coldata)
-
-## Summarize to gene level
-sg <- summarizeToGene(se)
+## Use the quantification of transcripts on the gene level
+sg <- se$sg
 
 ## Create DGEList and include average transcript length offsets
 cts <- assays(sg)[["counts"]]
@@ -60,9 +45,9 @@ dge0$genes <- as.data.frame(rowRanges(sg))
 
 ## Define design. ************** MODIFY ************** 
 stopifnot(all(colnames(dge0) == metadata$name))
-(des <- model.matrix(~ XXXX, data = metadata))
+#(des <- model.matrix(~ XXXX, data = metadata))
 #e.g.
-#(des <- model.matrix(~ 0 + celline, data = metadata))
+(des <- model.matrix(~ 0 + celline, data = metadata))
 
 ## Filter out genes with average CPM below 1
 print(dim(dge0))
@@ -79,9 +64,9 @@ qlfit <- glmQLFit(dge, design = des)
 plotBCV(dge)
 
 ## Define contrasts. ************** MODIFY ************** 
-(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
+#(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
 #e.g.
-#(contrasts <- as.data.frame(makeContrasts(contrasts= "cellineN61311-cellineN052611", levels = des)))
+(contrasts <- as.data.frame(makeContrasts(contrasts= "cellineN61311-cellineN052611", levels = des)))
 
 ## Perform tests
 signif3 <- function(x) signif(x, digits = 3)

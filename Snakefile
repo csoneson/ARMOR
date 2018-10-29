@@ -406,26 +406,44 @@ rule bigwig:
 		"{input.chrl} {output}; rm -f {params.STARbigwigdir}/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph"
 
 ## ------------------------------------------------------------------------------------ ##
-## Differential expression
+## Transcript quantification
 ## ------------------------------------------------------------------------------------ ##
-## edgeR
-rule edgeR:
+## tximeta
+rule tximeta:
 	input:
 		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
 		metatxt = config["metatxt"],
 		salmonidx = config["salmonindex"] + "/hash.bin",
 		json = config["salmonindex"] + ".json",
-		script = "scripts/run_dge_edgeR.R"
+		script = "scripts/run_tximeta.R"
 	output:
-		outputdir + "outputR/edgeR_dge.rds"
+		outputdir + "outputR/tximeta_se.rds"
 	log:
-		outputdir + "Rout/run_dge_edgeR.Rout"
+		outputdir + "Rout/tximeta_se.Rout"
 	params:
 		salmondir = outputdir + "salmon"
 	conda:
 		"envs/environment.yaml"
 	shell:
 		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+
+
+## ------------------------------------------------------------------------------------ ##
+## Differential expression
+## ------------------------------------------------------------------------------------ ##
+## edgeR
+rule edgeR:
+	input:
+		rds = outputdir + "outputR/tximeta_se.rds",
+		script = "scripts/run_dge_edgeR.R"
+	output:
+		outputdir + "outputR/edgeR_dge.rds"
+	log:
+		outputdir + "Rout/run_dge_edgeR.Rout"
+	conda:
+		"envs/environment.yaml"
+	shell:
+		'''R CMD BATCH --no-restore --no-save "--args se='{input.rds}' outrds='{output}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage
