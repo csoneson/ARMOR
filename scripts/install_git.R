@@ -7,7 +7,7 @@ print(outtxt)
 
 
 # =============== list all the packages =================
-pkgs.use <- list(cran = c("dplyr","ggplot2", "tidyr", "devtools"),
+pkgs.use <- list(cran = c("dplyr","ggplot2", "tidyr", "devtools", "BiocManager"),
                  bioconductor = c("limma", "edgeR", "ggtree",
                                   "S4Vectors", "DRIMSeq", 
                                   "SingleCellExperiment"),
@@ -78,6 +78,13 @@ usePackage <- function(pkgs, gitLink, lib.personal,
         
         ## use this after 2018-10-31
         # --------------------------------------------------------------------------
+        # install BiocManager packages
+        isBiocM <- "BiocManager" %in% installed.packages()[, 1]
+        if (!isBiocM) {
+            install.packages("BiocManager", lib = lib.personal)
+        }
+        
+        # install the other packages
         pkgs <- unlist(pkgs.use, use.names = FALSE)
         isInstalled <- pkgs %in% installed.packages()[, 1]
         BiocManager::install(pkgs[!isInstalled], update = FALSE,
