@@ -115,7 +115,6 @@ print(paths)
 
 ## install packages
 usePackage(pkgs.use, gitLink = gitLink,
-           lib.personal = .libPaths()[1],
            defaultCRANmirror = "http://cran.at.r-project.org")
 
 
