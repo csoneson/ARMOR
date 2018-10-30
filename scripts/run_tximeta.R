@@ -8,8 +8,6 @@ suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(tximport))
 suppressPackageStartupMessages(library(tximeta))
 suppressPackageStartupMessages(library(SummarizedExperiment))
-suppressPackageStartupMessages(library(edgeR))
-suppressPackageStartupMessages(library(ggplot2))
 
 print(salmondir)
 print(json)
