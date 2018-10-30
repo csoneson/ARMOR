@@ -23,7 +23,6 @@ metadata <- read.delim(metafile, header = TRUE, as.is = TRUE, sep = "\t")
 ## List Salmon directories
 salmonfiles <- paste0(salmondir,"/",metadata$names, "/quant.sf")
 names(salmonfiles) <- metadata$names
-(salmonfiles <- salmonfiles[file.exists(salmonfiles)])
 
 ## Add file column to metadata and import annotated abundances
 ## In transcript level
