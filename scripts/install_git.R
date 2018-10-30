@@ -11,10 +11,8 @@ pkgs.use <- list(cran = c("dplyr","ggplot2", "tidyr", "devtools", "BiocManager")
                  bioconductor = c("limma", "edgeR", "ggtree",
                                   "S4Vectors", "DRIMSeq", 
                                   "SingleCellExperiment"),
-                 github = c("tximeta"))
+                 github = c("mikelove/tximeta"))
 
-gitLink <- c("mikelove/tximeta")
-names(gitLink) <- pkgs.use$github
 
 
 # =================== load package =================
@@ -56,20 +54,27 @@ usePackage <- function(pkgs, gitLink, lib.personal,
     
     ## github (!!! remember to remove token)
     if(!is.null(pkgs[["github"]])){
-        ind.git <- pkgs[["github"]] %in% installed.packages()[,1]
+        pkg.git <- gsub(".*/", pkgs[["github"]])
+        ind.git <- pkg.git %in% installed.packages()[,1]
         if(sum(ind.git)>0){
-            cat("packages: ", pkgs[["github"]][ind.git],
+            cat("Packages: ", pkg.git[ind.git],
                 "exist in the environment \n")
         }
         if(!all(ind.git)){
             options(unzip = "internal")
             for(i in seq_len(sum(!ind.git))){
                 wgit <- which(!ind.git)
-                cat("packages: ", pkgs[["github"]][wgit[i]],
+                cat("The package: ", pkg.git[wgit[i]],
                     "is installing \n")
-                devtools::install_github(gitLink[pkgs[["github"]][wgit[i]]],
-                                         lib = lib.personal,
-                                         ref = "88271a3b57e7bafa93025fa09842d626abf036a1")
+                if (pkg.git[wgit[i]] == "tximeta") {
+                    devtools::install_github(pkgs[["github"]][wgit[i]],
+                                             lib = lib.personal,
+                                             ref = "88271a3b57e7bafa93025fa09842d626abf036a1")
+                } else {
+                    devtools::install_github(pkgs[["github"]][wgit[i]],
+                                             lib = lib.personal)
+                }
+                
             }
         }
     }
