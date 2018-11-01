@@ -6,9 +6,8 @@ for (i in 1:length(args)) {
 print(outtxt)
 
 # =============== list all the packages =================
-pkgs.use <- list(cran = c("dplyr","ggplot2", "tidyr", "devtools", "BiocManager"),
-                 bioconductor = c("limma", "edgeR", "ggtree",
-                                  "S4Vectors", "DRIMSeq", 
+pkgs.use <- list(cran = c("dplyr", "ggplot2", "tidyr", "remotes"),
+                 bioconductor = c("limma", "edgeR", "S4Vectors", "DRIMSeq", 
                                   "SingleCellExperiment", "tximeta"))
 
 # install the packages if not installed
