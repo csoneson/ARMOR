@@ -37,10 +37,10 @@ usePackage <- function(pkgs, defaultCRANmirror) {
     
     suppressPackageStartupMessages(lapply(unlist(pkgs), library, character.only = TRUE))
     
-    # sink(outtxt)
-    # cat("packages loaded successfully: \n",
-    #     unlist(pkgs.use)[unlist(pkgs) %in% loadedNamespaces()])
-    # sink()
+    sink(outtxt)
+    cat("packages loaded successfully: \n",
+        unlist(pkgs.use)[unlist(pkgs) %in% loadedNamespaces()])
+    sink()
 }
 
 paths <- .libPaths()
