@@ -16,13 +16,14 @@ usePackage <- function(pkgs, defaultCRANmirror) {
     # install BiocManager package
     isBiocM <- "BiocManager" %in% installed.packages()[, 1]
     if (!isBiocM) {
-        install.packages("BiocManager")
+        install.packages("BiocManager", repos = defaultCRANmirror)
     }
     
     # install the other packages
     pkgs <- unlist(pkgs.use, use.names = FALSE)
     isInstalled <- pkgs %in% installed.packages()[, 1]
-    BiocManager::install(pkgs[!isInstalled], update = FALSE, dependencies = TRUE)
+    BiocManager::install(pkgs[!isInstalled],
+                         update = FALSE, dependencies = TRUE)
     
     pkg.load <- lapply(pkgs, FUN = function(x) {
         x[!(x %in% installed.packages()[, "Package"])]
@@ -36,10 +37,10 @@ usePackage <- function(pkgs, defaultCRANmirror) {
     
     suppressPackageStartupMessages(lapply(unlist(pkgs), library, character.only = TRUE))
     
-    sink(outtxt)
-    cat("packages loaded successfully: \n",
-        unlist(pkgs.use)[unlist(pkgs) %in% loadedNamespaces()])
-    sink()
+    # sink(outtxt)
+    # cat("packages loaded successfully: \n",
+    #     unlist(pkgs.use)[unlist(pkgs) %in% loadedNamespaces()])
+    # sink()
 }
 
 paths <- .libPaths()
