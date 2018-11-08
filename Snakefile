@@ -37,14 +37,14 @@ rule all:
 		outputdir + "outputR/shiny_results_sce_edgeR.rds"
 		
 ## Install tximeta (or other packages from a repository needed by the user)		
-rule gitinstall:
+rule installpkgs:
 	input:
-		script = "scripts/install_git.R"
+		script = "scripts/install_pkgs.R"
 	output:
-	    outputdir + "Rout/gitinstall_state.txt"
+	    outputdir + "Rout/installpkgs_state.txt"
 	priority: 50
 	log:
-		outputdir + "Rout/install_git.Rout"
+		outputdir + "Rout/install_pkgs.Rout"
 	shell:
 		'''R CMD BATCH --no-restore --no-save "--args outtxt='{output}' " {input.script} {log}'''
 
@@ -130,7 +130,7 @@ rule linkedTxome:
 		gtf = config["gtf"],
 		salmonidx = config["salmonindex"] + "/hash.bin",
 		script = "scripts/generate_linkedTxome.R",
-		install = outputdir + "Rout/gitinstall_state.txt"
+		install = outputdir + "Rout/installpkgs_state.txt"
 	log:
 		outputdir + "Rout/generate_linkedTxome.Rout"
 	output:
@@ -412,7 +412,7 @@ rule bigwig:
 ## tximeta
 rule tximeta:
 	input:
-	    outputdir + "Rout/gitinstall_state.txt",
+	    outputdir + "Rout/installpkgs_state.txt",
 		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
 		metatxt = config["metatxt"],
 		salmonidx = config["salmonindex"] + "/hash.bin",
@@ -436,7 +436,7 @@ rule tximeta:
 ## edgeR
 rule edgeR:
 	input:
-	    outputdir + "Rout/gitinstall_state.txt",
+	    outputdir + "Rout/installpkgs_state.txt",
 		rds = outputdir + "outputR/tximeta_se.rds",
 		script = "scripts/run_dge_edgeR.R"
 	output:
@@ -454,7 +454,7 @@ rule edgeR:
 ## DRIMSeq
 rule DRIMSeq:
 	input:
-	    outputdir + "Rout/gitinstall_state.txt",
+	    outputdir + "Rout/installpkgs_state.txt",
 		rds = outputdir + "outputR/tximeta_se.rds",
 		script = "scripts/run_dtu_drimseq.R"
 	output:
@@ -471,7 +471,7 @@ rule DRIMSeq:
 ## ------------------------------------------------------------------------------------ ##
 rule shiny:
 	input:
-	    outputdir + "Rout/gitinstall_state.txt",
+	    outputdir + "Rout/installpkgs_state.txt",
 		expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()),
 		rds = outputdir + "outputR/edgeR_dge.rds",
 		metatxt = config["metatxt"],
@@ -493,7 +493,7 @@ rule shiny:
 
 rule shinyedgeR:
 	input:
-	    outputdir + "Rout/gitinstall_state.txt",
+	    outputdir + "Rout/installpkgs_state.txt",
 		rds = outputdir + "outputR/edgeR_dge.rds",
 		metatxt = config["metatxt"],
 		script = "scripts/prepare_results_for_shiny.R"

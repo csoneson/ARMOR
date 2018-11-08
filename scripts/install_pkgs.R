@@ -16,7 +16,8 @@ usePackage <- function(pkgs, defaultCRANmirror) {
     # install BiocManager package
     isBiocM <- "BiocManager" %in% installed.packages()[, 1]
     if (!isBiocM) {
-        install.packages("BiocManager", repos = defaultCRANmirror)
+        #install.packages("BiocManager", repos = defaultCRANmirror)
+        install.packages("BiocManager")
     }
     
     # install the other packages
@@ -47,8 +48,8 @@ paths <- .libPaths()
 print(paths)
 
 ## install packages
-usePackage(pkgs.use, defaultCRANmirror = "http://cran.at.r-project.org")
-
+# usePackage(pkgs.use, defaultCRANmirror = "http://cran.at.r-project.org")
+usePackage(pkgs.use)
 sessionInfo()
 date()
 
