@@ -42,6 +42,7 @@ rule gitinstall:
 		script = "scripts/install_git.R"
 	output:
 	    outputdir + "Rout/gitinstall_state.txt"
+	priority: 50
 	log:
 		outputdir + "Rout/install_git.Rout"
 	shell:
