@@ -16,7 +16,8 @@ usePackage <- function(pkgs, defaultCRANmirror) {
     # install BiocManager package
     isBiocM <- "BiocManager" %in% installed.packages()[, 1]
     if (!isBiocM) {
-        install.packages("BiocManager", repos = defaultCRANmirror)
+        install.packages("BiocManager", repos = defaultCRANmirror, 
+                         lib = .libPaths()[1])
         # install.packages("BiocManager")
     }
     
@@ -24,7 +25,8 @@ usePackage <- function(pkgs, defaultCRANmirror) {
     pkgs <- unlist(pkgs.use, use.names = FALSE)
     isInstalled <- pkgs %in% installed.packages()[, 1]
     BiocManager::install(pkgs[!isInstalled],
-                         update = FALSE, dependencies = TRUE)
+                         update = FALSE, dependencies = TRUE,
+                         lib = .libPaths()[1])
     
     pkg.load <- lapply(pkgs, FUN = function(x) {
         x[!(x %in% installed.packages()[, "Package"])]
