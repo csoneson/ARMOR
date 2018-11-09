@@ -89,12 +89,12 @@ rule listpackages:
 		outputdir + "Rout/list_packages.Rout"
 	params:
 		Routdir = outputdir + "Rout",
-		outtxt = "R_package_versions.txt",
+		outtxt = outputdir + "R_package_versions.txt",
 		script = "scripts/list_packages.R"
 	conda:
 		Renv
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args Routdir='{params.Routdir}' outtxt='{params.outtxt}'" {input.script} {log}'''
+		'''R CMD BATCH --no-restore --no-save "--args Routdir='{params.Routdir}' outtxt='{params.outtxt}'" {params.script} {log}'''
 
 ## Print the versions of all software packages
 rule softwareversions:
