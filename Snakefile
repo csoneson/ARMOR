@@ -43,6 +43,8 @@ rule pkginstall:
 	output:
 	    outputdir + "Rout/pkginstall_state.txt"
 	priority: 50
+	conda:
+		"envs/environment_R.yaml"
 	log:
 		outputdir + "Rout/install_pkgs.Rout"
 	shell:
@@ -81,7 +83,7 @@ rule listpackages:
 		outtxt = "R_package_versions.txt",
 		script = "scripts/list_packages.R"
 	conda:
-		"envs/environment.yaml"
+		"envs/environment_R.yaml"
 	shell:
 		'''R CMD BATCH --no-restore --no-save "--args Routdir='{params.Routdir}' outtxt='{params.outtxt}'" {input.script} {log}'''
 
@@ -90,7 +92,7 @@ rule softwareversions:
 	conda:
 		"envs/environment.yaml"
 	shell:
-		"R --version; salmon --version; trim_galore --version; cutadapt --version; "
+		"salmon --version; trim_galore --version; cutadapt --version; "
 		"fastqc --version; STAR --version; samtools --version; multiqc --version; "
 		"bedtools --version"
 
@@ -141,7 +143,7 @@ rule linkedTxome:
 		release = str(config["release"]),
 		build = config["build"]
 	conda:
-		"envs/environment.yaml"
+		"envs/environment_R.yaml"
 	shell:
 		'''R CMD BATCH --no-restore --no-save "--args transcriptfasta='{input.txome}' salmonidx='{input.salmonidx}' gtf='{input.gtf}' annotation='{params.flag}' organism='{params.organism}' release='{params.release}' build='{params.build}' output='{output}'" {input.script} {log}'''
 
@@ -425,7 +427,7 @@ rule tximeta:
 	params:
 		salmondir = outputdir + "salmon"
 	conda:
-		"envs/environment.yaml"
+		"envs/environment_R.yaml"
 	shell:
 		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
 
@@ -444,7 +446,7 @@ rule edgeR:
 	log:
 		outputdir + "Rout/run_dge_edgeR.Rout"
 	conda:
-		"envs/environment.yaml"
+		"envs/environment_R.yaml"
 	shell:
 		'''R CMD BATCH --no-restore --no-save "--args se='{input.rds}' outrds='{output}'" {input.script} {log}'''
 
@@ -462,7 +464,7 @@ rule DRIMSeq:
 	log:
 		outputdir + "Rout/run_dtu_drimseq.Rout"
 	conda:
-		"envs/environment.yaml"
+		"envs/environment_R.yaml"
 	shell:
 		'''R CMD BATCH --no-restore --no-save "--args se='{input.rds}' outrds='{output}'" {input.script} {log}'''
 
@@ -486,7 +488,7 @@ rule shiny:
 		groupvar = config["groupvar"],
 		bigwigdir = "STARbigwig"
 	conda:
-		"envs/environment.yaml"
+		"envs/environment_R.yaml"
 	shell:
 		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile='{input.gtf}' metafile='{input.metatxt}' bigwigdir='{params.bigwigdir}' outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
 
@@ -505,6 +507,6 @@ rule shinyedgeR:
 	params:
 		groupvar = config["groupvar"]
 	conda:
-		"envs/environment.yaml"
+		"envs/environment_R.yaml"
 	shell:
 		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile=NULL metafile='{input.metatxt}' bigwigdir=NULL outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
