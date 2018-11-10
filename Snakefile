@@ -35,7 +35,7 @@ Rbin = config["Rbin"]
 ## Target definitions
 ## ------------------------------------------------------------------------------------ ##
 ## Run all analyses
-## Add "output/DRIMSeq_dtu.rds" if desired
+## Add outputdir + "outputR/DRIMSeq_dtu.rds" if desired
 rule all:
 	input:
 		outputdir + "MultiQC/multiqc_report.html",
