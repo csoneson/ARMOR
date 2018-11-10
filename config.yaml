@@ -64,5 +64,4 @@ output: output
 ## your own R installation (then you have to set the path to your library in the .Renviron file)
 useCondaR: True
 Rbin: R
-Rlib: ''
 ##---------------------------------------------------------------------------------------------

@@ -30,7 +30,6 @@ else:
 print(Renv)
 
 Rbin = config["Rbin"]
-Rlib = config["Rlib"]
 
 ## ------------------------------------------------------------------------------------ ##
 ## Target definitions
@@ -58,7 +57,7 @@ rule pkginstall:
 	log:
 		outputdir + "Rout/install_pkgs.Rout"
 	shell:
-		'''R_LIBS_USER='{Rlib}' {Rbin} CMD BATCH --no-restore --no-save "--args outtxt='{output}' " {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args outtxt='{output}' " {input.script} {log}'''
 
 ## FastQC on original (untrimmed) files
 rule runfastqc:
@@ -95,7 +94,7 @@ rule listpackages:
 	conda:
 		Renv
 	shell:
-		'''R_LIBS_USER='{Rlib}' {Rbin} CMD BATCH --no-restore --no-save "--args Routdir='{params.Routdir}' outtxt='{params.outtxt}'" {params.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args Routdir='{params.Routdir}' outtxt='{params.outtxt}'" {params.script} {log}'''
 
 ## Print the versions of all software packages
 rule softwareversions:
@@ -155,7 +154,7 @@ rule linkedTxome:
 	conda:
 		Renv
 	shell:
-		'''R_LIBS_USER='{Rlib}' {Rbin} CMD BATCH --no-restore --no-save "--args transcriptfasta='{input.txome}' salmonidx='{input.salmonidx}' gtf='{input.gtf}' annotation='{params.flag}' organism='{params.organism}' release='{params.release}' build='{params.build}' output='{output}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args transcriptfasta='{input.txome}' salmonidx='{input.salmonidx}' gtf='{input.gtf}' annotation='{params.flag}' organism='{params.organism}' release='{params.release}' build='{params.build}' output='{output}'" {input.script} {log}'''
 
 ## Generate STAR index
 rule starindex:
@@ -439,7 +438,7 @@ rule tximeta:
 	conda:
 		Renv
 	shell:
-		'''R_LIBS_USER='{Rlib}' {Rbin} CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
 
 
 ## ------------------------------------------------------------------------------------ ##
@@ -458,7 +457,7 @@ rule edgeR:
 	conda:
 		Renv
 	shell:
-		'''R_LIBS_USER='{Rlib}' {Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' outrds='{output}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' outrds='{output}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage
@@ -476,7 +475,7 @@ rule DRIMSeq:
 	conda:
 		Renv
 	shell:
-		'''R_LIBS_USER='{Rlib}' {Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' outrds='{output}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' outrds='{output}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Shiny app
@@ -500,7 +499,7 @@ rule shiny:
 	conda:
 		Renv
 	shell:
-		'''R_LIBS_USER='{Rlib}' {Rbin} CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile='{input.gtf}' metafile='{input.metatxt}' bigwigdir='{params.bigwigdir}' outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile='{input.gtf}' metafile='{input.metatxt}' bigwigdir='{params.bigwigdir}' outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
 
 
 rule shinyedgeR:
@@ -519,4 +518,4 @@ rule shinyedgeR:
 	conda:
 		Renv
 	shell:
-		'''R_LIBS_USER='{Rlib}' {Rbin} CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile=NULL metafile='{input.metatxt}' bigwigdir=NULL outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile=NULL metafile='{input.metatxt}' bigwigdir=NULL outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
