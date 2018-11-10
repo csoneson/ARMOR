@@ -30,6 +30,7 @@ se <- readRDS(se)
 
 ## Use the quantification on the gene level
 sg <- se$sg
+metadata <- colData(sg)
 
 ## Create DGEList and include average transcript length offsets
 cts <- assays(sg)[["counts"]]
@@ -44,7 +45,7 @@ dge0 <- calcNormFactors(dge0)
 dge0$genes <- as.data.frame(rowRanges(sg))
 
 ## Define design. ************** MODIFY ************** 
-stopifnot(all(colnames(dge0) == metadata$name))
+stopifnot(all(colnames(dge0) == metadata$names))
 #(des <- model.matrix(~ XXXX, data = metadata))
 #e.g.
 (des <- model.matrix(~ 0 + celline, data = metadata))
