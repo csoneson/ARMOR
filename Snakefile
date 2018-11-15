@@ -21,6 +21,15 @@ FASTQdir = getpath(config["FASTQ"])
 print(outputdir)
 print(FASTQdir)
 
+## Define the conda environment for all rules using R
+if config["useCondaR"] == True:
+	Renv = "envs/environment_R.yaml"
+else:
+	Renv = "envs/environment.yaml"
+
+print(Renv)
+
+Rbin = config["Rbin"]
 
 ## ------------------------------------------------------------------------------------ ##
 ## Target definitions
@@ -36,16 +45,19 @@ rule all:
 		outputdir + "outputR/shiny_results_list_edgeR.rds",
 		outputdir + "outputR/shiny_results_sce_edgeR.rds"
 		
-## Install tximeta (or other packages from a repository needed by the user)		
-rule gitinstall:
+## Install R packages	
+rule pkginstall:
 	input:
-		script = "scripts/install_git.R"
+		script = "scripts/install_pkgs.R"
 	output:
-		outputdir + "Rout/gitinstall_state.txt"
+	    outputdir + "Rout/pkginstall_state.txt"
+	priority: 50
+	conda:
+		Renv
 	log:
-		outputdir + "Rout/install_git.Rout"
+		outputdir + "Rout/install_pkgs.Rout"
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args outtxt='{output}' " {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args outtxt='{output}' " {input.script} {log}'''
 
 ## FastQC on original (untrimmed) files
 rule runfastqc:
@@ -77,19 +89,19 @@ rule listpackages:
 		outputdir + "Rout/list_packages.Rout"
 	params:
 		Routdir = outputdir + "Rout",
-		outtxt = "R_package_versions.txt",
+		outtxt = outputdir + "R_package_versions.txt",
 		script = "scripts/list_packages.R"
 	conda:
-		"envs/environment.yaml"
+		Renv
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args Routdir='{params.Routdir}' outtxt='{params.outtxt}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args Routdir='{params.Routdir}' outtxt='{params.outtxt}'" {params.script} {log}'''
 
 ## Print the versions of all software packages
 rule softwareversions:
 	conda:
 		"envs/environment.yaml"
 	shell:
-		"R --version; salmon --version; trim_galore --version; cutadapt --version; "
+		"salmon --version; trim_galore --version; cutadapt --version; "
 		"fastqc --version; STAR --version; samtools --version; multiqc --version; "
 		"bedtools --version"
 
@@ -129,7 +141,7 @@ rule linkedTxome:
 		gtf = config["gtf"],
 		salmonidx = config["salmonindex"] + "/hash.bin",
 		script = "scripts/generate_linkedTxome.R",
-		install = outputdir + "Rout/gitinstall_state.txt"
+		install = outputdir + "Rout/pkginstall_state.txt"
 	log:
 		outputdir + "Rout/generate_linkedTxome.Rout"
 	output:
@@ -140,9 +152,9 @@ rule linkedTxome:
 		release = str(config["release"]),
 		build = config["build"]
 	conda:
-		"envs/environment.yaml"
+		Renv
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args transcriptfasta='{input.txome}' salmonidx='{input.salmonidx}' gtf='{input.gtf}' annotation='{params.flag}' organism='{params.organism}' release='{params.release}' build='{params.build}' output='{output}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args transcriptfasta='{input.txome}' salmonidx='{input.salmonidx}' gtf='{input.gtf}' annotation='{params.flag}' organism='{params.organism}' release='{params.release}' build='{params.build}' output='{output}'" {input.script} {log}'''
 
 ## Generate STAR index
 rule starindex:
@@ -406,26 +418,46 @@ rule bigwig:
 		"{input.chrl} {output}; rm -f {params.STARbigwigdir}/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph"
 
 ## ------------------------------------------------------------------------------------ ##
+## Transcript quantification
+## ------------------------------------------------------------------------------------ ##
+## tximeta
+rule tximeta:
+	input:
+	    outputdir + "Rout/pkginstall_state.txt",
+		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
+		metatxt = config["metatxt"],
+		salmonidx = config["salmonindex"] + "/hash.bin",
+		json = config["salmonindex"] + ".json",
+		script = "scripts/run_tximeta.R"
+	output:
+		outputdir + "outputR/tximeta_se.rds"
+	log:
+		outputdir + "Rout/tximeta_se.Rout"
+	params:
+		salmondir = outputdir + "salmon"
+	conda:
+		Renv
+	shell:
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+
+
+## ------------------------------------------------------------------------------------ ##
 ## Differential expression
 ## ------------------------------------------------------------------------------------ ##
 ## edgeR
 rule edgeR:
 	input:
-		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
-		metatxt = config["metatxt"],
-		salmonidx = config["salmonindex"] + "/hash.bin",
-		json = config["salmonindex"] + ".json",
+	    outputdir + "Rout/pkginstall_state.txt",
+		rds = outputdir + "outputR/tximeta_se.rds",
 		script = "scripts/run_dge_edgeR.R"
 	output:
 		outputdir + "outputR/edgeR_dge.rds"
 	log:
 		outputdir + "Rout/run_dge_edgeR.Rout"
-	params:
-		salmondir = outputdir + "salmon"
 	conda:
-		"envs/environment.yaml"
+		Renv
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' outrds='{output}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage
@@ -433,27 +465,24 @@ rule edgeR:
 ## DRIMSeq
 rule DRIMSeq:
 	input:
-		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
-		metatxt = config["metatxt"],
-		salmonidx = config["salmonindex"] + "/hash.bin",
-		json = config["salmonindex"] + ".json",
+	    outputdir + "Rout/pkginstall_state.txt",
+		rds = outputdir + "outputR/tximeta_se.rds",
 		script = "scripts/run_dtu_drimseq.R"
 	output:
 		outputdir + "outputR/DRIMSeq_dtu.rds"
 	log:
 		outputdir + "Rout/run_dtu_drimseq.Rout"
-	params:
-		salmondir = outputdir + "salmon"
 	conda:
-		"envs/environment.yaml"
+		Renv
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' outrds='{output}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Shiny app
 ## ------------------------------------------------------------------------------------ ##
 rule shiny:
 	input:
+	    outputdir + "Rout/pkginstall_state.txt",
 		expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()),
 		rds = outputdir + "outputR/edgeR_dge.rds",
 		metatxt = config["metatxt"],
@@ -468,13 +497,14 @@ rule shiny:
 		groupvar = config["groupvar"],
 		bigwigdir = "STARbigwig"
 	conda:
-		"envs/environment.yaml"
+		Renv
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile='{input.gtf}' metafile='{input.metatxt}' bigwigdir='{params.bigwigdir}' outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile='{input.gtf}' metafile='{input.metatxt}' bigwigdir='{params.bigwigdir}' outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
 
 
 rule shinyedgeR:
 	input:
+	    outputdir + "Rout/pkginstall_state.txt",
 		rds = outputdir + "outputR/edgeR_dge.rds",
 		metatxt = config["metatxt"],
 		script = "scripts/prepare_results_for_shiny.R"
@@ -486,6 +516,6 @@ rule shinyedgeR:
 	params:
 		groupvar = config["groupvar"]
 	conda:
-		"envs/environment.yaml"
+		Renv
 	shell:
-		'''R CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile=NULL metafile='{input.metatxt}' bigwigdir=NULL outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile=NULL metafile='{input.metatxt}' bigwigdir=NULL outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''

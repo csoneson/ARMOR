@@ -67,3 +67,10 @@ FASTQ: FASTQ
 output: output
 ##---------------------------------------------------------------------------------------------
 
+## R setup
+##---------------------------------------------------------------------------------------------
+## Specify "True" if R should be installed in a conda environment or "False" if you want to use 
+## your own R installation (then you have to set the path to your library in the .Renviron file)
+useCondaR: True
+Rbin: R
+##---------------------------------------------------------------------------------------------

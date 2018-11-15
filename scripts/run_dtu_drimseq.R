@@ -16,33 +16,22 @@ suppressPackageStartupMessages(library(edgeR))
 suppressPackageStartupMessages(library(DRIMSeq))
 suppressPackageStartupMessages(library(ggplot2))
 
-print(salmondir)
-print(json)
-print(metafile)
-print(outrds)
-
-## Load json linkedTxome
-loadLinkedTxome(json)
-
 ## Open pdf file to contain any figure generated below
 pdf(gsub("rds$", "pdf", outrds))
 
-## Read metadata
-metadata <- read.delim(metafile, header = TRUE, as.is = TRUE, sep = "\t")
+## Load the SummarizedExperiment object obtained from tximeta
+se <- readRDS(se)
 
-## List Salmon directories
-salmonfiles <- paste0(salmondir,"/",metadata$names, "/quant.sf")
-names(salmonfiles) <- metadata$names
-(salmonfiles <- salmonfiles[file.exists(salmonfiles)])
+## Quantification on the gene level
+sg <- se$sg
 
-## Add file column to metadata and import annotated abundances
-coldata <- cbind(metadata, files = salmonfiles, stringsAsFactors=FALSE)
-se <- tximeta(coldata)
+## Quantification on the transcript level
+st <- se$st
 
 ## Create dmDSdata object
-counts <- data.frame(feature_id = rownames(se),
-                     gene_id = unlist(rowData(se)$gene_id),
-                     assays(se)[["counts"]],
+counts <- data.frame(feature_id = rownames(st),
+                     gene_id = unlist(rowData(st)$gene_id),
+                     assays(st)[["counts"]],
                      row.names = NULL)
 
 metadata <- metadata %>% select(sample_id = names, group  = celline)
@@ -55,8 +44,8 @@ d <- dmFilter(d, min_samps_gene_expr = 3, min_samps_feature_expr = 3,
               min_gene_expr = 10, min_feature_expr = 5)
 
 ## Define design. ************** MODIFY ************** 
-(des <- model.matrix(~ XXXX, data = samples(d)))
-
+# (des <- model.matrix(~ XXXX, data = samples(d)))
+(des <- model.matrix(~ 0 + group, data = samples(d)))
 ## Calculate precision
 set.seed(123)
 d <- dmPrecision(d, design = des)
@@ -66,8 +55,8 @@ plotPrecision(d)
 d <- dmFit(d, design = des, verbose = 1)
 
 ## Define contrasts. ************** MODIFY ************** 
-(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
-
+#(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
+(contrasts <- as.data.frame(makeContrasts("groupN61311-groupN052611", levels = des)))
 ## Perform tests ************** MODIFY **************
 level <- "gene" ## set to "feature" if transcript-level results are desired
 signif3 <- function(x) signif(x, digits = 3)
