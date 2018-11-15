@@ -13,13 +13,13 @@ usePackage <- function(pkgs) {
     # install BiocManager package
     isBiocM <- "BiocManager" %in% installed.packages()[, 1]
     if (!isBiocM) {
-        if (is.null(mirror)) {
+       # if (is.null(mirror)) {
             install.packages("BiocManager", repos = "http://cran.rstudio.com/",
                              lib = .libPaths()[1])
-        } else {
-            install.packages("BiocManager",
-                             lib = .libPaths()[1])
-        }
+       # } else {
+       #     install.packages("BiocManager",
+        #                      lib = .libPaths()[1])
+        # }
     }
     
     # install the other packages
