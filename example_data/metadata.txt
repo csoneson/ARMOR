@@ -1,0 +1,5 @@
+names	type	celline	treatment
+SRR1039508	PE	N61311	Untreated
+SRR1039509	PE	N61311	Dexamethasone
+SRR1039512	PE	N052611	Untreated
+SRR1039513	PE	N052611	Dexamethasone
