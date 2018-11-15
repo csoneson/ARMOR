@@ -45,7 +45,7 @@ rule all:
 		outputdir + "outputR/shiny_results_list_edgeR.rds",
 		outputdir + "outputR/shiny_results_sce_edgeR.rds"
 		
-## Install tximeta (or other packages from a repository needed by the user)		
+## Install R packages	
 rule pkginstall:
 	input:
 		script = "scripts/install_pkgs.R"
