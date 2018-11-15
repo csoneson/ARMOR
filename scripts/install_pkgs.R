@@ -5,7 +5,7 @@ for (i in 1:length(args)) {
 
 print(outtxt)
 
-getOption("repos")
+(mirror <- getOption("repos"))
 
 ## The function to install packages that are not installed
 usePackage <- function(pkgs) {
@@ -13,10 +13,13 @@ usePackage <- function(pkgs) {
     # install BiocManager package
     isBiocM <- "BiocManager" %in% installed.packages()[, 1]
     if (!isBiocM) {
-        install.packages("BiocManager", repos = "http://cran.rstudio.com/",
-                         lib = .libPaths()[1])
-        # install.packages("BiocManager",
-        #                  lib = .libPaths()[1])
+        if (is.null(mirror)) {
+            install.packages("BiocManager", repos = "http://cran.rstudio.com/",
+                             lib = .libPaths()[1])
+        } else {
+            install.packages("BiocManager",
+                             lib = .libPaths()[1])
+        }
     }
     
     # install the other packages
