@@ -5,15 +5,18 @@ for (i in 1:length(args)) {
 
 print(outtxt)
 
+getOption("repos")
+
 ## The function to install packages that are not installed
 usePackage <- function(pkgs, defaultCRANmirror) {
     
     # install BiocManager package
     isBiocM <- "BiocManager" %in% installed.packages()[, 1]
     if (!isBiocM) {
-        install.packages("BiocManager", repos = defaultCRANmirror, 
+        install.packages("BiocManager", repos = defaultCRANmirror,
                          lib = .libPaths()[1])
-        # install.packages("BiocManager")
+        # install.packages("BiocManager",
+        #                  lib = .libPaths()[1])
     }
     
     # install the other packages
@@ -51,7 +54,7 @@ print(paths)
 pkgs.use <- c("dplyr", "ggplot2", "tidyr", "remotes", "limma", "edgeR", 
           "S4Vectors", "DRIMSeq", "SingleCellExperiment", "tximeta")
 
-usePackage(pkgs = pkgs.use, defaultCRANmirror = "http://cran.at.r-project.org")
+usePackage(pkgs = pkgs.use, defaultCRANmirror = "http://cran.rstudio.com/")
 # usePackage(pkgs.use)
 
 
