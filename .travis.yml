@@ -22,4 +22,4 @@ install:
 script:
   - source activate snakemake
   # run the workflow
-  - snakemake --use-conda runfastqc
+  - snakemake --use-conda pkginstall
