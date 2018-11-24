@@ -1,3 +1,7 @@
+suppressPackageStartupMessages({
+  library(rmarkdown)
+})
+
 #' Generate report
 #'
 #' Generate a report based on a Rmarkdown template file.
