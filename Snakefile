@@ -464,17 +464,18 @@ rule edgeR:
 		outputdir + "Rout/pkginstall_state.txt",
 		rds = outputdir + "outputR/tximeta_se.rds",
 		script = "scripts/run_render.R",
-		template = "scripts/edgeR_dge.Rmd",
-		directory = outputdir + "outputR"
+		template = "scripts/edgeR_dge.Rmd"
 	output:
 		html = outputdir + "outputR/edgeR_dge.html",
 		rds = outputdir + "outputR/edgeR_dge_results.rds"
+	params:
+		directory = outputdir + "outputR"
 	log: 
 		outputdir + "/Rout/run_dge_edgeR.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' rmdtemplate='{input.template}' outputdir='{input.directory}' outputfile='edgeR_dge.html'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='edgeR_dge.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage
