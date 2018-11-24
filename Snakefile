@@ -466,7 +466,7 @@ rule edgeR:
 		script = "scripts/run_render.R",
 		template = "scripts/edgeR_dge.Rmd"
 	output:
-		html = outputdir + "/outputR/edgeR_dge.html"
+		html = outputdir + "/outputR/edgeR_dge.html",
 		rds = outputdir + "/outputR/edgeR_dge.rds"
 	log: 
 		outputdir + "/Rout/run_dge_edgeR.Rout"
