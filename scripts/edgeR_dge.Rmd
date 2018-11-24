@@ -50,7 +50,7 @@ metadata <- colData(sg)
 # Create DGEList and include average transcript length offsets
 
 ```{r dge-generate}
-cts <- counts(sg)
+cts <- assays(sg)[["counts"]]
 normMat <- assays(sg)[["length"]]
 normMat <- normMat/exp(rowMeans(log(normMat)))
 o <- log(calcNormFactors(cts/normMat)) + log(colSums(cts/normMat))
@@ -110,7 +110,7 @@ edgeR_res <- lapply(contrasts, function(cm) {
 ## Write results to text files and make MA plots
 if (class(edgeR_res) == "data.frame") {
   write.table(edgeR_res %>% dplyr::arrange(PValue), 
-              file = gsub("rds$", "txt", outrds), 
+              file = "edgeR_dge_results.txt", 
               sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
   print(ggplot(edgeR_res, aes(x = logCPM, y = logFC, color = FDR <= 0.05)) + 
           geom_point() + theme_bw() + 
@@ -118,7 +118,7 @@ if (class(edgeR_res) == "data.frame") {
 } else {
   for (nm in names(edgeR_res)) {
     write.table(edgeR_res[[nm]] %>% dplyr::arrange(PValue), 
-                file = gsub("\\.rds$", paste0("_", nm, ".txt"), outrds), 
+                file = paste0("edgeR_dge_results_", nm, ".txt"), 
                 sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
     print(ggplot(edgeR_res[[nm]], aes(x = logCPM, y = logFC, color = FDR <= 0.05)) + 
             geom_point() + theme_bw() + 
