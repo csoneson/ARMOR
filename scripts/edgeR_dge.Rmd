@@ -129,7 +129,7 @@ if (class(edgeR_res) == "data.frame") {
 }
 
 
-saveRDS(list(results = edgeR_res, data = dge0), file = "edgeR_dge_results.rds")
+saveRDS(list(results = edgeR_res, data = dge0), file = "edgeR_dge.rds")
 ```
 
 ```{r session-info}
