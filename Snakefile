@@ -466,6 +466,7 @@ rule edgeR:
 		script = "scripts/run_render.R",
 		template = "scripts/edgeR_dge.Rmd"
 	output:
+		directory = outputdir,
 		html = outputdir + "/outputR/edgeR_dge.html",
 		rds = outputdir + "/outputR/edgeR_dge.rds"
 	log: 
@@ -473,7 +474,7 @@ rule edgeR:
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' rmdtemplate='{input.template}' outputdir=outputdir outputfile='edgeR_dge.html'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' rmdtemplate='{input.template}' outputdir={output.directory} outputfile='edgeR_dge.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage
