@@ -1,0 +1,138 @@
+---
+title: "Untitled"
+author: ""
+date: "`r Sys.date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: 'cerulean'
+    highlight: 'tango'
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(dev = c("png", "pdf"))
+```
+
+# Introduction
+
+This script performs differential expression analysis with edgeR, based on 
+abundance estimates from Salmon. It supports testing one or more contrasts. 
+
+# Load packages
+
+```{r load-pkg}
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(tximport)
+  library(tximeta)
+  library(SummarizedExperiment)
+  library(edgeR)
+  library(ggplot2)
+})
+```
+
+# Load `SummarizedExperiment` object
+
+We will use the gene-level quantifications.
+
+```{r print-se}
+## Load the SummarizedExperiment object obtained from tximeta
+se <- readRDS(se)
+
+## Use the quantification on the gene level
+sg <- se$sg
+metadata <- colData(sg)
+```
+
+# Create DGEList and include average transcript length offsets
+
+```{r dge-generate}
+cts <- counts(sg)
+normMat <- assays(sg)[["length"]]
+normMat <- normMat/exp(rowMeans(log(normMat)))
+o <- log(calcNormFactors(cts/normMat)) + log(colSums(cts/normMat))
+dge0 <- DGEList(cts)
+dge0$offset <- t(t(log(normMat)) + o)
+dge0 <- calcNormFactors(dge0)
+
+## Add gene annotation to the DGEList object
+dge0$genes <- as.data.frame(rowRanges(sg))
+```
+
+# Define design. ************** MODIFY ************** 
+
+```{r define-design}
+stopifnot(all(colnames(dge0) == metadata$names))
+#(des <- model.matrix(~ XXXX, data = metadata))
+#e.g.
+(des <- model.matrix(~ 0 + celline, data = metadata))
+```
+
+```{r filter-genes}
+## Filter out genes with average CPM below 1
+print(dim(dge0))
+cpms <- cpm(dge0)
+dge <- dge0[apply(cpms, 1, mean) > 1, ]
+dge <- calcNormFactors(dge)
+print(dim(dge))
+```
+
+```{r estimate-disp}
+## Estimate dispersion and fit model
+dge <- estimateDisp(dge, design = des)
+qlfit <- glmQLFit(dge, design = des)
+
+## Plot dispersions
+plotBCV(dge)
+```
+
+```{r define-contrasts}
+## Define contrasts. ************** MODIFY ************** 
+#(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
+#e.g.
+(contrasts <- as.data.frame(makeContrasts(contrasts= "cellineN61311-cellineN052611", levels = des)))
+```
+
+```{r perform-tests}
+## Perform tests
+signif3 <- function(x) signif(x, digits = 3)
+edgeR_res <- lapply(contrasts, function(cm) {
+  qlf <- glmQLFTest(qlfit, contrast = cm)
+  tt <- topTags(qlf, n = Inf, sort.by = "none")$table
+  tt %>% dplyr::mutate_if(is.numeric, signif3)
+})
+```
+
+```{r write-results}
+## Write results to text files and make MA plots
+if (class(edgeR_res) == "data.frame") {
+  write.table(edgeR_res %>% dplyr::arrange(PValue), 
+              file = gsub("rds$", "txt", outrds), 
+              sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+  print(ggplot(edgeR_res, aes(x = logCPM, y = logFC, color = FDR <= 0.05)) + 
+          geom_point() + theme_bw() + 
+          scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black")))
+} else {
+  for (nm in names(edgeR_res)) {
+    write.table(edgeR_res[[nm]] %>% dplyr::arrange(PValue), 
+                file = gsub("\\.rds$", paste0("_", nm, ".txt"), outrds), 
+                sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+    print(ggplot(edgeR_res[[nm]], aes(x = logCPM, y = logFC, color = FDR <= 0.05)) + 
+            geom_point() + theme_bw() + 
+            scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black")) + 
+            ggtitle(nm))
+  }
+}
+
+
+saveRDS(list(results = edgeR_res, data = dge0), file = "edgeR_dge_results.rds")
+```
+
+```{r session-info}
+date()
+sessionInfo()
+```
+
