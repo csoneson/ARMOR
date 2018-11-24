@@ -467,8 +467,8 @@ rule edgeR:
 		template = "scripts/edgeR_dge.Rmd",
 		directory = outputdir
 	output:
-		html = outputdir + "/outputR/edgeR_dge.html",
-		rds = outputdir + "/outputR/edgeR_dge.rds"
+		html = outputdir + "outputR/edgeR_dge.html",
+		rds = outputdir + "outputR/edgeR_dge.rds"
 	log: 
 		outputdir + "/Rout/run_dge_edgeR.Rout"
 	conda:
