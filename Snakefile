@@ -465,10 +465,10 @@ rule edgeR:
 		rds = outputdir + "outputR/tximeta_se.rds",
 		script = "scripts/run_render.R",
 		template = "scripts/edgeR_dge.Rmd",
-		directory = outputdir
+		directory = outputdir + "outputR"
 	output:
 		html = outputdir + "outputR/edgeR_dge.html",
-		rds = outputdir + "outputR/edgeR_dge.rds"
+		rds = outputdir + "outputR/edgeR_dge_results.rds"
 	log: 
 		outputdir + "/Rout/run_dge_edgeR.Rout"
 	conda:
