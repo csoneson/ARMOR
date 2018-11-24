@@ -471,7 +471,7 @@ rule edgeR:
 	params:
 		directory = outputdir + "outputR"
 	log: 
-		outputdir + "/Rout/run_dge_edgeR.Rout"
+		outputdir + "Rout/run_dge_edgeR.Rout"
 	conda:
 		Renv
 	shell:
