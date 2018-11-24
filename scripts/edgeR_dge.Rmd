@@ -40,11 +40,12 @@ We will use the gene-level quantifications.
 
 ```{r print-se}
 ## Load the SummarizedExperiment object obtained from tximeta
-se <- readRDS(se)
+#se <- readRDS(se)
 
 ## Use the quantification on the gene level
 sg <- se$sg
 metadata <- colData(sg)
+sg
 ```
 
 # Create DGEList and include average transcript length offsets

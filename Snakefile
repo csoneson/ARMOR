@@ -39,7 +39,7 @@ Rbin = config["Rbin"]
 rule all:
 	input:
 		outputdir + "MultiQC/multiqc_report.html",
-		outputdir + "outputR/edgeR_dge.rds",
+		outputdir + "outputR/edgeR_dge.html",
 		outputdir + "outputR/shiny_results_list.rds",
 		outputdir + "outputR/shiny_results_sce.rds",
 		outputdir + "outputR/shiny_results_list_edgeR.rds",
@@ -445,19 +445,35 @@ rule tximeta:
 ## Differential expression
 ## ------------------------------------------------------------------------------------ ##
 ## edgeR
+#rule edgeR:
+#	input:
+#	    outputdir + "Rout/pkginstall_state.txt",
+#		rds = outputdir + "outputR/tximeta_se.rds",
+#		script = "scripts/run_dge_edgeR.R"
+#	output:
+#		outputdir + "outputR/edgeR_dge.rds"
+#	log:
+#		outputdir + "Rout/run_dge_edgeR.Rout"
+#	conda:
+#		Renv
+#	shell:
+#		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' outrds='{output}'" {input.script} {log}'''
+
 rule edgeR:
 	input:
-	    outputdir + "Rout/pkginstall_state.txt",
+		outputdir + "Rout/pkginstall_state.txt",
 		rds = outputdir + "outputR/tximeta_se.rds",
-		script = "scripts/run_dge_edgeR.R"
+		script = "scripts/run_render.R",
+		template = "scripts/edgeR_dge.Rmd"
 	output:
-		outputdir + "outputR/edgeR_dge.rds"
-	log:
-		outputdir + "Rout/run_dge_edgeR.Rout"
+		html = outputdir + "/outputR/edgeR_dge.html"
+		rds = outputdir + "/outputR/edgeR_dge.rds"
+	log: 
+		outputdir + "/Rout/run_dge_edgeR.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' outrds='{output}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' rmdtemplate='{input.template}' outputdir=outputdir outputfile='edgeR_dge.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage

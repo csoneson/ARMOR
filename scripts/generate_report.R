@@ -115,6 +115,7 @@ generateReport <- function(se, rmdTemplate, outputFile, outputDir = "./",
   if (!file.exists(se)) {
     stop("The indicated se object does not exist")
   }
+  se <- readRDS(se)
   
   ## ------------------------- output files ------------------------------- ##
   outputReport <- file.path(outputDir, basename(outputFile))
