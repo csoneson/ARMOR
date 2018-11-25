@@ -6,8 +6,8 @@ output:
   html_document:
     toc: true
     toc_float: true
-    theme: 'cerulean'
-    highlight: 'tango'
+    theme: yeti
+    highlight: tango
     code_folding: show
     keep_md: true
 ---
@@ -39,10 +39,6 @@ suppressPackageStartupMessages({
 We will use the gene-level quantifications.
 
 ```{r print-se}
-## Load the SummarizedExperiment object obtained from tximeta
-#se <- readRDS(se)
-
-## Use the quantification on the gene level
 sg <- se$sg
 metadata <- colData(sg)
 sg
@@ -72,14 +68,18 @@ stopifnot(all(colnames(dge0) == metadata$names))
 (des <- model.matrix(~ 0 + celline, data = metadata))
 ```
 
+# Filter out lowly expressed genes
+
 ```{r filter-genes}
 ## Filter out genes with average CPM below 1
 print(dim(dge0))
 cpms <- cpm(dge0)
 dge <- dge0[apply(cpms, 1, mean) > 1, ]
 dge <- calcNormFactors(dge)
-print(dim(dge))
+dim(dge)
 ```
+
+# Estimate dispersion
 
 ```{r estimate-disp}
 ## Estimate dispersion and fit model
@@ -90,15 +90,17 @@ qlfit <- glmQLFit(dge, design = des)
 plotBCV(dge)
 ```
 
+# Define contrasts ************** MODIFY ************** 
+
 ```{r define-contrasts}
-## Define contrasts. ************** MODIFY ************** 
 #(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
 #e.g.
 (contrasts <- as.data.frame(makeContrasts(contrasts= "cellineN61311-cellineN052611", levels = des)))
 ```
 
+# Perform tests
+
 ```{r perform-tests}
-## Perform tests
 signif3 <- function(x) signif(x, digits = 3)
 edgeR_res <- lapply(contrasts, function(cm) {
   qlf <- glmQLFTest(qlfit, contrast = cm)
@@ -107,30 +109,43 @@ edgeR_res <- lapply(contrasts, function(cm) {
 })
 ```
 
-```{r write-results}
-## Write results to text files and make MA plots
-if (class(edgeR_res) == "data.frame") {
-  write.table(edgeR_res %>% dplyr::arrange(PValue), 
-              file = "edgeR_dge_results.txt", 
-              sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+# Make MA plots
+
+```{r}
+if (is(edgeR_res, "data.frame")) {
   print(ggplot(edgeR_res, aes(x = logCPM, y = logFC, color = FDR <= 0.05)) + 
           geom_point() + theme_bw() + 
           scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black")))
 } else {
   for (nm in names(edgeR_res)) {
-    write.table(edgeR_res[[nm]] %>% dplyr::arrange(PValue), 
-                file = paste0("edgeR_dge_results_", nm, ".txt"), 
-                sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
     print(ggplot(edgeR_res[[nm]], aes(x = logCPM, y = logFC, color = FDR <= 0.05)) + 
             geom_point() + theme_bw() + 
             scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black")) + 
             ggtitle(nm))
   }
 }
+```
 
+# Write results to text files and save .rds file
+
+```{r save-results}
+## Write results to text files and make MA plots
+if (is(edgeR_res, "data.frame")) {
+  write.table(edgeR_res %>% dplyr::arrange(PValue), 
+              file = "edgeR_dge_results.txt", 
+              sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+} else {
+  for (nm in names(edgeR_res)) {
+    write.table(edgeR_res[[nm]] %>% dplyr::arrange(PValue), 
+                file = paste0("edgeR_dge_results_", nm, ".txt"), 
+                sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+  }
+}
 
 saveRDS(list(results = edgeR_res, data = dge0), file = "edgeR_dge.rds")
 ```
+
+# Session info
 
 ```{r session-info}
 date()
