@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "edgeR DGE"
 author: ""
 date: "`r Sys.Date()`"
 output: 
@@ -9,11 +9,11 @@ output:
     theme: 'cerulean'
     highlight: 'tango'
     code_folding: show
+    keep_md: true
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-options(dev = c("png", "pdf"))
+knitr::opts_chunk$set(echo = TRUE, dev = c("png", "pdf"))
 ```
 
 # Introduction
