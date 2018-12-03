@@ -444,21 +444,6 @@ rule tximeta:
 ## ------------------------------------------------------------------------------------ ##
 ## Differential expression
 ## ------------------------------------------------------------------------------------ ##
-## edgeR
-#rule edgeR:
-#	input:
-#	    outputdir + "Rout/pkginstall_state.txt",
-#		rds = outputdir + "outputR/tximeta_se.rds",
-#		script = "scripts/run_dge_edgeR.R"
-#	output:
-#		outputdir + "outputR/edgeR_dge.rds"
-#	log:
-#		outputdir + "Rout/run_dge_edgeR.Rout"
-#	conda:
-#		Renv
-#	shell:
-#		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' outrds='{output}'" {input.script} {log}'''
-
 rule edgeR:
 	input:
 		outputdir + "Rout/pkginstall_state.txt",
@@ -485,15 +470,19 @@ rule DRIMSeq:
 	input:
 	    outputdir + "Rout/pkginstall_state.txt",
 		rds = outputdir + "outputR/tximeta_se.rds",
-		script = "scripts/run_dtu_drimseq.R"
+		script = "scripts/run_dtu_drimseq.R",
+		template = "scripts/DRIMSeq_dtu.Rmd"
 	output:
-		outputdir + "outputR/DRIMSeq_dtu.rds"
+		html = outputdir + "outputR/DRIMSeq_dtu.html",
+		rds = outputdir + "outputR/DRIMSeq_dtu.rds"
+	params:
+		directory = outputdir + "outputR"
 	log:
 		outputdir + "Rout/run_dtu_drimseq.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' outrds='{output}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='edgeR_dge.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Shiny app

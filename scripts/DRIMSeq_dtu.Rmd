@@ -1,34 +1,52 @@
-args <- (commandArgs(trailingOnly = TRUE))
-for (i in 1:length(args)) {
-  eval(parse(text = args[[i]]))
-}
+---
+title: "DRIMSeq DTU"
+author: ""
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: yeti
+    highlight: tango
+    code_folding: show
+    keep_md: true
+---
 
-## This script performs differential transcript usage analysis with DRIMSeq,
-## based on abundance estimates from Salmon.
-## Please modify the design, contrast, filtering criterion and the desired level
-## (gene or feature) below as appropriate
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-suppressPackageStartupMessages(library(dplyr))
-suppressPackageStartupMessages(library(tximport))
-suppressPackageStartupMessages(library(tximeta))
-suppressPackageStartupMessages(library(SummarizedExperiment))
-suppressPackageStartupMessages(library(edgeR))
-suppressPackageStartupMessages(library(DRIMSeq))
-suppressPackageStartupMessages(library(ggplot2))
+# Introduction
 
-## Open pdf file to contain any figure generated below
-pdf(gsub("rds$", "pdf", outrds))
+This script performs differential transcript usage analysis with DRIMSeq, based
+on abundance estimates from Salmon. It supports testing one or more contrasts.
 
-## Load the SummarizedExperiment object obtained from tximeta
-se <- readRDS(se)
+# Load packages
 
-## Quantification on the gene level
+```{r}
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(tximport)
+  library(tximeta)
+  library(SummarizedExperiment)
+  library(edgeR)
+  library(DRIMSeq)
+  library(ggplot2)
+})
+```
+
+# Load `SummarizedExperiment` object
+
+We will use the transcript-level quantifications.
+
+```{r}
 sg <- se$sg
-
-## Quantification on the transcript level
 st <- se$st
+```
 
-## Create dmDSdata object
+# Create dmDSdata object
+
+```{r}
 counts <- data.frame(feature_id = rownames(st),
                      gene_id = unlist(rowData(st)$gene_id),
                      assays(st)[["counts"]],
@@ -38,26 +56,46 @@ metadata <- metadata %>% select(sample_id = names, group  = celline)
   
 d <- dmDSdata(counts = counts, samples = metadata)
 plotData(d)
+```
 
-## Filter ************** MODIFY ************** 
+# Filter ************** MODIFY ************** 
+
+```{r}
 d <- dmFilter(d, min_samps_gene_expr = 3, min_samps_feature_expr = 3,
               min_gene_expr = 10, min_feature_expr = 5)
+```
 
-## Define design. ************** MODIFY ************** 
+# Define design. ************** MODIFY ************** 
+
+```{r}
 # (des <- model.matrix(~ XXXX, data = samples(d)))
 (des <- model.matrix(~ 0 + group, data = samples(d)))
-## Calculate precision
+```
+
+# Calculate precision
+
+```{r}
 set.seed(123)
 d <- dmPrecision(d, design = des)
 plotPrecision(d)
+```
 
-## Fit model
+# Fit model
+
+```{r}
 d <- dmFit(d, design = des, verbose = 1)
+```
 
-## Define contrasts. ************** MODIFY ************** 
+# Define contrasts. ************** MODIFY ************** 
+
+```{r}
 #(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
 (contrasts <- as.data.frame(makeContrasts("groupN61311-groupN052611", levels = des)))
-## Perform tests ************** MODIFY **************
+```
+
+# Perform tests ************** MODIFY **************
+
+```{r}
 level <- "gene" ## set to "feature" if transcript-level results are desired
 signif3 <- function(x) signif(x, digits = 3)
 DRIMSeq_fits <- lapply(contrasts, function(cm) {
@@ -69,23 +107,31 @@ DRIMSeq_fits <- lapply(contrasts, function(cm) {
 DRIMSeq_res <- lapply(DRIMSeq_fits, function(dr) {
   results(dr, level = level) %>% dplyr::mutate_if(is.numeric, signif3)
 })
+```
 
-## Write results to text files
+# Write results to text files and save .rds file
+
+```{r}
 if (class(DRIMSeq_res) == "data.frame") {
   write.table(DRIMSeq_res %>% dplyr::arrange(pvalue), 
-              file = gsub("rds$", "txt", outrds), 
+              file = "DRIMSeq_dtu_results.txt", 
               sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
 } else {
   for (nm in names(DRIMSeq_res)) {
     write.table(DRIMSeq_res[[nm]] %>% dplyr::arrange(pvalue), 
-                file = gsub("\\.rds$", paste0("_", nm, ".txt"), outrds), 
+                file = paste0("DRIMSeq_dtu_results_", nm, ".txt"), 
                 sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
   }
 }
 
-dev.off()
+saveRDS(list(results = DRIMSeq_res, fits = DRIMSeq_fits), 
+        file = "DRIMSeq_dtu.rds")
+```
 
-saveRDS(list(results = DRIMSeq_res, fits = DRIMSeq_fits), file = outrds)
+# Session info
 
-sessionInfo()
+```{r}
 date()
+sessionInfo()
+```
+
