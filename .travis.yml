@@ -4,6 +4,11 @@ python:
   # We don't actually use the Travis Python, but this keeps it organized.
   - "3.6"
 
+before_install:
+  - mkdir -p ~/.R
+  - echo -e 'MAKEFLAGS = -j4' > ~/.R/Makevars
+  - echo 'options(Ncpus = 4)' > ~/.Rprofile
+
 install:
   - sudo apt-get update
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
