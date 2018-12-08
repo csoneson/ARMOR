@@ -28,3 +28,4 @@ script:
   - source activate snakemake
   # run the workflow
   - travis_wait 50 snakemake --use-conda multiqc
+  - travis_wait 50 snakemake --use-conda bigwig
