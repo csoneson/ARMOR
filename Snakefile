@@ -40,10 +40,9 @@ rule all:
 	input:
 		outputdir + "MultiQC/multiqc_report.html",
 		outputdir + "outputR/edgeR_dge.html",
-		outputdir + "outputR/shiny_results_list.rds",
-		outputdir + "outputR/shiny_results_sce.rds",
-		outputdir + "outputR/shiny_results_list_edgeR.rds",
-		outputdir + "outputR/shiny_results_sce_edgeR.rds"
+		outputdir + "outputR/DRIMSeq_dtu.html",
+		outputdir + "outputR/shiny_sce.rds"
+		
 		
 ## Install R packages	
 rule pkginstall:
@@ -469,7 +468,7 @@ rule edgeR:
 rule DRIMSeq:
 	input:
 	    outputdir + "Rout/pkginstall_state.txt",
-		rds = outputdir + "outputR/tximeta_se.rds",
+		rds = outputdir + "outputR/analysis_se.rds",
 		script = "scripts/run_render.R",
 		template = "scripts/DRIMSeq_dtu.Rmd"
 	output:
@@ -487,42 +486,26 @@ rule DRIMSeq:
 ## ------------------------------------------------------------------------------------ ##
 ## Shiny app
 ## ------------------------------------------------------------------------------------ ##
-rule shiny:
+## Shiny
+rule Shiny:
 	input:
 	    outputdir + "Rout/pkginstall_state.txt",
-		expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()),
-		rds = outputdir + "outputR/edgeR_dge.rds",
-		metatxt = config["metatxt"],
+		rds = outputdir + "outputR/analysis_se.rds",
+		script = "scripts/run_render_shiny.R",
 		gtf = config["gtf"],
-		script = "scripts/prepare_results_for_shiny.R"
-	log: 
-		outputdir + "Rout/shiny_results.Rout"
+		edgerres = outputdir + "outputR/edgeR_dge.rds",
+		template = "scripts/prepare_shiny.Rmd"
 	output:
-		outList = outputdir + "outputR/shiny_results_list.rds",
-		outSCE = outputdir + "outputR/shiny_results_sce.rds"
+		html = outputdir + "outputR/prepare_shiny.html",
+		rds = outputdir + "outputR/shiny_sce.rds"
 	params:
+		directory = outputdir + "outputR",
 		groupvar = config["groupvar"],
-		bigwigdir = "STARbigwig"
-	conda:
-		Renv
-	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile='{input.gtf}' metafile='{input.metatxt}' bigwigdir='{params.bigwigdir}' outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
-
-
-rule shinyedgeR:
-	input:
-	    outputdir + "Rout/pkginstall_state.txt",
-		rds = outputdir + "outputR/edgeR_dge.rds",
-		metatxt = config["metatxt"],
-		script = "scripts/prepare_results_for_shiny.R"
+		bigwigdir = outputdir + "STARbigwig"
 	log:
-		outputdir + "Rout/shiny_results_edgeR.Rout"
-	output:
-		outList = outputdir + "outputR/shiny_results_list_edgeR.rds",
-		outSCE = outputdir + "outputR/shiny_results_sce_edgeR.rds"
-	params:
-		groupvar = config["groupvar"]
+		outputdir + "Rout/prepare_shiny.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile=NULL metafile='{input.metatxt}' bigwigdir=NULL outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' gtffile='{input.gtf}' edgerres='{input.edgerres}' bigwigdir='{params.bigwigdir}' groupvar='{params.groupvar}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='prepare_shiny.html'" {input.script} {log}'''
+
