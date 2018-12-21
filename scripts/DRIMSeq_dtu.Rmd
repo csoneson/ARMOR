@@ -216,7 +216,7 @@ for (i in seq_along(DRIMSeq_resA)) {
     rowData(sg)[[namI]] <- DRIMSeq_resA[[i]] 
 }
 
-save(sg, file = "DRIMSeq_sg.rds")
+
 ```
 
 
@@ -290,11 +290,13 @@ for (i in seq_along(DRIMSeq_resB)) {
     namI <- paste("DRIMSeq:", nam, sep = "")
     rowData(st)[[namI]] <- DRIMSeq_resB[[i]] 
 }
-
-save(st, file = "DRIMSeq_st.rds")
 ```
 
-
+The output is saved as a list.
+```{r save-se}
+analysis_se <- c(se, list(DRIMSeq_sg = sg, DRIMSeq_st = st))
+saveRDS(analysis_se, file = "analysis_se.rds")
+```
 # Session info
 
 ```{r}
