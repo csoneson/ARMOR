@@ -53,7 +53,8 @@ suppressPackageStartupMessages({
 generateReport <- function(se, rmdTemplate, outputFile, outputDir = "./",
                            outputFormat = NULL, showCode = FALSE,
                            forceOverwrite = FALSE, knitrProgress = FALSE,
-                           quiet = FALSE, ignorePandoc = FALSE, ...) {
+                           quiet = FALSE, ignorePandoc = FALSE,
+                           gtffile, edgerres, bigwigdir, groupvar,...) {
   ## This function was inspired by code from Nicholas Hamilton, provided at
   ## http://stackoverflow.com/questions/37097535/generate-report-in-r
   
@@ -117,6 +118,17 @@ generateReport <- function(se, rmdTemplate, outputFile, outputDir = "./",
   }
   se <- readRDS(se)
   
+  ## gtffile 
+  genemodels <- rtracklayer::import(gtffile)
+  
+  ## edgerres
+  edgerres <- readRDS(edgerres)
+  
+  ## bigwigdir
+  bigwigdir <- bigwigdir
+  
+  ## groupvar
+  groupvar <- groupvar
   ## ------------------------- output files ------------------------------- ##
   outputReport <- file.path(outputDir, basename(outputFile))
   outputRmd <- file.path(
