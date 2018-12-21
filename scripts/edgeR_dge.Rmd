@@ -145,6 +145,69 @@ if (is(edgeR_res, "data.frame")) {
 saveRDS(list(results = edgeR_res, data = dge0), file = "edgeR_dge.rds")
 ```
 
+
+# Output results as `SummarizedExperiment` object
+
+```{r save-se}
+## add rows (NA) for genes that are filtered out (if any)
+edgeR_resA <- lapply(seq_along(edgeR_res), FUN = function(x) {
+    
+    # all genes
+    geneA <- rowData(sg)$gene_id
+    
+    # genes that are not filtered out
+    resX <- edgeR_res[[x]]
+    resX <- resX %>% 
+        dplyr::select(c("gene_id","logFC", "logCPM", 
+                        "F", "FDR", "PValue")) 
+    rownames(resX) <- resX$gene_id
+    
+    # genes that are filtered out 
+    geneO <- setdiff(geneA, resX$gene_id)
+    
+    # results for all genes
+    if (length(geneO) > 0) {
+        # create a data frame with values NA as the results of the genes that
+        # are filtered out
+        matO <- matrix(NA, nrow = length(geneO),
+                        ncol = ncol(resX),
+                        dimnames = list(geneO, 
+                                        colnames(resX))) 
+        resO <- data.frame(matO)
+        resO$gene_id <- geneO
+        
+        # combine the result tables 
+        resA <- resO %>%
+            dplyr::bind_rows(resX) %>%
+            dplyr::arrange(match(gene_id, geneA)) %>%
+            dplyr::mutate(contrast = names(edgeR_res)[[x]]) 
+            # %>% dplyr::mutate(from = fromPkg) 
+    } else {
+        resA <- resX %>%
+            dplyr::arrange(match(gene_id, geneA)) %>%
+            dplyr::mutate(contrast = names(edgeR_res)[[x]]) 
+            # %>% dplyr::mutate(from = fromPkg) 
+    }
+    
+    # use gene column as rownames
+    rownames(resA) <- resA$gene_id
+    
+    # convert to DataFrame
+    resA <- S4Vectors::DataFrame(resA)
+    return(resA)
+})
+names(edgeR_resA) <- names(edgeR_res)
+
+## Put the result tables in rowData 
+for (i in seq_along(edgeR_resA)) {
+    nam <- names(edgeR_resA)[i]
+    namI <- paste("edgeR:", nam, sep = "")
+    rowData(sg)[[namI]] <- edgeR_resA[[i]] 
+}
+
+save(sg, file = "edgeR_sg.rds")
+```
+
 # Session info
 
 ```{r session-info}
