@@ -148,7 +148,7 @@ saveRDS(list(results = edgeR_res, data = dge0), file = "edgeR_dge.rds")
 
 # Output results as `SummarizedExperiment` object
 
-```{r save-se}
+```{r se}
 ## add rows (NA) for genes that are filtered out (if any)
 edgeR_resA <- lapply(seq_along(edgeR_res), FUN = function(x) {
     
@@ -205,9 +205,13 @@ for (i in seq_along(edgeR_resA)) {
     rowData(sg)[[namI]] <- edgeR_resA[[i]] 
 }
 
-save(sg, file = "edgeR_sg.rds")
 ```
 
+The output is saved as a list.
+```{r save-se}
+analysis_se <- c(se, list(edgeR_sg = sg))
+saveRDS(analysis_se, file = "analysis_se.rds")
+```
 # Session info
 
 ```{r session-info}
