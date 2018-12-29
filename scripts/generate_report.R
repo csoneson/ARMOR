@@ -7,6 +7,10 @@ suppressPackageStartupMessages({
 #' Generate a report based on a Rmarkdown template file.
 #' 
 #' @param se Path to a \code{SummarizedExperiment} object.
+#' @param gtffile
+#' @param edgerres
+#' @param bigwigdir
+#' @param groupvar
 #' @param rmdTemplate Path to a .Rmd template file.
 #' @param outputFile File name of the output report. The file name extension
 #'   must be either \code{.html} or \code{.pdf}, and consistent with the value
