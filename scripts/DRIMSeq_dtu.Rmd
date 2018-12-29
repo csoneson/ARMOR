@@ -125,7 +125,8 @@ DRIMSeq_feature_res <- lapply(DRIMSeq_feature_fits, function(dr) {
   results(dr, level = level) %>% dplyr::mutate_if(is.numeric, signif3)
 })
 ```
-# Write results to text files and save .rds file
+
+# Write results to text files
 
 ```{r save-result}
 if (class(DRIMSeq_res) == "data.frame") {
@@ -139,15 +140,13 @@ if (class(DRIMSeq_res) == "data.frame") {
                 sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
   }
 }
-
-saveRDS(list(results = DRIMSeq_res, fits = DRIMSeq_fits), 
-        file = "DRIMSeq_dtu.rds")
 ```
 
 
 # Output results as `SummarizedExperiment` object
 
 The `SummarizedExperiment` object on the transcript level
+
 ```{r se-gene}
 ## add rows (NA) for genes that are filtered out (if any)
 DRIMSeq_resA <- lapply(seq_along(DRIMSeq_res), FUN = function(x) {
@@ -197,7 +196,6 @@ DRIMSeq_resA <- lapply(seq_along(DRIMSeq_res), FUN = function(x) {
         resA <- resX %>%
             dplyr::arrange(match(gene_id, geneA)) %>%
             dplyr::mutate(contrast = names(DRIMSeq_res)[[x]]) 
-             
     }
     
     # use gene column as rownames
@@ -215,12 +213,10 @@ for (i in seq_along(DRIMSeq_resA)) {
     namI <- paste("DRIMSeq:", nam, sep = "")
     rowData(sg)[[namI]] <- DRIMSeq_resA[[i]] 
 }
-
-
 ```
 
-
 The `SummarizedExperiment` object on the transcript level
+
 ```{r se-tx}
 ## add rows (NA) for genes that are filtered out (if any)
 DRIMSeq_resB <- lapply(seq_along(DRIMSeq_feature_res), FUN = function(x) {
@@ -272,7 +268,6 @@ DRIMSeq_resB <- lapply(seq_along(DRIMSeq_feature_res), FUN = function(x) {
         resA <- resX %>%
             dplyr::arrange(match(feature_id, txA)) %>%
             dplyr::mutate(contrast = names(DRIMSeq_feature_res)[[x]]) 
-             
     }
     
     # use gene column as rownames
@@ -293,10 +288,12 @@ for (i in seq_along(DRIMSeq_resB)) {
 ```
 
 The output is saved as a list.
+
 ```{r save-se}
-analysis_se <- c(se, list(DRIMSeq_sg = sg, DRIMSeq_st = st))
-saveRDS(analysis_se, file = "analysis_se.rds")
+analysis_se <- list(sg = sg, st = st)
+saveRDS(analysis_se, file = "DRIMSeq_dtu.rds")
 ```
+
 # Session info
 
 ```{r}
