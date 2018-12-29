@@ -8,7 +8,6 @@ suppressPackageStartupMessages({
 #' 
 #' @param se Path to a \code{SummarizedExperiment} object.
 #' @param gtffile
-#' @param edgerres
 #' @param bigwigdir
 #' @param groupvar
 #' @param rmdTemplate Path to a .Rmd template file.
@@ -54,7 +53,7 @@ suppressPackageStartupMessages({
 #' @return Generates a summary report in the \code{outputDir} directory, and
 #'   returns (invisibly) the name of the generated report.
 #'
-generateReport <- function(se, gtffile = NULL, edgerres = NULL, 
+generateReport <- function(se, gtffile = NULL, 
                            bigwigdir = NULL, groupvar = NULL, 
                            rmdTemplate, outputFile, outputDir = "./",
                            outputFormat = NULL, showCode = FALSE,

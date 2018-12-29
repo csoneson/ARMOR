@@ -4,7 +4,6 @@ for (i in 1:length(args)) {
 }
 
 print(se)
-print(edgerres)
 print(gtffile)
 print(rmdtemplate)
 print(bigwigdir)
@@ -14,7 +13,7 @@ print(outputfile)
 
 source("scripts/generate_report.R")
 
-generateReport(se = se, gtffile = gtffile, edgerres = edgerres,
+generateReport(se = se, gtffile = gtffile,
                bigwigdir = bigwigdir, groupvar = groupvar, 
                rmdTemplate = rmdtemplate, outputDir = outputdir, 
                outputFile = outputfile, forceOverwrite = TRUE,
