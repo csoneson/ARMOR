@@ -92,7 +92,7 @@ if (!is.null(bigwigdir)) {
 ## Data for MDS
 # dge <- edgerres$data
 # logcpms <- edgeR::cpm(dge, log = TRUE, prior.count = 2)
-logcpms <- assay(sg, "logcpms")
+logcpms <- assay(sg, "logcpm")
 mds <- limma::plotMDS(logcpms, top = 500, labels = NULL, pch = NULL,
                       cex = 1, dim.plot = c(1, 2), ndim = min(7, ncol(logcpms) - 1),
                       gene.selection = "common",
