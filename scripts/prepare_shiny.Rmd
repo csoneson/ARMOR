@@ -38,21 +38,18 @@ suppressPackageStartupMessages({
 })
 ```
 
-# Visualize using `iResViewer`
-
-## Load data
+# Load data
 
 ```{r load-data}
 options(ucscChromosomeNames = FALSE)
 sg <- se$sg
+st <- se$st
 ```
 
-## Gene models
+# Gene models
 
 ```{r gene-model}
-## Gene models from gtf
 create_genemodels <- function(genemodels) {
-    # genemodels <- rtracklayer::import(gtf_file)
     idx <- match(c("transcript_id", "gene_id", "exon_id"), 
                  colnames(mcols(genemodels)))
     colnames(mcols(genemodels))[idx] <- c("transcript", "gene", "exon")
@@ -67,7 +64,7 @@ if (!is.null(gtffile)) {
 }
 ```
 
-## Vector with bigWig file names and condition information
+# Vector with bigWig file names and condition information
 
 ```{r bigwig}
 metadata <- colData(sg)
@@ -81,17 +78,14 @@ if (!is.null(bigwigdir)) {
     condition <- condition[ordr]
     bwfiles <- bwfiles[ordr]
 } else {
-    # bwfiles <- condition <- NULL
-    bwfiles <- condition <- NA
+    bwfiles <- NA
+    condition <- NA
 }
 ```
 
-## edgeR - MDS
+# edgeR - gene-level MDS
 
 ```{r MDS}
-## Data for MDS
-# dge <- edgerres$data
-# logcpms <- edgeR::cpm(dge, log = TRUE, prior.count = 2)
 logcpms <- assay(sg, "logcpm")
 mds <- limma::plotMDS(logcpms, top = 500, labels = NULL, pch = NULL,
                       cex = 1, dim.plot = c(1, 2), ndim = min(7, ncol(logcpms) - 1),
@@ -102,7 +96,7 @@ mds <- as.data.frame(mds) %>% tibble::rownames_to_column(var = "names") %>%
     dplyr::full_join(data.frame(metadata), by = "names")
 ```
 
-## SingleCellExperiment on gene level
+# SingleCellExperiment on gene level
 
 The `rowData` of `sce_gene` includes the gene information and the result tables
 from `edgeR` and `DRIMSeq`. Each result table is stored as a column, and the
@@ -115,17 +109,6 @@ and condition information
 The multidimensional scale data is stored in `reducedDims`.
 
 ```{r sce_gene}
-
-# add logCPM count to the table of assays
-# logCPM_count <- edgeR::cpm(edgerres$data, log = TRUE, prior.count = 2)
-# aData <- assays(se$sg)
-# aData$logCPM <- logCPM_count[rownames(se$sg), colnames(se$sg)]
-
-# row data
-# rD <- cbind(rowData(sg1), rowData(sg2))
-# rD <- rD[, !duplicated(colnames(rD))]
-# rowData(sg) <- rD
-
 ## column data
 nam <- colData(sg)$names
 colData(sg)$bwFiles <- bwfiles[nam]
@@ -141,8 +124,10 @@ sce_gene <- SingleCellExperiment(assays = assays(sg),
                                  rowData = rowData(sg),
                                  colData = colData(sg),
                                  metadata = list(geneModels = genemodels),
-                                 reducedDims = SimpleList(dimReds = reducedData))
+                                 reducedDims = SimpleList(MDS = reducedData))
 ```
+
+# SingleCellExperiment on transcript level
 
 The `rowData` of `sce_tx` includes the information of genes and transcripts,
 and the result table on the transcript level from `DRIMSeq`.
@@ -153,25 +138,15 @@ and condition information.
 The multidimensional scale data is stored in `reducedDims`.
 
 ```{r sce_tx}
-# SCE on transcript level
-st <- se$st
-
 ## column data
 nam <- colData(st)$names
 colData(st)$bwFiles <- bwfiles[nam]
 colData(st)$bwCond <- condition[nam]
 
-## low dimensional representations
-reducedData <- mds %>%
-    dplyr::arrange(match(names, nam)) %>%
-    dplyr::select(-one_of(colnames(colData(sg))))
-reducedData <- as.matrix(reducedData)
-
 sce_tx <- SingleCellExperiment(assays = assays(st), 
                                rowData = rowData(st),
                                colData = colData(st),
-                               metadata = list(geneModels = genemodels),
-                               reducedDims = SimpleList(dimReds = reducedData))
+                               metadata = list(geneModels = genemodels))
 ```
 
 # Output results
