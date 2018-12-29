@@ -59,6 +59,15 @@ dge0 <- calcNormFactors(dge0)
 dge0$genes <- as.data.frame(rowRanges(sg))
 ```
 
+# Calculate logCPMs and add as an assay
+
+```{r add-logcpm}
+logcpms <- edgeR::cpm(dge0, log = TRUE, prior.count = 2)
+stopifnot(all(rownames(logcpms) == rownames(sg)))
+stopifnot(all(colnames(logcpms) == colnames(sg)))
+assay(sg, "logcpm") <- logcpms
+```
+
 # Define design. ************** MODIFY ************** 
 
 ```{r define-design}
@@ -95,7 +104,9 @@ plotBCV(dge)
 ```{r define-contrasts}
 #(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
 #e.g.
-(contrasts <- as.data.frame(makeContrasts(contrasts= "cellineN61311-cellineN052611", levels = des)))
+(contrasts <- as.data.frame(makeContrasts(
+  contrasts= "cellineN61311-cellineN052611", levels = des
+)))
 ```
 
 # Perform tests
@@ -141,10 +152,7 @@ if (is(edgeR_res, "data.frame")) {
                 sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
   }
 }
-
-saveRDS(list(results = edgeR_res, data = dge0), file = "edgeR_dge.rds")
 ```
-
 
 # Output results as `SummarizedExperiment` object
 
@@ -204,14 +212,15 @@ for (i in seq_along(edgeR_resA)) {
     namI <- paste("edgeR:", nam, sep = "")
     rowData(sg)[[namI]] <- edgeR_resA[[i]] 
 }
-
 ```
 
 The output is saved as a list.
+
 ```{r save-se}
-analysis_se <- c(se, list(edgeR_sg = sg))
-saveRDS(analysis_se, file = "analysis_se.rds")
+analysis_se <- list(sg = sg, st = se$st)
+saveRDS(analysis_se, file = "edgeR_dge.rds")
 ```
+
 # Session info
 
 ```{r session-info}

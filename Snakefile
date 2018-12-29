@@ -468,7 +468,7 @@ rule edgeR:
 rule DRIMSeq:
 	input:
 	    outputdir + "Rout/pkginstall_state.txt",
-		rds = outputdir + "outputR/analysis_se.rds",
+		rds = outputdir + "outputR/edgeR_dge.rds",
 		script = "scripts/run_render.R",
 		template = "scripts/DRIMSeq_dtu.Rmd"
 	output:
@@ -490,10 +490,9 @@ rule DRIMSeq:
 rule Shiny:
 	input:
 	    outputdir + "Rout/pkginstall_state.txt",
-		rds = outputdir + "outputR/analysis_se.rds",
+		rds = outputdir + "outputR/DRIMSeq_dtu.rds",
 		script = "scripts/run_render_shiny.R",
 		gtf = config["gtf"],
-		edgerres = outputdir + "outputR/edgeR_dge.rds",
 		template = "scripts/prepare_shiny.Rmd"
 	output:
 		html = outputdir + "outputR/prepare_shiny.html",
@@ -507,5 +506,5 @@ rule Shiny:
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' gtffile='{input.gtf}' edgerres='{input.edgerres}' bigwigdir='{params.bigwigdir}' groupvar='{params.groupvar}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='prepare_shiny.html'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' gtffile='{input.gtf}' bigwigdir='{params.bigwigdir}' groupvar='{params.groupvar}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='prepare_shiny.html'" {input.script} {log}'''
 
