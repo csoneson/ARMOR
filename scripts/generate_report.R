@@ -127,11 +127,6 @@ generateReport <- function(se, gtffile = NULL,
     genemodels <- rtracklayer::import(gtffile)
   }
   
-  ## edgerres
-  if (!is.null(edgerres)) {
-    edgerres <- readRDS(edgerres)
-  }
-  
   ## bigwigdir
   if (!is.null(bigwigdir)) {
     bigwigdir <- bigwigdir
