@@ -18,8 +18,8 @@ knitr::opts_chunk$set(echo = TRUE, dev = c("png", "pdf"))
 
 # Introduction
 
-This script performs differential expression analysis with edgeR, based on 
-abundance estimates from Salmon. It supports testing one or more contrasts. 
+Here, we perform differential gene expression analysis with edgeR, based on
+abundance estimates from Salmon. 
 
 # Load packages
 
@@ -36,35 +36,45 @@ suppressPackageStartupMessages({
 
 # Load `SummarizedExperiment` object
 
-We will use the gene-level quantifications.
+We load the `SummarizedExperiment` objects prepared using `tximeta`, containing
+gene- and transcript-level counts and feature lengths. In this report, we will
+use the gene-level quantifications.
 
 ```{r print-se}
+## List of SummarizedExperiment objects (gene/transcript level)
+se
+
+## Get gene-level SummarizedExperiment object
 sg <- se$sg
 metadata <- colData(sg)
+
 sg
 ```
 
 # Create DGEList and include average transcript length offsets
 
 ```{r dge-generate}
-cts <- assays(sg)[["counts"]]
-normMat <- assays(sg)[["length"]]
+## Extract count matrix and average transcript lengths
+cts <- assay(sg, "counts")
+normMat <- assay(sg, "length")
 normMat <- normMat/exp(rowMeans(log(normMat)))
-o <- log(calcNormFactors(cts/normMat)) + log(colSums(cts/normMat))
-dge0 <- DGEList(cts)
-dge0$offset <- t(t(log(normMat)) + o)
-dge0 <- calcNormFactors(dge0)
 
-## Add gene annotation to the DGEList object
-dge0$genes <- as.data.frame(rowRanges(sg))
+## Generate offset matrix
+o <- log(edgeR::calcNormFactors(cts/normMat)) + 
+  log(colSums(cts/normMat))
+
+## Create DGEList object and add offsets
+dge0 <- edgeR::DGEList(cts)
+dge0 <- edgeR::scaleOffset(dge0, offset = t(t(log(normMat)) + o))
+dge0 <- edgeR::calcNormFactors(dge0)
 ```
 
 # Calculate logCPMs and add as an assay
 
 ```{r add-logcpm}
 logcpms <- edgeR::cpm(dge0, log = TRUE, prior.count = 2)
-stopifnot(all(rownames(logcpms) == rownames(sg)))
-stopifnot(all(colnames(logcpms) == colnames(sg)))
+stopifnot(all(rownames(logcpms) == rownames(sg)),
+          all(colnames(logcpms) == colnames(sg)))
 assay(sg, "logcpm") <- logcpms
 ```
 
@@ -80,10 +90,9 @@ stopifnot(all(colnames(dge0) == metadata$names))
 # Filter out lowly expressed genes
 
 ```{r filter-genes}
-## Filter out genes with average CPM below 1
-print(dim(dge0))
-cpms <- cpm(dge0)
-dge <- dge0[apply(cpms, 1, mean) > 1, ]
+dim(dge0)
+keep <- edgeR::filterByExpr(dge0, design = des)
+dge <- dge0[keep, ]
 dge <- calcNormFactors(dge)
 dim(dge)
 ```
@@ -105,7 +114,7 @@ plotBCV(dge)
 #(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
 #e.g.
 (contrasts <- as.data.frame(makeContrasts(
-  contrasts= "cellineN61311-cellineN052611", levels = des
+  contrasts = "cellineN61311-cellineN052611", levels = des
 )))
 ```
 
@@ -137,7 +146,7 @@ if (is(edgeR_res, "data.frame")) {
 }
 ```
 
-# Write results to text files and save .rds file
+# Write results to text files
 
 ```{r save-results}
 ## Write results to text files and make MA plots
@@ -154,63 +163,62 @@ if (is(edgeR_res, "data.frame")) {
 }
 ```
 
-# Output results as `SummarizedExperiment` object
+# Output results as list of `SummarizedExperiment` objects
 
 ```{r se}
 ## add rows (NA) for genes that are filtered out (if any)
 edgeR_resA <- lapply(seq_along(edgeR_res), FUN = function(x) {
-    
-    # all genes
-    geneA <- rowData(sg)$gene_id
-    
-    # genes that are not filtered out
-    resX <- edgeR_res[[x]]
-    resX <- resX %>% 
-        dplyr::select(c("gene_id","logFC", "logCPM", 
-                        "F", "FDR", "PValue")) 
-    rownames(resX) <- resX$gene_id
-    
-    # genes that are filtered out 
-    geneO <- setdiff(geneA, resX$gene_id)
-    
-    # results for all genes
-    if (length(geneO) > 0) {
-        # create a data frame with values NA as the results of the genes that
-        # are filtered out
-        matO <- matrix(NA, nrow = length(geneO),
-                        ncol = ncol(resX),
-                        dimnames = list(geneO, 
-                                        colnames(resX))) 
-        resO <- data.frame(matO)
-        resO$gene_id <- geneO
+  
+  ## All genes
+  geneA <- rowData(sg)$gene_id
+  
+  ## Genes that are not filtered out
+  resX <- edgeR_res[[x]]
+  resX <- resX %>% 
+    dplyr::select(c("gene_id", "logFC", "logCPM", 
+                    "F", "FDR", "PValue")) 
+  rownames(resX) <- resX$gene_id
+  
+  ## Genes that are filtered out 
+  geneO <- setdiff(geneA, resX$gene_id)
+  
+  ## results for all genes
+  if (length(geneO) > 0) {
+    ## create a data frame with values NA as the results of the genes that
+    ## are filtered out
+    matO <- matrix(NA, nrow = length(geneO),
+                   ncol = ncol(resX),
+                   dimnames = list(geneO, 
+                                   colnames(resX))) 
+    resO <- data.frame(matO)
+    resO$gene_id <- geneO
         
-        # combine the result tables 
-        resA <- resO %>%
-            dplyr::bind_rows(resX) %>%
-            dplyr::arrange(match(gene_id, geneA)) %>%
-            dplyr::mutate(contrast = names(edgeR_res)[[x]]) 
-            # %>% dplyr::mutate(from = fromPkg) 
-    } else {
-        resA <- resX %>%
-            dplyr::arrange(match(gene_id, geneA)) %>%
-            dplyr::mutate(contrast = names(edgeR_res)[[x]]) 
-            # %>% dplyr::mutate(from = fromPkg) 
-    }
+    ## Combine the result tables 
+    resA <- resO %>%
+      dplyr::bind_rows(resX) %>%
+      dplyr::arrange(match(gene_id, geneA)) %>%
+      dplyr::mutate(contrast = names(edgeR_res)[[x]]) 
+  } else {
+    resA <- resX %>%
+      dplyr::arrange(match(gene_id, geneA)) %>%
+      dplyr::mutate(contrast = names(edgeR_res)[[x]]) 
+  }
+  
+  ## Use gene column as rownames
+  rownames(resA) <- resA$gene_id
     
-    # use gene column as rownames
-    rownames(resA) <- resA$gene_id
-    
-    # convert to DataFrame
-    resA <- S4Vectors::DataFrame(resA)
-    return(resA)
+  ## convert to DataFrame
+  resA <- S4Vectors::DataFrame(resA)
+  return(resA)
 })
 names(edgeR_resA) <- names(edgeR_res)
 
 ## Put the result tables in rowData 
 for (i in seq_along(edgeR_resA)) {
-    nam <- names(edgeR_resA)[i]
-    namI <- paste("edgeR:", nam, sep = "")
-    rowData(sg)[[namI]] <- edgeR_resA[[i]] 
+  nam <- names(edgeR_resA)[i]
+  namI <- paste("edgeR:", nam, sep = "")
+  stopifnot(all(rownames(sg) == rownames(edgeR_resA[[i]])))
+  rowData(sg)[[namI]] <- edgeR_resA[[i]] 
 }
 ```
 
