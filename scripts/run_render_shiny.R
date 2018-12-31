@@ -5,9 +5,9 @@ for (i in 1:length(args)) {
 
 print(se)
 print(gtffile)
-print(rmdtemplate)
 print(bigwigdir)
 print(groupvar)
+print(rmdtemplate)
 print(outputdir)
 print(outputfile)
 
