@@ -490,6 +490,7 @@ rule DRIMSeq:
 rule Shiny:
 	input:
 	    outputdir + "Rout/pkginstall_state.txt",
+	    expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()),
 		rds = outputdir + "outputR/DRIMSeq_dtu.rds",
 		script = "scripts/run_render_shiny.R",
 		gtf = config["gtf"],
