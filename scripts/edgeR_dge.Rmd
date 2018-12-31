@@ -67,6 +67,9 @@ o <- log(edgeR::calcNormFactors(cts/normMat)) +
 dge0 <- edgeR::DGEList(cts)
 dge0 <- edgeR::scaleOffset(dge0, offset = t(t(log(normMat)) + o))
 dge0 <- edgeR::calcNormFactors(dge0)
+
+## Add gene annotation to the DGEList object
+dge0$genes <- as.data.frame(rowRanges(sg))
 ```
 
 # Calculate logCPMs and add as an assay
