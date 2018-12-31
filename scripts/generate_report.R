@@ -6,10 +6,8 @@ suppressPackageStartupMessages({
 #'
 #' Generate a report based on a Rmarkdown template file.
 #' 
-#' @param se Path to a \code{SummarizedExperiment} object.
-#' @param gtffile
-#' @param bigwigdir
-#' @param groupvar
+#' @param se,gtffile,bigwigdir,groupvar Arguments that are passed to the
+#'   provided Rmarkdown template
 #' @param rmdTemplate Path to a .Rmd template file.
 #' @param outputFile File name of the output report. The file name extension
 #'   must be either \code{.html} or \code{.pdf}, and consistent with the value
@@ -124,17 +122,23 @@ generateReport <- function(se, gtffile = NULL,
   
   ## gtffile 
   if (!is.null(gtffile)) {
+    if (!is(gtffile, "character") || length(gtffile) != 1) {
+      stop("gtffile must be a character string")
+    }
+    if (!file.exists(gtffile)) {
+      stop("The indicated gtffile does not exist")
+    }
     genemodels <- rtracklayer::import(gtffile)
   }
   
   ## bigwigdir
   if (!is.null(bigwigdir)) {
-    bigwigdir <- bigwigdir
-  }
-  
-  ## groupvar
-  if (!is.null(groupvar)) {
-    groupvar <- groupvar
+    if (!is(bigwigdir, "character") || length(bigwigdir) != 1) {
+      stop("bigwigdir must be a character string")
+    }
+    if (!file.exists(bigwigdir)) {
+      stop("The indicated bigwigdir does not exist")
+    }
   }
   
   ## ------------------------- output files ------------------------------- ##
