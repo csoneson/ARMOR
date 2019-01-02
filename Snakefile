@@ -1,9 +1,11 @@
+## Configuration file
 configfile: "config.yaml"
 
+## Read metadata
 import pandas as pd
 samples = pd.read_table(config["metatxt"])
 
-## Sanitize output directory
+## Sanitize provided input and output directories
 import re
 def getpath(str):
 	if str in ['', '.', './']:
@@ -18,39 +20,34 @@ def getpath(str):
 outputdir = getpath(config["output"])
 FASTQdir = getpath(config["FASTQ"])
 
-print(outputdir)
-print(FASTQdir)
-
 ## Define the conda environment for all rules using R
 if config["useCondaR"] == True:
 	Renv = "envs/environment_R.yaml"
 else:
 	Renv = "envs/environment.yaml"
 
-print(Renv)
-
+## Define the R binary
 Rbin = config["Rbin"]
 
 ## ------------------------------------------------------------------------------------ ##
 ## Target definitions
 ## ------------------------------------------------------------------------------------ ##
 ## Run all analyses
-## Add outputdir + "outputR/DRIMSeq_dtu.rds" if desired
 rule all:
 	input:
 		outputdir + "MultiQC/multiqc_report.html",
 		outputdir + "outputR/edgeR_dge.html",
 		outputdir + "outputR/DRIMSeq_dtu.html",
 		outputdir + "outputR/shiny_sce.rds"
-		
-		
+
 ## Install R packages	
 rule pkginstall:
 	input:
 		script = "scripts/install_pkgs.R"
 	output:
 	    outputdir + "Rout/pkginstall_state.txt"
-	priority: 50
+	priority: 
+		50
 	conda:
 		Renv
 	log:
