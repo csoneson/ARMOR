@@ -12,7 +12,7 @@ output:
     keep_md: true
 ---
 
-```{r setup, include=FALSE}
+```{r DRIMSeq-setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -23,7 +23,7 @@ on abundance estimates from Salmon. It supports testing one or more contrasts.
 
 # Load packages
 
-```{r}
+```{r DRIMSeq-load-pkg}
 suppressPackageStartupMessages({
   library(dplyr)
   library(tximport)
@@ -39,14 +39,14 @@ suppressPackageStartupMessages({
 
 We will use the transcript-level quantifications.
 
-```{r}
+```{r DRIMSeq-print-se}
 sg <- se$sg
 st <- se$st
 ```
 
 # Create dmDSdata object
 
-```{r dmDSdata}
+```{r DRIMSeq-dmDSdata}
 counts <- data.frame(feature_id = rownames(st),
                      gene_id = unlist(rowData(st)$gene_id),
                      assays(st)[["counts"]],
@@ -62,7 +62,7 @@ plotData(d)
 
 # Filter ************** MODIFY ************** 
 
-```{r data-filter}
+```{r DRIMSeq-data-filter}
 d <- dmFilter(d, min_samps_gene_expr = 3, min_samps_feature_expr = 3,
               min_gene_expr = 10, min_feature_expr = 5)
 plotData(d)
@@ -70,14 +70,14 @@ plotData(d)
 
 # Define design. ************** MODIFY ************** 
 
-```{r define-design}
+```{r DRIMSeq-define-design}
 # (des <- model.matrix(~ XXXX, data = samples(d)))
 (des <- model.matrix(~ 0 + group, data = samples(d)))
 ```
 
 # Calculate precision
 
-```{r calculate-precision}
+```{r DRIMSeq-calculate-precision}
 set.seed(123)
 d <- dmPrecision(d, design = des)
 plotPrecision(d)
@@ -85,20 +85,20 @@ plotPrecision(d)
 
 # Fit model
 
-```{r fit-model}
+```{r DRIMSeq-fit-model}
 d <- dmFit(d, design = des, verbose = 1)
 ```
 
 # Define contrasts. ************** MODIFY ************** 
 
-```{r define-contrasts}
+```{r DRIMSeq-define-contrasts}
 #(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
 (contrasts <- as.data.frame(makeContrasts("groupN61311-groupN052611", levels = des)))
 ```
 
 # Perform tests ************** MODIFY **************
 
-```{r result-genes}
+```{r DRIMSeq-result-genes}
 level <- "gene" ## set to "feature" if transcript-level results are desired
 signif3 <- function(x) signif(x, digits = 3)
 DRIMSeq_fits <- lapply(contrasts, function(cm) {
@@ -113,7 +113,7 @@ DRIMSeq_res <- lapply(DRIMSeq_fits, function(dr) {
 ```
 
 
-```{r result-transcripts}
+```{r DRIMSeq-result-transcripts}
 level <- "feature" ## set to "feature" if transcript-level results are desired
 DRIMSeq_feature_fits <- lapply(contrasts, function(cm) {
   dr <- dmTest(d, contrast = cm, verbose = 1)
@@ -128,7 +128,7 @@ DRIMSeq_feature_res <- lapply(DRIMSeq_feature_fits, function(dr) {
 
 # Write results to text files
 
-```{r save-result}
+```{r DRIMSeq-save-result}
 if (class(DRIMSeq_res) == "data.frame") {
   write.table(DRIMSeq_res %>% dplyr::arrange(pvalue), 
               file = "DRIMSeq_dtu_results.txt", 
@@ -147,7 +147,7 @@ if (class(DRIMSeq_res) == "data.frame") {
 
 The `SummarizedExperiment` object on the transcript level
 
-```{r se-gene}
+```{r DRIMSeq-se-gene}
 ## add rows (NA) for genes that are filtered out (if any)
 DRIMSeq_resA <- lapply(seq_along(DRIMSeq_res), FUN = function(x) {
     
@@ -217,7 +217,7 @@ for (i in seq_along(DRIMSeq_resA)) {
 
 The `SummarizedExperiment` object on the transcript level
 
-```{r se-tx}
+```{r DRIMSeq-se-tx}
 ## add rows (NA) for genes that are filtered out (if any)
 DRIMSeq_resB <- lapply(seq_along(DRIMSeq_feature_res), FUN = function(x) {
     
@@ -289,14 +289,14 @@ for (i in seq_along(DRIMSeq_resB)) {
 
 The output is saved as a list.
 
-```{r save-se}
+```{r DRIMSeq-save-se}
 analysis_se <- list(sg = sg, st = st)
 saveRDS(analysis_se, file = "DRIMSeq_dtu.rds")
 ```
 
 # Session info
 
-```{r}
+```{r DRIMSeq-session-info}
 date()
 sessionInfo()
 ```

@@ -12,7 +12,7 @@ output:
     keep_md: true
 ---
 
-```{r setup, include=FALSE}
+```{r edgeR-setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, dev = c("png", "pdf"))
 ```
 
@@ -23,7 +23,7 @@ abundance estimates from Salmon.
 
 # Load packages
 
-```{r load-pkg}
+```{r edgeR-load-pkg}
 suppressPackageStartupMessages({
   library(dplyr)
   library(tximport)
@@ -40,7 +40,7 @@ We load the `SummarizedExperiment` objects prepared using `tximeta`, containing
 gene- and transcript-level counts and feature lengths. In this report, we will
 use the gene-level quantifications.
 
-```{r print-se}
+```{r edgeR-print-se}
 ## List of SummarizedExperiment objects (gene/transcript level)
 se
 
@@ -53,7 +53,7 @@ sg
 
 # Create DGEList and include average transcript length offsets
 
-```{r dge-generate}
+```{r edgeR-dge-generate}
 ## Extract count matrix and average transcript lengths
 cts <- assay(sg, "counts")
 normMat <- assay(sg, "length")
@@ -74,7 +74,7 @@ dge0$genes <- as.data.frame(rowRanges(sg))
 
 # Calculate logCPMs and add as an assay
 
-```{r add-logcpm}
+```{r edgeR-add-logcpm}
 logcpms <- edgeR::cpm(dge0, log = TRUE, prior.count = 2)
 stopifnot(all(rownames(logcpms) == rownames(sg)),
           all(colnames(logcpms) == colnames(sg)))
@@ -83,7 +83,7 @@ assay(sg, "logcpm") <- logcpms
 
 # Define design. ************** MODIFY ************** 
 
-```{r define-design}
+```{r edgeR-define-design}
 stopifnot(all(colnames(dge0) == metadata$names))
 #(des <- model.matrix(~ XXXX, data = metadata))
 #e.g.
@@ -92,7 +92,7 @@ stopifnot(all(colnames(dge0) == metadata$names))
 
 # Filter out lowly expressed genes
 
-```{r filter-genes}
+```{r edgeR-filter-genes}
 dim(dge0)
 keep <- edgeR::filterByExpr(dge0, design = des)
 dge <- dge0[keep, ]
@@ -102,7 +102,7 @@ dim(dge)
 
 # Estimate dispersion
 
-```{r estimate-disp}
+```{r edgeR-estimate-disp}
 ## Estimate dispersion and fit model
 dge <- estimateDisp(dge, design = des)
 qlfit <- glmQLFit(dge, design = des)
@@ -113,7 +113,7 @@ plotBCV(dge)
 
 # Define contrasts ************** MODIFY ************** 
 
-```{r define-contrasts}
+```{r edgeR-define-contrasts}
 #(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
 #e.g.
 (contrasts <- as.data.frame(makeContrasts(
@@ -123,7 +123,7 @@ plotBCV(dge)
 
 # Perform tests
 
-```{r perform-tests}
+```{r edgeR-perform-tests}
 signif3 <- function(x) signif(x, digits = 3)
 edgeR_res <- lapply(contrasts, function(cm) {
   qlf <- glmQLFTest(qlfit, contrast = cm)
@@ -134,7 +134,7 @@ edgeR_res <- lapply(contrasts, function(cm) {
 
 # Make MA plots
 
-```{r}
+```{r edgeR-ma-plots}
 if (is(edgeR_res, "data.frame")) {
   print(ggplot(edgeR_res, aes(x = logCPM, y = logFC, color = FDR <= 0.05)) + 
           geom_point() + theme_bw() + 
@@ -151,7 +151,7 @@ if (is(edgeR_res, "data.frame")) {
 
 # Write results to text files
 
-```{r save-results}
+```{r edgeR-save-results}
 ## Write results to text files and make MA plots
 if (is(edgeR_res, "data.frame")) {
   write.table(edgeR_res %>% dplyr::arrange(PValue), 
@@ -168,7 +168,7 @@ if (is(edgeR_res, "data.frame")) {
 
 # Output results as list of `SummarizedExperiment` objects
 
-```{r se}
+```{r edgeR-se}
 ## add rows (NA) for genes that are filtered out (if any)
 edgeR_resA <- lapply(seq_along(edgeR_res), FUN = function(x) {
   
@@ -227,14 +227,14 @@ for (i in seq_along(edgeR_resA)) {
 
 The output is saved as a list.
 
-```{r save-se}
+```{r edgeR-save-se}
 analysis_se <- list(sg = sg, st = se$st)
 saveRDS(analysis_se, file = "edgeR_dge.rds")
 ```
 
 # Session info
 
-```{r session-info}
+```{r edgeR-session-info}
 date()
 sessionInfo()
 ```

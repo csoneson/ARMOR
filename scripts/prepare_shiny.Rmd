@@ -14,7 +14,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-```{r setup, include=FALSE}
+```{r shiny-setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, dev = c("png", "pdf"), root.dir = "../")
 #knitr::opts_knit$set(root.dir = "../")
 ```
@@ -25,7 +25,7 @@ This script prepares the data to be used for shiny app.
 
 # Load packages
 
-```{r load-pkg}
+```{r shiny-load-pkg}
 suppressPackageStartupMessages({
   library(dplyr)
   library(tidyr)
@@ -40,7 +40,7 @@ suppressPackageStartupMessages({
 
 # Load data
 
-```{r load-data}
+```{r shiny-load-data}
 options(ucscChromosomeNames = FALSE)
 sg <- se$sg
 st <- se$st
@@ -48,7 +48,7 @@ st <- se$st
 
 # Gene models
 
-```{r gene-model}
+```{r shiny-gene-model}
 create_genemodels <- function(genemodels) {
     idx <- match(c("transcript_id", "gene_id", "exon_id"), 
                  colnames(mcols(genemodels)))
@@ -66,7 +66,7 @@ if (!is.null(gtffile)) {
 
 # Vector with bigWig file names and condition information
 
-```{r bigwig}
+```{r shiny-bigwig}
 metadata <- colData(sg)
 if (!is.null(bigwigdir)) {
     bwfiles <- normalizePath(list.files(bigwigdir, pattern = "\\.bw$", 
@@ -85,7 +85,7 @@ if (!is.null(bigwigdir)) {
 
 # edgeR - gene-level MDS
 
-```{r MDS}
+```{r shiny-MDS}
 logcpms <- assay(sg, "logcpm")
 mds <- limma::plotMDS(logcpms, top = 500, labels = NULL, pch = NULL,
                       cex = 1, dim.plot = c(1, 2), ndim = min(7, ncol(logcpms) - 1),
@@ -108,7 +108,7 @@ and condition information
 
 The multidimensional scale data is stored in `reducedDims`.
 
-```{r sce_gene}
+```{r shiny-sce-gene}
 ## column data
 nam <- colData(sg)$names
 colData(sg)$bwFiles <- bwfiles[nam]
@@ -137,7 +137,7 @@ and condition information.
 
 The multidimensional scale data is stored in `reducedDims`.
 
-```{r sce_tx}
+```{r shiny-sce-tx}
 ## column data
 nam <- colData(st)$names
 colData(st)$bwFiles <- bwfiles[nam]
@@ -151,7 +151,7 @@ sce_tx <- SingleCellExperiment(assays = assays(st),
 
 # Output results
 
-```{r output}
+```{r shiny-save-sce}
 saveRDS(list(sce_tx = sce_tx, 
              sce_gene = sce_gene),
         file = "shiny_sce.rds")
@@ -159,7 +159,7 @@ saveRDS(list(sce_tx = sce_tx,
 
 # Session info
 
-```{r session-info}
+```{r shiny-session-info}
 date()
 sessionInfo()
 ```
