@@ -1,9 +1,11 @@
+## Configuration file
 configfile: "config.yaml"
 
+## Read metadata
 import pandas as pd
 samples = pd.read_table(config["metatxt"])
 
-## Sanitize output directory
+## Sanitize provided input and output directories
 import re
 def getpath(str):
 	if str in ['', '.', './']:
@@ -18,40 +20,34 @@ def getpath(str):
 outputdir = getpath(config["output"])
 FASTQdir = getpath(config["FASTQ"])
 
-print(outputdir)
-print(FASTQdir)
-
 ## Define the conda environment for all rules using R
 if config["useCondaR"] == True:
 	Renv = "envs/environment_R.yaml"
 else:
 	Renv = "envs/environment.yaml"
 
-print(Renv)
-
+## Define the R binary
 Rbin = config["Rbin"]
 
 ## ------------------------------------------------------------------------------------ ##
 ## Target definitions
 ## ------------------------------------------------------------------------------------ ##
 ## Run all analyses
-## Add outputdir + "outputR/DRIMSeq_dtu.rds" if desired
 rule all:
 	input:
 		outputdir + "MultiQC/multiqc_report.html",
-		outputdir + "outputR/edgeR_dge.rds",
-		outputdir + "outputR/shiny_results_list.rds",
-		outputdir + "outputR/shiny_results_sce.rds",
-		outputdir + "outputR/shiny_results_list_edgeR.rds",
-		outputdir + "outputR/shiny_results_sce_edgeR.rds"
-		
+		outputdir + "outputR/edgeR_dge.html",
+		outputdir + "outputR/DRIMSeq_dtu.html",
+		outputdir + "outputR/shiny_sce.rds"
+
 ## Install R packages	
 rule pkginstall:
 	input:
 		script = "scripts/install_pkgs.R"
 	output:
 	    outputdir + "Rout/pkginstall_state.txt"
-	priority: 50
+	priority: 
+		50
 	conda:
 		Renv
 	log:
@@ -81,7 +77,8 @@ rule runsalmonquant:
 ## STAR alignment
 rule runstar:
 	input:
-		expand(outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
+		expand(outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist()),
+		expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist())
 
 ## List all the packages that were used by the R analyses
 rule listpackages:
@@ -444,20 +441,23 @@ rule tximeta:
 ## ------------------------------------------------------------------------------------ ##
 ## Differential expression
 ## ------------------------------------------------------------------------------------ ##
-## edgeR
 rule edgeR:
 	input:
-	    outputdir + "Rout/pkginstall_state.txt",
+		outputdir + "Rout/pkginstall_state.txt",
 		rds = outputdir + "outputR/tximeta_se.rds",
-		script = "scripts/run_dge_edgeR.R"
+		script = "scripts/run_render.R",
+		template = "scripts/edgeR_dge.Rmd"
 	output:
-		outputdir + "outputR/edgeR_dge.rds"
-	log:
+		html = outputdir + "outputR/edgeR_dge.html",
+		rds = outputdir + "outputR/edgeR_dge.rds"
+	params:
+		directory = outputdir + "outputR"
+	log: 
 		outputdir + "Rout/run_dge_edgeR.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' outrds='{output}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='edgeR_dge.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage
@@ -466,56 +466,44 @@ rule edgeR:
 rule DRIMSeq:
 	input:
 	    outputdir + "Rout/pkginstall_state.txt",
-		rds = outputdir + "outputR/tximeta_se.rds",
-		script = "scripts/run_dtu_drimseq.R"
+		rds = outputdir + "outputR/edgeR_dge.rds",
+		script = "scripts/run_render.R",
+		template = "scripts/DRIMSeq_dtu.Rmd"
 	output:
-		outputdir + "outputR/DRIMSeq_dtu.rds"
+		html = outputdir + "outputR/DRIMSeq_dtu.html",
+		rds = outputdir + "outputR/DRIMSeq_dtu.rds"
+	params:
+		directory = outputdir + "outputR"
 	log:
 		outputdir + "Rout/run_dtu_drimseq.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' outrds='{output}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='DRIMSeq_dtu.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Shiny app
 ## ------------------------------------------------------------------------------------ ##
-rule shiny:
+## Shiny
+rule Shiny:
 	input:
 	    outputdir + "Rout/pkginstall_state.txt",
-		expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()),
-		rds = outputdir + "outputR/edgeR_dge.rds",
-		metatxt = config["metatxt"],
+	    expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()),
+		rds = outputdir + "outputR/DRIMSeq_dtu.rds",
+		script = "scripts/run_render_shiny.R",
 		gtf = config["gtf"],
-		script = "scripts/prepare_results_for_shiny.R"
-	log: 
-		outputdir + "Rout/shiny_results.Rout"
+		template = "scripts/prepare_shiny.Rmd"
 	output:
-		outList = outputdir + "outputR/shiny_results_list.rds",
-		outSCE = outputdir + "outputR/shiny_results_sce.rds"
+		html = outputdir + "outputR/prepare_shiny.html",
+		rds = outputdir + "outputR/shiny_sce.rds"
 	params:
+		directory = outputdir + "outputR",
 		groupvar = config["groupvar"],
-		bigwigdir = "STARbigwig"
-	conda:
-		Renv
-	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile='{input.gtf}' metafile='{input.metatxt}' bigwigdir='{params.bigwigdir}' outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
-
-
-rule shinyedgeR:
-	input:
-	    outputdir + "Rout/pkginstall_state.txt",
-		rds = outputdir + "outputR/edgeR_dge.rds",
-		metatxt = config["metatxt"],
-		script = "scripts/prepare_results_for_shiny.R"
+		bigwigdir = outputdir + "STARbigwig"
 	log:
-		outputdir + "Rout/shiny_results_edgeR.Rout"
-	output:
-		outList = outputdir + "outputR/shiny_results_list_edgeR.rds",
-		outSCE = outputdir + "outputR/shiny_results_sce_edgeR.rds"
-	params:
-		groupvar = config["groupvar"]
+		outputdir + "Rout/prepare_shiny.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args edgerres='{input.rds}' groupvar='{params.groupvar}' gtffile=NULL metafile='{input.metatxt}' bigwigdir=NULL outList='{output.outList}' outSCE='{output.outSCE}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' gtffile='{input.gtf}' bigwigdir='{params.bigwigdir}' groupvar='{params.groupvar}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='prepare_shiny.html'" {input.script} {log}'''
+

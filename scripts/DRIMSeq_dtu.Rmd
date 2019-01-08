@@ -1,0 +1,303 @@
+---
+title: "DRIMSeq DTU"
+author: ""
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: yeti
+    highlight: tango
+    code_folding: show
+    keep_md: true
+---
+
+```{r DRIMSeq-setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+This script performs differential transcript usage analysis with DRIMSeq, based
+on abundance estimates from Salmon. It supports testing one or more contrasts.
+
+# Load packages
+
+```{r DRIMSeq-load-pkg}
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(tximport)
+  library(tximeta)
+  library(SummarizedExperiment)
+  library(edgeR)
+  library(DRIMSeq)
+  library(ggplot2)
+})
+```
+
+# Load `SummarizedExperiment` object
+
+We will use the transcript-level quantifications.
+
+```{r DRIMSeq-print-se}
+sg <- se$sg
+st <- se$st
+```
+
+# Create dmDSdata object
+
+```{r DRIMSeq-dmDSdata}
+counts <- data.frame(feature_id = rownames(st),
+                     gene_id = unlist(rowData(st)$gene_id),
+                     assays(st)[["counts"]],
+                     row.names = NULL)
+
+metadata <- data.frame(colData(st))
+metadata <- metadata %>% 
+    dplyr::select(sample_id = names, group  = celline)
+  
+d <- dmDSdata(counts = counts, samples = metadata)
+plotData(d)
+```
+
+# Filter ************** MODIFY ************** 
+
+```{r DRIMSeq-data-filter}
+d <- dmFilter(d, min_samps_gene_expr = 3, min_samps_feature_expr = 3,
+              min_gene_expr = 10, min_feature_expr = 5)
+plotData(d)
+```
+
+# Define design. ************** MODIFY ************** 
+
+```{r DRIMSeq-define-design}
+# (des <- model.matrix(~ XXXX, data = samples(d)))
+(des <- model.matrix(~ 0 + group, data = samples(d)))
+```
+
+# Calculate precision
+
+```{r DRIMSeq-calculate-precision}
+set.seed(123)
+d <- dmPrecision(d, design = des)
+plotPrecision(d)
+```
+
+# Fit model
+
+```{r DRIMSeq-fit-model}
+d <- dmFit(d, design = des, verbose = 1)
+```
+
+# Define contrasts. ************** MODIFY ************** 
+
+```{r DRIMSeq-define-contrasts}
+#(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
+(contrasts <- as.data.frame(makeContrasts("groupN61311-groupN052611", levels = des)))
+```
+
+# Perform tests ************** MODIFY **************
+
+```{r DRIMSeq-result-genes}
+level <- "gene" ## set to "feature" if transcript-level results are desired
+signif3 <- function(x) signif(x, digits = 3)
+DRIMSeq_fits <- lapply(contrasts, function(cm) {
+  dr <- dmTest(d, contrast = cm, verbose = 1)
+  print(plotPValues(dr, level = level))
+  dr
+})
+
+DRIMSeq_res <- lapply(DRIMSeq_fits, function(dr) {
+  results(dr, level = level) %>% dplyr::mutate_if(is.numeric, signif3)
+})
+```
+
+
+```{r DRIMSeq-result-transcripts}
+level <- "feature" ## set to "feature" if transcript-level results are desired
+DRIMSeq_feature_fits <- lapply(contrasts, function(cm) {
+  dr <- dmTest(d, contrast = cm, verbose = 1)
+  print(plotPValues(dr, level = level))
+  dr
+})
+
+DRIMSeq_feature_res <- lapply(DRIMSeq_feature_fits, function(dr) {
+  results(dr, level = level) %>% dplyr::mutate_if(is.numeric, signif3)
+})
+```
+
+# Write results to text files
+
+```{r DRIMSeq-save-result}
+if (class(DRIMSeq_res) == "data.frame") {
+  write.table(DRIMSeq_res %>% dplyr::arrange(pvalue), 
+              file = "DRIMSeq_dtu_results.txt", 
+              sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+} else {
+  for (nm in names(DRIMSeq_res)) {
+    write.table(DRIMSeq_res[[nm]] %>% dplyr::arrange(pvalue), 
+                file = paste0("DRIMSeq_dtu_results_", nm, ".txt"), 
+                sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+  }
+}
+```
+
+
+# Output results as `SummarizedExperiment` object
+
+The `SummarizedExperiment` object on the transcript level
+
+```{r DRIMSeq-se-gene}
+## add rows (NA) for genes that are filtered out (if any)
+DRIMSeq_resA <- lapply(seq_along(DRIMSeq_res), FUN = function(x) {
+    
+    # all genes
+    geneA <- rowData(sg)$gene_id
+    
+    # genes that are not filtered out
+    resX <- DRIMSeq_res[[x]]
+    
+    # other characteristics that have been calculated
+    mexp <- mean_expression(DRIMSeq_fits[[x]]) %>%
+        dplyr::arrange(match(gene_id, resX$gene_id)) %>%
+        dplyr::select(-gene_id) 
+    prec <- genewise_precision(DRIMSeq_fits[[x]]) %>%  
+        dplyr::arrange(match(gene_id, resX$gene_id)) %>%
+        dplyr::select(-gene_id) 
+   
+    resX <- resX %>%
+        dplyr::bind_cols(mexp) %>%
+        dplyr::bind_cols(prec) %>%
+        dplyr::mutate(contrast = names(DRIMSeq_res)[[x]]) 
+    resX$common_precision <- common_precision(DRIMSeq_fits[[x]])
+    rownames(resX) <- resX$gene_id
+    
+    # genes that are filtered out 
+    geneO <- setdiff(geneA, resX$gene_id)
+    
+    # results for all genes
+    if (length(geneO) > 0) {
+        # create a data frame with values NA as the results of the genes that
+        # are filtered out
+        matO <- matrix(NA, nrow = length(geneO),
+                        ncol = ncol(resX),
+                        dimnames = list(geneO, 
+                                        colnames(resX))) 
+        resO <- data.frame(matO)
+        resO$gene_id <- geneO
+        
+        # combine the result tables 
+        resA <- resO %>%
+            dplyr::bind_rows(resX) %>%
+            dplyr::arrange(match(gene_id, geneA)) %>%
+            dplyr::mutate(contrast = names(DRIMSeq_res)[[x]]) 
+            
+    } else {
+        resA <- resX %>%
+            dplyr::arrange(match(gene_id, geneA)) %>%
+            dplyr::mutate(contrast = names(DRIMSeq_res)[[x]]) 
+    }
+    
+    # use gene column as rownames
+    rownames(resA) <- resA$gene_id
+    
+    # convert to DataFrame
+    resA <- S4Vectors::DataFrame(resA)
+    return(resA)
+})
+names(DRIMSeq_resA) <- names(DRIMSeq_res)
+
+## Put the result tables in rowData 
+for (i in seq_along(DRIMSeq_resA)) {
+    nam <- names(DRIMSeq_resA)[i]
+    namI <- paste("DRIMSeq:", nam, sep = "")
+    rowData(sg)[[namI]] <- DRIMSeq_resA[[i]] 
+}
+```
+
+The `SummarizedExperiment` object on the transcript level
+
+```{r DRIMSeq-se-tx}
+## add rows (NA) for genes that are filtered out (if any)
+DRIMSeq_resB <- lapply(seq_along(DRIMSeq_feature_res), FUN = function(x) {
+    
+    # all genes
+    txA <- rowData(st)$tx_id
+    
+    # genes that are not filtered out
+    resX <- DRIMSeq_feature_res[[x]]
+    
+    prop <- proportions(DRIMSeq_feature_fits[[x]]) %>%  
+        dplyr::arrange(match(feature_id, resX$feature_id)) %>%
+        dplyr::select(-c(gene_id, feature_id))
+    colnames(prop) <- paste("proportion", colnames(prop), sep = "_")
+    
+    coef <- coefficients(DRIMSeq_feature_fits[[x]]) %>%  
+        dplyr::arrange(match(feature_id, resX$feature_id)) %>%
+        dplyr::select(-c(gene_id, feature_id))
+    colnames(coef) <- paste("coef", colnames(coef), sep = "_")
+    
+    resX <- resX %>%
+        dplyr::bind_cols(prop) %>%
+        dplyr::bind_cols(coef) %>%
+        dplyr::mutate(contrast = names(DRIMSeq_res)[[x]]) 
+    
+    rownames(resX) <- resX$feature_id
+    
+    # genes that are filtered out 
+    txO <- setdiff(txA, resX$feature_id)
+    
+    # results for all genes
+    if (length(txO) > 0) {
+        # create a data frame with values NA as the results of the genes that
+        # are filtered out
+        matO <- matrix(NA, nrow = length(txO),
+                        ncol = ncol(resX),
+                        dimnames = list(txO, 
+                                        colnames(resX))) 
+        resO <- data.frame(matO)
+        resO$feature_id <- txO
+        
+        # combine the result tables 
+        resA <- resO %>%
+            dplyr::bind_rows(resX) %>%
+            dplyr::arrange(match(feature_id, txA)) %>%
+            dplyr::mutate(contrast = names(DRIMSeq_feature_res)[[x]]) 
+            
+    } else {
+        resA <- resX %>%
+            dplyr::arrange(match(feature_id, txA)) %>%
+            dplyr::mutate(contrast = names(DRIMSeq_feature_res)[[x]]) 
+    }
+    
+    # use gene column as rownames
+    rownames(resA) <- resA$feature_id
+    
+    # convert to DataFrame
+    resA <- S4Vectors::DataFrame(resA)
+    return(resA)
+})
+names(DRIMSeq_resB) <- names(DRIMSeq_feature_res)
+
+## Put the result tables in rowData 
+for (i in seq_along(DRIMSeq_resB)) {
+    nam <- names(DRIMSeq_resB)[i]
+    namI <- paste("DRIMSeq:", nam, sep = "")
+    rowData(st)[[namI]] <- DRIMSeq_resB[[i]] 
+}
+```
+
+The output is saved as a list.
+
+```{r DRIMSeq-save-se}
+analysis_se <- list(sg = sg, st = st)
+saveRDS(analysis_se, file = "DRIMSeq_dtu.rds")
+```
+
+# Session info
+
+```{r DRIMSeq-session-info}
+date()
+sessionInfo()
+```
+

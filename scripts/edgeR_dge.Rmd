@@ -1,0 +1,241 @@
+---
+title: "edgeR DGE"
+author: ""
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: yeti
+    highlight: tango
+    code_folding: show
+    keep_md: true
+---
+
+```{r edgeR-setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, dev = c("png", "pdf"))
+```
+
+# Introduction
+
+Here, we perform differential gene expression analysis with edgeR, based on
+abundance estimates from Salmon. 
+
+# Load packages
+
+```{r edgeR-load-pkg}
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(tximport)
+  library(tximeta)
+  library(SummarizedExperiment)
+  library(edgeR)
+  library(ggplot2)
+})
+```
+
+# Load `SummarizedExperiment` object
+
+We load the `SummarizedExperiment` objects prepared using `tximeta`, containing
+gene- and transcript-level counts and feature lengths. In this report, we will
+use the gene-level quantifications.
+
+```{r edgeR-print-se}
+## List of SummarizedExperiment objects (gene/transcript level)
+se
+
+## Get gene-level SummarizedExperiment object
+sg <- se$sg
+metadata <- colData(sg)
+
+sg
+```
+
+# Create DGEList and include average transcript length offsets
+
+```{r edgeR-dge-generate}
+## Extract count matrix and average transcript lengths
+cts <- assay(sg, "counts")
+normMat <- assay(sg, "length")
+normMat <- normMat/exp(rowMeans(log(normMat)))
+
+## Generate offset matrix
+o <- log(edgeR::calcNormFactors(cts/normMat)) + 
+  log(colSums(cts/normMat))
+
+## Create DGEList object and add offsets
+dge0 <- edgeR::DGEList(cts)
+dge0 <- edgeR::scaleOffset(dge0, offset = t(t(log(normMat)) + o))
+dge0 <- edgeR::calcNormFactors(dge0)
+
+## Add gene annotation to the DGEList object
+dge0$genes <- as.data.frame(rowRanges(sg))
+```
+
+# Calculate logCPMs and add as an assay
+
+```{r edgeR-add-logcpm}
+logcpms <- edgeR::cpm(dge0, log = TRUE, prior.count = 2)
+stopifnot(all(rownames(logcpms) == rownames(sg)),
+          all(colnames(logcpms) == colnames(sg)))
+assay(sg, "logcpm") <- logcpms
+```
+
+# Define design. ************** MODIFY ************** 
+
+```{r edgeR-define-design}
+stopifnot(all(colnames(dge0) == metadata$names))
+#(des <- model.matrix(~ XXXX, data = metadata))
+#e.g.
+(des <- model.matrix(~ 0 + celline, data = metadata))
+```
+
+# Filter out lowly expressed genes
+
+```{r edgeR-filter-genes}
+dim(dge0)
+keep <- edgeR::filterByExpr(dge0, design = des)
+dge <- dge0[keep, ]
+dge <- calcNormFactors(dge)
+dim(dge)
+```
+
+# Estimate dispersion
+
+```{r edgeR-estimate-disp}
+## Estimate dispersion and fit model
+dge <- estimateDisp(dge, design = des)
+qlfit <- glmQLFit(dge, design = des)
+
+## Plot dispersions
+plotBCV(dge)
+```
+
+# Define contrasts ************** MODIFY ************** 
+
+```{r edgeR-define-contrasts}
+#(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
+#e.g.
+(contrasts <- as.data.frame(makeContrasts(
+  contrasts = "cellineN61311-cellineN052611", levels = des
+)))
+```
+
+# Perform tests
+
+```{r edgeR-perform-tests}
+signif3 <- function(x) signif(x, digits = 3)
+edgeR_res <- lapply(contrasts, function(cm) {
+  qlf <- glmQLFTest(qlfit, contrast = cm)
+  tt <- topTags(qlf, n = Inf, sort.by = "none")$table
+  tt %>% dplyr::mutate_if(is.numeric, signif3)
+})
+```
+
+# Make MA plots
+
+```{r edgeR-ma-plots}
+if (is(edgeR_res, "data.frame")) {
+  print(ggplot(edgeR_res, aes(x = logCPM, y = logFC, color = FDR <= 0.05)) + 
+          geom_point() + theme_bw() + 
+          scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black")))
+} else {
+  for (nm in names(edgeR_res)) {
+    print(ggplot(edgeR_res[[nm]], aes(x = logCPM, y = logFC, color = FDR <= 0.05)) + 
+            geom_point() + theme_bw() + 
+            scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black")) + 
+            ggtitle(nm))
+  }
+}
+```
+
+# Write results to text files
+
+```{r edgeR-save-results}
+## Write results to text files and make MA plots
+if (is(edgeR_res, "data.frame")) {
+  write.table(edgeR_res %>% dplyr::arrange(PValue), 
+              file = "edgeR_dge_results.txt", 
+              sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+} else {
+  for (nm in names(edgeR_res)) {
+    write.table(edgeR_res[[nm]] %>% dplyr::arrange(PValue), 
+                file = paste0("edgeR_dge_results_", nm, ".txt"), 
+                sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+  }
+}
+```
+
+# Output results as list of `SummarizedExperiment` objects
+
+```{r edgeR-se}
+## add rows (NA) for genes that are filtered out (if any)
+edgeR_resA <- lapply(seq_along(edgeR_res), FUN = function(x) {
+  
+  ## All genes
+  geneA <- rowData(sg)$gene_id
+  
+  ## Genes that are not filtered out
+  resX <- edgeR_res[[x]]
+  resX <- resX %>% 
+    dplyr::select(c("gene_id", "logFC", "logCPM", 
+                    "F", "FDR", "PValue")) 
+  rownames(resX) <- resX$gene_id
+  
+  ## Genes that are filtered out 
+  geneO <- setdiff(geneA, resX$gene_id)
+  
+  ## results for all genes
+  if (length(geneO) > 0) {
+    ## create a data frame with values NA as the results of the genes that
+    ## are filtered out
+    matO <- matrix(NA, nrow = length(geneO),
+                   ncol = ncol(resX),
+                   dimnames = list(geneO, 
+                                   colnames(resX))) 
+    resO <- data.frame(matO)
+    resO$gene_id <- geneO
+        
+    ## Combine the result tables 
+    resA <- resO %>%
+      dplyr::bind_rows(resX) %>%
+      dplyr::arrange(match(gene_id, geneA)) %>%
+      dplyr::mutate(contrast = names(edgeR_res)[[x]]) 
+  } else {
+    resA <- resX %>%
+      dplyr::arrange(match(gene_id, geneA)) %>%
+      dplyr::mutate(contrast = names(edgeR_res)[[x]]) 
+  }
+  
+  ## Use gene column as rownames
+  rownames(resA) <- resA$gene_id
+    
+  ## convert to DataFrame
+  resA <- S4Vectors::DataFrame(resA)
+  return(resA)
+})
+names(edgeR_resA) <- names(edgeR_res)
+
+## Put the result tables in rowData 
+for (i in seq_along(edgeR_resA)) {
+  nam <- names(edgeR_resA)[i]
+  namI <- paste("edgeR:", nam, sep = "")
+  stopifnot(all(rownames(sg) == rownames(edgeR_resA[[i]])))
+  rowData(sg)[[namI]] <- edgeR_resA[[i]] 
+}
+```
+
+The output is saved as a list.
+
+```{r edgeR-save-se}
+analysis_se <- list(sg = sg, st = se$st)
+saveRDS(analysis_se, file = "edgeR_dge.rds")
+```
+
+# Session info
+
+```{r edgeR-session-info}
+date()
+sessionInfo()
+```
+
