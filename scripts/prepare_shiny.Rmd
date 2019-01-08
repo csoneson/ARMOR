@@ -1,0 +1,166 @@
+---
+title: "Shiny preparation"
+author: ""
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: yeti
+    highlight: tango
+    code_folding: show
+    keep_md: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r shiny-setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, dev = c("png", "pdf"), root.dir = "../")
+#knitr::opts_knit$set(root.dir = "../")
+```
+
+# Introduction
+
+This script prepares the data to be used for shiny app. 
+
+# Load packages
+
+```{r shiny-load-pkg}
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(tidyr)
+  library(limma)
+  library(edgeR)
+  library(rtracklayer)
+  library(reshape2)
+  library(SingleCellExperiment)
+  library(S4Vectors)
+})
+```
+
+# Load data
+
+```{r shiny-load-data}
+options(ucscChromosomeNames = FALSE)
+sg <- se$sg
+st <- se$st
+```
+
+# Gene models
+
+```{r shiny-gene-model}
+create_genemodels <- function(genemodels) {
+    idx <- match(c("transcript_id", "gene_id", "exon_id"), 
+                 colnames(mcols(genemodels)))
+    colnames(mcols(genemodels))[idx] <- c("transcript", "gene", "exon")
+    mcols(genemodels)$symbol <- mcols(genemodels)$transcript
+    subset(genemodels, type == "exon")
+}
+
+if (!is.null(gtffile)) {
+    genemodels <- create_genemodels(genemodels)
+} else {
+    genemodels <- NULL
+}
+```
+
+# Vector with bigWig file names and condition information
+
+```{r shiny-bigwig}
+metadata <- colData(sg)
+if (!is.null(bigwigdir)) {
+    bwfiles <- normalizePath(list.files(bigwigdir, pattern = "\\.bw$", 
+                                        full.names = TRUE))
+    names(bwfiles) <- gsub("_Aligned.sortedByCoord.out.bw", "", basename(bwfiles))
+    condition <- metadata[[groupvar]][match(names(bwfiles), metadata$names)]
+    names(condition) <- names(bwfiles)
+    ordr <- order(condition)
+    condition <- condition[ordr]
+    bwfiles <- bwfiles[ordr]
+} else {
+    bwfiles <- NA
+    condition <- NA
+}
+```
+
+# edgeR - gene-level MDS
+
+```{r shiny-MDS}
+logcpms <- assay(sg, "logcpm")
+mds <- limma::plotMDS(logcpms, top = 500, labels = NULL, pch = NULL,
+                      cex = 1, dim.plot = c(1, 2), ndim = min(7, ncol(logcpms) - 1),
+                      gene.selection = "common",
+                      xlab = NULL, ylab = NULL, plot = FALSE)$cmdscale.out
+colnames(mds) <- paste0("MDS", 1:min(7, ncol(logcpms) - 1))
+mds <- as.data.frame(mds) %>% tibble::rownames_to_column(var = "names") %>%
+    dplyr::full_join(data.frame(metadata), by = "names")
+```
+
+# SingleCellExperiment on gene level
+
+The `rowData` of `sce_gene` includes the gene information and the result tables
+from `edgeR` and `DRIMSeq`. Each result table is stored as a column, and the
+column name is composed by `edgeR:` or `DRIMSeq:` and the name of the contrast
+used. 
+
+The `colData` of `sce_gene` stores the sample information, the bigWig file names
+and condition information
+
+The multidimensional scale data is stored in `reducedDims`.
+
+```{r shiny-sce-gene}
+## column data
+nam <- colData(sg)$names
+colData(sg)$bwFiles <- bwfiles[nam]
+colData(sg)$bwCond <- condition[nam]
+
+## low dimensional representations
+reducedData <- mds %>%
+    dplyr::arrange(match(names, nam)) %>%
+    dplyr::select(-one_of(colnames(colData(sg))))
+reducedData <- as.matrix(reducedData)
+
+sce_gene <- SingleCellExperiment(assays = assays(sg), 
+                                 rowData = rowData(sg),
+                                 colData = colData(sg),
+                                 metadata = list(geneModels = genemodels),
+                                 reducedDims = SimpleList(MDS = reducedData))
+```
+
+# SingleCellExperiment on transcript level
+
+The `rowData` of `sce_tx` includes the information of genes and transcripts,
+and the result table on the transcript level from `DRIMSeq`.
+
+The `colData` of `sce_tx` stores the sample information, the bigWig file names
+and condition information.
+
+The multidimensional scale data is stored in `reducedDims`.
+
+```{r shiny-sce-tx}
+## column data
+nam <- colData(st)$names
+colData(st)$bwFiles <- bwfiles[nam]
+colData(st)$bwCond <- condition[nam]
+
+sce_tx <- SingleCellExperiment(assays = assays(st), 
+                               rowData = rowData(st),
+                               colData = colData(st),
+                               metadata = list(geneModels = genemodels))
+```
+
+# Output results
+
+```{r shiny-save-sce}
+saveRDS(list(sce_tx = sce_tx, 
+             sce_gene = sce_gene),
+        file = "shiny_sce.rds")
+```
+
+# Session info
+
+```{r shiny-session-info}
+date()
+sessionInfo()
+```
+
