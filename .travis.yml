@@ -28,4 +28,7 @@ script:
   - source activate snakemake
   # run the workflow
   - travis_wait 50 snakemake --use-conda 
+
+after_failure:
+  - cat example_data/output/Rout/install_pkgs.Rout
   
