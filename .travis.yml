@@ -9,6 +9,7 @@ before_install:
   - echo -e 'MAKEFLAGS = -j4' > ~/.R/Makevars
   - echo 'options(Ncpus = 4)' > ~/.Rprofile
   - sudo apt-get install gfortran
+  - sudo apt-get install libudunits2-dev
 
 install:
   - sudo apt-get update
