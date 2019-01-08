@@ -8,6 +8,7 @@ before_install:
   - mkdir -p ~/.R
   - echo -e 'MAKEFLAGS = -j4' > ~/.R/Makevars
   - echo 'options(Ncpus = 4)' > ~/.Rprofile
+  - sudo apt-get install gfortran
 
 install:
   - sudo apt-get update
