@@ -6,7 +6,7 @@ python:
 
 cache:
   directories:
-    - $HOME/build/csoneson/rnaseqworkflow/.snakemake/conda/dc7f56d0/lib/R/library
+    - $HOME/build/csoneson/rnaseqworkflow/.snakemake/conda/dc7f56d0
   
 before_install:
   - mkdir -p ~/.R
