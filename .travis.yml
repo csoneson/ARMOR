@@ -29,7 +29,7 @@ install:
 script:
   - source activate snakemake
   ## run the workflow
-  - travis_wait 50 snakemake --use-conda pkginstall
+  - travis_wait 50 snakemake --use-conda edgeR
 
 ## Print out the R package installation log file
 after_script:
