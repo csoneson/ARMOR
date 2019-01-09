@@ -4,10 +4,6 @@ python:
   ## We don't actually use the Travis Python, but this keeps it organized.
   - "3.6"
 
-cache:
-  directories:
-    - $HOME/build/csoneson/rnaseqworkflow/.snakemake/conda/dc7f56d0
-  
 before_install:
   - mkdir -p ~/.R
   - echo -e 'MAKEFLAGS = -j8' > ~/.R/Makevars
