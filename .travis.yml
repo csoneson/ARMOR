@@ -7,6 +7,7 @@ python:
 addons:
   apt_packages:
     - pandoc
+    - pandoc-citeproc
     
 before_install:
   - mkdir -p ~/.R
