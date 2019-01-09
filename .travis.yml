@@ -1,13 +1,17 @@
 ## Inspired/copied from https://github.com/snakemake-workflows/ngs-test-data/blob/master/.travis.yml
 language: python
 python:
-  # We don't actually use the Travis Python, but this keeps it organized.
+  ## We don't actually use the Travis Python, but this keeps it organized.
   - "3.6"
 
+cache:
+  directories:
+  - $HOME/miniconda
+  
 before_install:
   - mkdir -p ~/.R
-  - echo -e 'MAKEFLAGS = -j4' > ~/.R/Makevars
-  - echo 'options(Ncpus = 4)' > ~/.Rprofile
+  - echo -e 'MAKEFLAGS = -j8' > ~/.R/Makevars
+  - echo 'options(Ncpus = 8)' > ~/.Rprofile
   - sudo apt-get install gfortran
   - sudo apt-get install libudunits2-dev
 
@@ -19,7 +23,7 @@ install:
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
-  # Useful for debugging any issues with conda
+  ## Useful for debugging any issues with conda
   - conda info -a
   - conda config --add channels defaults
   - conda config --add channels conda-forge
@@ -28,9 +32,11 @@ install:
 
 script:
   - source activate snakemake
-  # run the workflow
+  ## run the workflow
   - travis_wait 50 snakemake --use-conda 
 
+## Since most failures are due to package installation issues, print out the 
+## corresponding log file in case of failure
 after_failure:
   - cat example_data/output/Rout/install_pkgs.Rout
   
