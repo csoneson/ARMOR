@@ -35,8 +35,8 @@ script:
   ## run the workflow
   - travis_wait 50 snakemake --use-conda edgeR
 
-## Print out the R package installation log file
+## Print out the R log files
 after_script:
-  - cat example_data/output/Rout/install_pkgs.Rout
+  - tail example_data/output/Rout/install_pkgs.Rout
   - cat example_data/output/Rout/run_dge_edgeR.Rout
   
