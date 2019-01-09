@@ -35,8 +35,7 @@ script:
   ## run the workflow
   - travis_wait 50 snakemake --use-conda 
 
-## Since most failures are due to package installation issues, print out the 
-## corresponding log file in case of failure
-after_failure:
+## Print out the R package installation log file
+after_script:
   - cat example_data/output/Rout/install_pkgs.Rout
   
