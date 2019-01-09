@@ -34,4 +34,5 @@ script:
 ## Print out the R package installation log file
 after_script:
   - cat example_data/output/Rout/install_pkgs.Rout
+  - cat example_data/output/Rout/run_dge_edgeR.Rout
   
