@@ -74,3 +74,9 @@ output: example_data/output
 useCondaR: True
 Rbin: R
 ##---------------------------------------------------------------------------------------------
+
+## Conditional conda rules
+##---------------------------------------------------------------------------------------------
+## Should read trimming be performed? Set to FALSE if the step is not required.
+run_trimming: TRUE
+##---------------------------------------------------------------------------------------------
