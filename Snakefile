@@ -223,7 +223,6 @@ def multiqc_input(wildcards):
 	input.extend(expand(outputdir + "FastQC/{sample}_R1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
 	input.extend(expand(outputdir + "FastQC/{sample}_R2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
 	input.extend(expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()))
-	input.extend(expand(outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist()))
 	if config["run_trimming"]:
 		input.extend(expand(outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz", sample = samples.names[samples.type == 'SE'].values.tolist()))
 		input.extend(expand(outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()))
@@ -231,15 +230,18 @@ def multiqc_input(wildcards):
 		input.extend(expand(outputdir + "FastQC/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()))
 		input.extend(expand(outputdir + "FastQC/{sample}_R1_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
 		input.extend(expand(outputdir + "FastQC/{sample}_R2_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
+	if config["run_STAR"]:
+		input.extend(expand(outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist()))
 	return input
 
 ## Determine the input directories for MultiQC depending on the config file
 def multiqc_params(wildcards):
 	param = [outputdir + "FastQC", 
-	outputdir + "salmon",
-	outputdir + "STAR"]
+	outputdir + "salmon"]
 	if config["run_trimming"]:
-		param.extend(outputdir + "FASTQtrimmed")
+		param.append(outputdir + "FASTQtrimmed")
+	if config["run_STAR"]:
+		param.append(outputdir + "STAR")
 	return param
 
 ## MultiQC
@@ -499,11 +501,23 @@ rule DRIMSeq:
 ## ------------------------------------------------------------------------------------ ##
 ## Shiny app
 ## ------------------------------------------------------------------------------------ ##
+def shiny_input(wildcards):
+	input = [outputdir + "Rout/pkginstall_state.txt"] 
+	if config["run_STAR"]:
+		input.extend(expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()))
+	return input
+
+def shiny_params(wildcards):
+	param = ["outputdir='" + outputdir + "outputR'", 
+		"groupvar='" + config["groupvar"]+ "'"] 
+	if config["run_STAR"]:
+		param.append("bigwigdir='" + outputdir + "STARbigwig'")
+	return param
+
 ## Shiny
 rule Shiny:
 	input:
-	    outputdir + "Rout/pkginstall_state.txt",
-	    expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()),
+		shiny_input,
 		rds = outputdir + "outputR/DRIMSeq_dtu.rds",
 		script = "scripts/run_render_shiny.R",
 		gtf = config["gtf"],
@@ -512,13 +526,11 @@ rule Shiny:
 		html = outputdir + "outputR/prepare_shiny.html",
 		rds = outputdir + "outputR/shiny_sce.rds"
 	params:
-		directory = outputdir + "outputR",
-		groupvar = config["groupvar"],
-		bigwigdir = outputdir + "STARbigwig"
+		p = shiny_params
 	log:
 		outputdir + "Rout/prepare_shiny.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' gtffile='{input.gtf}' bigwigdir='{params.bigwigdir}' groupvar='{params.groupvar}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='prepare_shiny.html'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' gtffile='{input.gtf}' rmdtemplate='{input.template}' outputfile='prepare_shiny.html' {params.p}" {input.script} {log}'''
 
