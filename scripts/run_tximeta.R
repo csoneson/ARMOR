@@ -43,6 +43,12 @@ if (is(rowData(st)$gene_id, "CharacterList")) {
   rowData(st)$gene_id <- vapply(rowData(st)$gene_id, function(w) w[[1]], "")
 }
 
+## If rowData(st)$tx_id is of class integer, replace it with the tx_name 
+## column
+if (is(rowData(st)$tx_id, "integer")) {
+  rowData(st)$tx_id <- rowData(st)$tx_name
+}
+
 ## Add gene information, e.g. gene_name, entrezid, ... (if provided) to
 ## transcript-level SE
 rowData(st) <- rowData(st) %>%
