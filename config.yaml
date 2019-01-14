@@ -77,7 +77,8 @@ Rbin: R
 
 ## Conditional conda rules
 ##---------------------------------------------------------------------------------------------
-## Should read trimming and STAR mapping be performed? Set to False if the step is not required.
+## Should read trimming, STAR mapping and DRIMSeq analysis be performed? Set to False if the step is not required.
 run_trimming: True
 run_STAR: True
+run_DRIMSeq: True
 ##---------------------------------------------------------------------------------------------
