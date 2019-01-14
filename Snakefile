@@ -35,10 +35,8 @@ Rbin = config["Rbin"]
 ## Run all analyses
 rule all:
 	input:
-		[outputdir + "MultiQC/multiqc_report.html",
-		outputdir + "outputR/edgeR_dge.html",
-		[outputdir + "outputR/DRIMSeq_dtu.html", outputdir + "outputR/shiny_sce.rds"] if config["run_DRIMSeq"] else 
-		outputdir + "outputR/shiny_sce.rds"]
+		outputdir + "MultiQC/multiqc_report.html",
+		outputdir + "outputR/shiny_sce.rds"
 
 ## Install R packages	
 rule pkginstall:
