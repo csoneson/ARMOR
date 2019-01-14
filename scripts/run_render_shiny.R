@@ -9,11 +9,12 @@ print(groupvar)
 print(rmdtemplate)
 print(outputdir)
 print(outputfile)
+if (exists("bigwigdir")) print(bigwigdir)
 
 source("scripts/generate_report.R")
 
 generateReport(se = se, gtffile = gtffile,
-               bigwigdir = if (exists("bigwigdir")) bigwigdir else NULL, 
+               bigwigdir = if (exists("bigwigdir")) normalizePath(bigwigdir) else NULL, 
                groupvar = groupvar, 
                rmdTemplate = rmdtemplate, outputDir = outputdir, 
                outputFile = outputfile, forceOverwrite = TRUE,
