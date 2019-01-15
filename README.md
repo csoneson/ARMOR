@@ -4,6 +4,8 @@
 
 This RNA-seq workflow consists of a `Snakefile`, a [`conda`](https://conda.io/docs/) environment file (`envs/environment.yaml`) a configuration file (`config.yaml`) and a set of R scripts to perform quality control, preprocessing and differential expression analysis of RNA-seq data. The output can be combined with the [`iResViewer`](https://github.com/csoneson/iResViewer) R package to generate a shiny application for browsing and sharing the results.
 
+![](io_diagram.png)
+
 ## Using the RNA-seq workflow
 To use the RNA-seq workflow on your own data, follow the steps outlined below carefully
 
