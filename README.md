@@ -13,8 +13,9 @@ Current contributors include:
 - [Mark D. Robinson](https://github.com/markrobinsonuzh)
 - [Charlotte Soneson](https://github.com/csoneson)
 
+## Workflow graph
 ![DAG](dag_nice3.png)  
-DAG of workflow: Blue circles are rules run in `R`, orange circles from software called as shell commands. Dashed lines and light-colored are optional rules, controlled in `config.yaml`
+Blue circles are rules run in `R`, orange circles from software called as shell commands. Dashed lines and light-colored circles are optional rules, controlled in `config.yaml`
 
 
 ## Using the RNA-seq workflow
