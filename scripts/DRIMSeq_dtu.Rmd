@@ -44,6 +44,17 @@ sg <- se$sg
 st <- se$st
 ```
 
+# Plot total number of reads per sample
+
+```{r DRIMSeq-plot-totalcount}
+ggplot(data.frame(totCount = colSums(assay(sg, "counts")), 
+                  sample = colnames(assay(sg, "counts")), 
+                  stringsAsFactors = FALSE), 
+       aes(x = sample, y = totCount)) + geom_bar(stat = "identity") + 
+  theme_bw() + xlab("") + ylab("Total read count") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+```
+
 # Create dmDSdata object
 
 ```{r DRIMSeq-dmDSdata}
