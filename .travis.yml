@@ -35,7 +35,6 @@ script:
   - source activate snakemake
   ## run the workflow
   - travis_wait 50 snakemake --use-conda tximeta
-  - travis_wait 50 snakemake --use-conda multiqc
 
 ## Print out the R log files
 after_script:
