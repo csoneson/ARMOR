@@ -533,3 +533,11 @@ rule Shiny:
 	shell:
 		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' gtffile='{input.gtf}' rmdtemplate='{input.template}' outputfile='prepare_shiny.html' {params.p}" {input.script} {log}'''
 
+## ------------------------------------------------------------------------------------ ##
+## Success and failure messages
+## ------------------------------------------------------------------------------------ ##
+onsuccess:
+	print("Success! The Snakemake workflow is completed.")
+
+onerror:
+	print("Error! The Snakemake workflow aborted.")
