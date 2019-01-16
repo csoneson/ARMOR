@@ -36,8 +36,6 @@ Rbin = config["Rbin"]
 rule all:
 	input:
 		outputdir + "MultiQC/multiqc_report.html",
-		outputdir + "outputR/edgeR_dge.html",
-		outputdir + "outputR/DRIMSeq_dtu.html",
 		outputdir + "outputR/shiny_sce.rds"
 
 ## Install R packages	
@@ -214,35 +212,52 @@ rule fastqc2:
 		"echo 'FastQC version:\n' > {log}; fastqc --version >> {log}; "
 		"fastqc -o {params.FastQC} -t {threads} {input.fastq}"
 
+
+
+# The config.yaml files determines which steps should be performed
+def multiqc_input(wildcards):
+	input = []
+	input.extend(expand(outputdir + "FastQC/{sample}_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()))
+	input.extend(expand(outputdir + "FastQC/{sample}_R1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
+	input.extend(expand(outputdir + "FastQC/{sample}_R2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
+	input.extend(expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()))
+	if config["run_trimming"]:
+		input.extend(expand(outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz", sample = samples.names[samples.type == 'SE'].values.tolist()))
+		input.extend(expand(outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()))
+		input.extend(expand(outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()))
+		input.extend(expand(outputdir + "FastQC/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()))
+		input.extend(expand(outputdir + "FastQC/{sample}_R1_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
+		input.extend(expand(outputdir + "FastQC/{sample}_R2_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
+	if config["run_STAR"]:
+		input.extend(expand(outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist()))
+	return input
+
+## Determine the input directories for MultiQC depending on the config file
+def multiqc_params(wildcards):
+	param = [outputdir + "FastQC", 
+	outputdir + "salmon"]
+	if config["run_trimming"]:
+		param.append(outputdir + "FASTQtrimmed")
+	if config["run_STAR"]:
+		param.append(outputdir + "STAR")
+	return param
+
 ## MultiQC
 rule multiqc:
 	input:
-		expand(outputdir + "FastQC/{sample}_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_R1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_R2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_R1_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_R2_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz", sample = samples.names[samples.type == 'SE'].values.tolist()),
-		expand(outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
-		expand(outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist())
+		multiqc_input
 	output:
 		outputdir + "MultiQC/multiqc_report.html"
 	params:
-		MultiQCdir = outputdir + "MultiQC",
-		FastQCdir = outputdir + "FastQC",
-		FASTQtrimmeddir = outputdir + "FASTQtrimmed",
-		salmondir = outputdir + "salmon",
-		STARdir = outputdir + "STAR" 
+		inputdirs = multiqc_params,
+		MultiQCdir = outputdir + "MultiQC"
 	log:
 		outputdir + "logs/multiqc.log"
 	conda:
 		"envs/environment.yaml"
 	shell:
 		"echo 'MultiQC version:\n' > {log}; multiqc --version >> {log}; "
-		"multiqc {params.FastQCdir} {params.FASTQtrimmeddir} {params.salmondir} {params.STARdir} -f -o {params.MultiQCdir}"
+		"multiqc {params.inputdirs} -f -o {params.MultiQCdir}"
 
 
 ## ------------------------------------------------------------------------------------ ##
@@ -289,7 +304,7 @@ rule trimgalorePE:
 rule salmonSE:
 	input:
 		index = config["salmonindex"] + "/hash.bin",
-		fastq = outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz"
+		fastq = outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}.fastq.gz"
 	output:
 		outputdir + "salmon/{sample}/quant.sf"
 	log:
@@ -312,8 +327,8 @@ rule salmonSE:
 rule salmonPE:
 	input:
 		index = config["salmonindex"] + "/hash.bin",
-		fastq1 = outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz",
-		fastq2 = outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz"
+		fastq1 = outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_R1.fastq.gz",
+		fastq2 = outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_R2.fastq.gz"
 	output:
 		outputdir + "salmon/{sample}/quant.sf"
 	log:
@@ -340,7 +355,7 @@ rule salmonPE:
 rule starSE:
 	input:
 		index = config["STARindex"] + "/SA",
-		fastq = outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz"
+		fastq = outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}.fastq.gz"
 	output:
 		outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
 	threads: 
@@ -361,8 +376,8 @@ rule starSE:
 rule starPE:
 	input:
 		index = config["STARindex"] + "/SA",
-		fastq1 = outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz",
-		fastq2 = outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz"
+		fastq1 = outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_R1.fastq.gz",
+		fastq2 = outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_R2.fastq.gz"
 	output:
 		outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
 	threads: 
@@ -484,12 +499,25 @@ rule DRIMSeq:
 ## ------------------------------------------------------------------------------------ ##
 ## Shiny app
 ## ------------------------------------------------------------------------------------ ##
+def shiny_input(wildcards):
+	input = [outputdir + "Rout/pkginstall_state.txt"] 
+	if config["run_STAR"]:
+		input.extend(expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()))
+	return input
+
+def shiny_params(wildcards):
+	param = ["outputdir='" + outputdir + "outputR'", 
+		"groupvar='" + config["groupvar"]+ "'"] 
+	if config["run_STAR"]:
+		param.append("bigwigdir='" + outputdir + "STARbigwig'")
+	return param
+
 ## Shiny
 rule Shiny:
 	input:
-	    outputdir + "Rout/pkginstall_state.txt",
-	    expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()),
-		rds = outputdir + "outputR/DRIMSeq_dtu.rds",
+		shiny_input,
+		rds = outputdir + "outputR/DRIMSeq_dtu.rds" if config["run_DRIMSeq"] 
+			else outputdir + "outputR/edgeR_dge.rds",
 		script = "scripts/run_render_shiny.R",
 		gtf = config["gtf"],
 		template = "scripts/prepare_shiny.Rmd"
@@ -497,13 +525,11 @@ rule Shiny:
 		html = outputdir + "outputR/prepare_shiny.html",
 		rds = outputdir + "outputR/shiny_sce.rds"
 	params:
-		directory = outputdir + "outputR",
-		groupvar = config["groupvar"],
-		bigwigdir = outputdir + "STARbigwig"
+		p = shiny_params
 	log:
 		outputdir + "Rout/prepare_shiny.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' gtffile='{input.gtf}' bigwigdir='{params.bigwigdir}' groupvar='{params.groupvar}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='prepare_shiny.html'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' gtffile='{input.gtf}' rmdtemplate='{input.template}' outputfile='prepare_shiny.html' {params.p}" {input.script} {log}'''
 
