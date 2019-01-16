@@ -109,16 +109,17 @@ and condition information
 The multidimensional scale data is stored in `reducedDims`.
 
 ```{r shiny-sce-gene}
-## column data
 nam <- colData(sg)$names
-colData(sg)$bwFiles <- bwfiles[nam]
-colData(sg)$bwCond <- condition[nam]
 
-## low dimensional representations
+## low dimensional representation
 reducedData <- mds %>%
     dplyr::arrange(match(names, nam)) %>%
     dplyr::select(-one_of(colnames(colData(sg))))
 reducedData <- as.matrix(reducedData)
+
+## column data
+colData(sg)$bwFiles <- bwfiles[nam]
+colData(sg)$bwCond <- condition[nam]
 
 sce_gene <- SingleCellExperiment(assays = assays(sg), 
                                  rowData = rowData(sg),
@@ -138,8 +139,9 @@ and condition information.
 The multidimensional scale data is stored in `reducedDims`.
 
 ```{r shiny-sce-tx}
-## column data
 nam <- colData(st)$names
+
+## column data
 colData(st)$bwFiles <- bwfiles[nam]
 colData(st)$bwCond <- condition[nam]
 
