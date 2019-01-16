@@ -13,7 +13,7 @@ Current contributors include:
 - [Mark D. Robinson](https://github.com/markrobinsonuzh)
 - [Charlotte Soneson](https://github.com/csoneson)
 
-![DAG](dag_nice3.png =100x)
+![DAG](dag_nice3.png)
 DAG of workflow: Blue circles are rules run in `R`, orange circles from software called as shell commands. Dashed lines and light-colored are optional rules, controlled in `config.yaml`]
 
 
