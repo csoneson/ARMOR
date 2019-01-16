@@ -19,4 +19,4 @@ Blue circles are rules run in `R`, orange circles from software called as shell 
 
 
 ## Using the RNA-seq workflow
-To use the RNA-seq workflow on your own data, follow the steps outlined in the [wiki](https://github.com/csoneson/iSEE/wiki).
+To use the RNA-seq workflow on your own data, follow the steps outlined in the [wiki](https://github.com/csoneson/rnaseqworkflow/wiki).
