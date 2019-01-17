@@ -1,4 +1,5 @@
 # RNA-seq workflow
+[![Build Status](https://travis-ci.com/csoneson/rnaseqworkflow.svg?branch=master)](https://travis-ci.com/csoneson/rnaseqworkflow)
 
  <span style="color:blue">**Note: This is work in development, mainly as a template for personal use, and it is provided "as-is", without guarantees of robustness, correctness or optimality. Please use responsibly.**</span>
 
