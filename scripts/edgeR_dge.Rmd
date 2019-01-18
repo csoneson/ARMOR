@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE, dev = c("png", "pdf"))
 # Introduction
 
 Here, we perform differential gene expression analysis with edgeR, based on
-abundance estimates from Salmon. 
+abundance estimates from Salmon. For more detailed information of every step, please refer to the [edgeR user guide](https://www.bioconductor.org/packages/devel/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf).
 
 # Load packages
 
@@ -53,6 +53,12 @@ sg
 
 # Create DGEList and include average transcript length offsets
 
+A `DGEList` is the main object `edgeR` requires to perform the DGE analysis. It is designed to store read counts and associated information. After creating this object, we add offsets, which are average transcript length correction terms, and scale them so they are consistent with library sizes (sequencing depth for each sample). 
+
+Then we calculate normalization factors to scale the raw library sizes and minimize the log-fold changes between the samples for most genes. Here the trimmed mean of M-values between each pair of samples (TMM) is used by default. 
+
+Finally we add gene annotation information.
+
 ```{r edgeR-dge-generate}
 ## Extract count matrix and average transcript lengths
 cts <- assay(sg, "counts")
@@ -74,6 +80,10 @@ dge0$genes <- as.data.frame(rowRanges(sg))
 
 # Calculate logCPMs and add as an assay
 
+We use log-counts per million (CPMs) because they are useful descriptive measures for the expression level of a gene. By default, the normalized library sizes are used in the computation.
+
+We add the logCPMS to one of the fields (or assay) of the first gene-level `SummarizedExperiment` object `sg`. At the end of the analysis, we will use this object again to export the results of all the genes we started with. 
+
 ```{r edgeR-add-logcpm}
 logcpms <- edgeR::cpm(dge0, log = TRUE, prior.count = 2)
 stopifnot(all(rownames(logcpms) == rownames(sg)),
@@ -82,6 +92,10 @@ assay(sg, "logcpm") <- logcpms
 ```
 
 # Define design. ************** MODIFY ************** 
+
+Here you must specify the variable(s) by which your samples are divided in groups. As mentioned in the wiki, these variables should agree with the variables defined in the metadata text file.
+
+We provide a dummy example to use with the example dataset.
 
 ```{r edgeR-define-design}
 stopifnot(all(colnames(dge0) == metadata$names))
@@ -92,6 +106,8 @@ stopifnot(all(colnames(dge0) == metadata$names))
 
 # Filter out lowly expressed genes
 
+Now we determine which genes have sufficiently large counts to be retained in the statistical analysis, and remove the rest. After removing genes, we must recalculate the normalization factors.
+
 ```{r edgeR-filter-genes}
 dim(dge0)
 keep <- edgeR::filterByExpr(dge0, design = des)
@@ -101,6 +117,10 @@ dim(dge)
 ```
 
 # Estimate dispersion
+
+We fit the count data to a quasi-likelihood (QL) negative binomial (NB) generalized log-linear model, which accounts for gene-specific variability from both biological and technical source. Before fitting the model, we must estimate the NB dispersion (overall biological variability across all genes), and the QL dispersion (gene-specific) using the `estimateDisp()` function. 
+
+It is also good practice to look at the relationship between the biological coefficient of variation (NB dispersion) and the gene abundance (in logCPMs). 
 
 ```{r edgeR-estimate-disp}
 ## Estimate dispersion and fit model
@@ -113,6 +133,8 @@ plotBCV(dge)
 
 # Define contrasts ************** MODIFY ************** 
 
+Before testing for differences in gene expression, you must define the contrasts you wish to test for. Here we represent the constrast as a numeric matrix:
+
 ```{r edgeR-define-contrasts}
 #(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
 #e.g.
@@ -122,6 +144,8 @@ plotBCV(dge)
 ```
 
 # Perform tests
+
+Now we perform genewise tests for every contrast defined above, and we save the results of every contrast.
 
 ```{r edgeR-perform-tests}
 signif3 <- function(x) signif(x, digits = 3)
@@ -133,6 +157,8 @@ edgeR_res <- lapply(contrasts, function(cm) {
 ```
 
 # Make MA plots
+
+We can visualize the test results by plotting the logCPM (average) Vs the logFC, and coloring genes with an adjusted p-value below 0.05 (or another specificed FDR). A plot is drawn for every contrast.
 
 ```{r edgeR-ma-plots}
 if (is(edgeR_res, "data.frame")) {
@@ -151,6 +177,8 @@ if (is(edgeR_res, "data.frame")) {
 
 # Write results to text files
 
+Finally we export the results into files that can be visualized using your favorite editor.
+
 ```{r edgeR-save-results}
 ## Write results to text files and make MA plots
 if (is(edgeR_res, "data.frame")) {
@@ -167,6 +195,8 @@ if (is(edgeR_res, "data.frame")) {
 ```
 
 # Output results as list of `SummarizedExperiment` objects
+
+And we export the results for every gene included in the analyses (including those filtered out), into a `SummarizedExperiment` which we can feed in `iSEE`, and perform more exploratory and visual analysis.
 
 ```{r edgeR-se}
 ## add rows (NA) for genes that are filtered out (if any)
