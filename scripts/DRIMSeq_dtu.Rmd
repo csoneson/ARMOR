@@ -163,7 +163,7 @@ if (class(DRIMSeq_res) == "data.frame") {
 
 # Output results as `SummarizedExperiment` object
 
-Here, we store the results on the gene level with the original data. The result table `DRIMSeq_res` is appended on the `rowData` of the original  `SummarizedExperiment` object `sg`. The updated `sg` could be feed to the R package `iSEE` to perform more exploratory and visual analysis.
+Here, we store the results on the gene level with the original data. The result table `DRIMSeq_res` is appended on the `rowData` of the original  `SummarizedExperiment` object `sg`. For genes that were filtered out, `NA` values are used in the results. The updated `sg` could be feed to the R package `iSEE` to perform more exploratory and visual analysis.
 
 ```{r DRIMSeq-se-gene}
 ## add rows (NA) for genes that are filtered out (if any)
@@ -234,7 +234,7 @@ for (i in seq_along(DRIMSeq_resA)) {
 ```
 
 Here, we store the results on the transcript level with the original data. The result table `DRIMSeq_feature_res` is appended on the `rowData` of the original  `SummarizedExperiment` object `st`.
-The updated `st` could be feed to the R package `iSEE` to perform more exploratory and visual analysis.
+For transcripts that were filtered out, `NA` values are used in the results. The updated `st` could be feed to the R package `iSEE` to perform more exploratory and visual analysis.
 ```{r DRIMSeq-se-tx}
 ## add rows (NA) for genes that are filtered out (if any)
 DRIMSeq_resB <- lapply(seq_along(DRIMSeq_feature_res), FUN = function(x) {
