@@ -145,7 +145,7 @@ Before testing for differences in gene expression, you must define the contrasts
 
 # Perform tests
 
-Now we perform genewise tests for every contrast defined above, and we save the results of every contrast.
+Now we perform genewise tests for every contrast defined above, and save the results of every contrast.
 
 ```{r edgeR-perform-tests}
 signif3 <- function(x) signif(x, digits = 3)
@@ -196,7 +196,7 @@ if (is(edgeR_res, "data.frame")) {
 
 # Output results as list of `SummarizedExperiment` objects
 
-And we export the results for every gene included in the analyses (including those filtered out), into a `SummarizedExperiment` which we can feed in `iSEE`, and perform more exploratory and visual analysis.
+Here, we store the analysis results with the original data. The results are appended on the `rowData` of the original  `SummarizedExperiment` object `sg`. For genes that were filtered out, `NA` values are used in the result columns. The updated `sg` could be feed to the R package `iSEE` to perform more exploratory and visual analysis.
 
 ```{r edgeR-se}
 ## add rows (NA) for genes that are filtered out (if any)
@@ -255,7 +255,7 @@ for (i in seq_along(edgeR_resA)) {
 }
 ```
 
-The output is saved as a list.
+The output is saved as a list. Compared to the input data `se`, the element `sg` is updated and `st` stays the same.
 
 ```{r edgeR-save-se}
 analysis_se <- list(sg = sg, st = se$st)
