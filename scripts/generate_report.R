@@ -122,7 +122,7 @@ generateReport <- function(se, gtffile = NULL, organism = NULL,
   
   ## organism
   if (!is.null(organism)) {
-    if (!is(organism, "character" || length(organism) != 1)) {
+    if (!is(organism, "character") || length(organism) != 1) {
       stop("organism must be a character string")
     }
     organism <- gsub("_", "", organism)
