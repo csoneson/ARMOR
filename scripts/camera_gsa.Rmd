@@ -125,7 +125,7 @@ plotBCV(dge)
 # Perform tests
 
 ```{r camera-perform-tests}
-minSize <- 10
+minSize <- 3
 maxSize <- 500
 
 ## Get index for genes in each gene set in the DGEList
