@@ -1,0 +1,179 @@
+---
+title: "camera gene set analysis"
+author: ""
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: yeti
+    highlight: tango
+    code_folding: show
+    keep_md: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r camera-setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, dev = c("png", "pdf"))
+```
+
+# Introduction
+
+Here, we perform gene set analysis with the camera method from the limma
+package, based on gene-level abundance estimates from Salmon.
+
+# Load packages
+
+```{r camera-load-pkg}
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(tximport)
+  library(tximeta)
+  library(SummarizedExperiment)
+  library(edgeR)
+  library(ggplot2)
+  library(msigdbr)
+})
+```
+
+# Load `SummarizedExperiment` object
+
+We load the `SummarizedExperiment` objects prepared using `tximeta`, containing
+gene- and transcript-level counts and feature lengths. In this report, we will
+use the gene-level quantifications.
+
+```{r camera-print-se}
+## List of SummarizedExperiment objects (gene/transcript level)
+se
+
+## Get gene-level SummarizedExperiment object
+sg <- se$sg
+metadata <- colData(sg)
+
+sg
+```
+
+# Load gene sets
+
+```{r camera-load-genesets}
+m_df = msigdbr(species = organism,
+               category = c("H", "C5"))
+```
+
+
+# Create DGEList and include average transcript length offsets
+
+```{r camera-dge-generate}
+## Extract count matrix and average transcript lengths
+cts <- assay(sg, "counts")
+normMat <- assay(sg, "length")
+normMat <- normMat/exp(rowMeans(log(normMat)))
+
+## Generate offset matrix
+o <- log(edgeR::calcNormFactors(cts/normMat)) + 
+  log(colSums(cts/normMat))
+
+## Create DGEList object and add offsets
+dge0 <- edgeR::DGEList(cts)
+dge0 <- edgeR::scaleOffset(dge0, offset = t(t(log(normMat)) + o))
+dge0 <- edgeR::calcNormFactors(dge0)
+
+## Add gene annotation to the DGEList object
+dge0$genes <- as.data.frame(rowRanges(sg))
+```
+
+# Define design. ************** MODIFY ************** 
+
+```{r camera-define-design}
+stopifnot(all(colnames(dge0) == metadata$names))
+#(des <- model.matrix(~ XXXX, data = metadata))
+#e.g.
+(des <- model.matrix(~ 0 + celline, data = metadata))
+```
+
+# Filter out lowly expressed genes
+
+```{r camera-filter-genes}
+dim(dge0)
+keep <- edgeR::filterByExpr(dge0, design = des)
+dge <- dge0[keep, ]
+dge <- calcNormFactors(dge)
+dim(dge)
+```
+
+# Estimate dispersion
+
+```{r camera-estimate-disp}
+## Estimate dispersion and fit model
+dge <- estimateDisp(dge, design = des)
+
+## Plot dispersions
+plotBCV(dge)
+```
+
+# Define contrasts ************** MODIFY ************** 
+
+```{r camera-define-contrasts}
+#(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
+#e.g.
+(contrasts <- as.data.frame(makeContrasts(
+  contrasts = "cellineN61311-cellineN052611", levels = des
+)))
+```
+
+# Perform tests
+
+```{r camera-perform-tests}
+minSize <- 10
+maxSize <- 500
+
+## Get index for genes in each gene set in the DGEList
+indexList <- limma::ids2indices(
+  gene.sets = lapply(split(m_df, f = m_df$gs_name), function(w) w$gene_symbol),
+  identifiers = dge$genes$gene_name,
+  remove.empty = TRUE
+)
+
+## Filter out too small or too large gene sets
+gsSizes <- vapply(indexList, length, 0)
+indexList <- indexList[gsSizes >= minSize & gsSizes <= maxSize]
+
+camera_res <- lapply(contrasts, function(cm) {
+  camera(dge, index = indexList, design = des, contrast = cm, 
+         inter.gene.cor = NA)
+})
+```
+
+# Write results to text files
+
+```{r camera-save-results}
+## Write results to text files
+if (is(camera_res, "data.frame")) {
+  write.table(camera_res %>% dplyr::arrange(PValue), 
+              file = "camera_dge_results.txt", 
+              sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+} else {
+  for (nm in names(camera_res)) {
+    write.table(camera_res[[nm]] %>% dplyr::arrange(PValue), 
+                file = paste0("camera_dge_results_", nm, ".txt"), 
+                sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+  }
+}
+```
+
+The output is saved as a list.
+
+```{r camera-save-se}
+geneSets <- lapply(indexList, function(i) dge$genes$gene_name[i])
+saveRDS(list(cameraRes = camera_res,
+             geneSets = geneSets), file = "camera_gsa.rds")
+```
+
+# Session info
+
+```{r camera-session-info}
+date()
+sessionInfo()
+```
+
