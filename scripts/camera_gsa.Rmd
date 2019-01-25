@@ -150,7 +150,8 @@ camera_res <- lapply(contrasts, function(cm) {
 ```{r camera-save-results}
 ## Write results to text files
 if (is(camera_res, "data.frame")) {
-  write.table(camera_res %>% dplyr::arrange(PValue), 
+  write.table(camera_res %>% tibble::rownames_to_column("GeneSet") %>%
+                dplyr::arrange(PValue), 
               file = "camera_dge_results.txt", 
               sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
 } else {
