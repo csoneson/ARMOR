@@ -156,7 +156,9 @@ if (is(camera_res, "data.frame")) {
               sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
 } else {
   for (nm in names(camera_res)) {
-    write.table(camera_res[[nm]] %>% dplyr::arrange(PValue), 
+    write.table(camera_res[[nm]] %>% 
+                  tibble::rownames_to_column("GeneSet") %>%
+                  dplyr::arrange(PValue), 
                 file = paste0("camera_dge_results_", nm, ".txt"), 
                 sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
   }
