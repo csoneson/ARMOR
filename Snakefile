@@ -543,18 +543,18 @@ rule camera:
 		rds = outputdir + "outputR/tximeta_se.rds",
 		script = "scripts/run_render_camera.R",
 		template = "scripts/camera_gsa.Rmd",
-		organism = config["organism"]
 	output:
 		html = outputdir + "outputR/camera_gsa.html",
 		rds = outputdir + "outputR/camera_gsa.rds"
 	params:
 		directory = outputdir + "outputR"
+		organism = config["organism"]
 	log:
 		outputdir + "Rout/run_gsa_camera.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' organism='{input.organism}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='camera_gsa.html'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' organism='{params.organism}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='camera_gsa.html'" {input.script} {log}'''
 
 
 
