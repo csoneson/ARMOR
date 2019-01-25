@@ -46,7 +46,7 @@ st <- se$st
 
 # Create dmDSdata object
 
-To create a `dmDSdata` object, we need a data frame containing information about samples (`metadata`) and a data frame with counts (`counts`). A data summary plot could be made on the `dmDSdata` object.
+To create a `dmDSdata` object, we need a data frame containing information about the samples (`metadata`) and a data frame with counts (`counts`). The `dmDSdata` object is used to create a data summary plot.
 ```{r DRIMSeq-dmDSdata}
 counts <- data.frame(feature_id = rownames(st),
                      gene_id = unlist(rowData(st)$gene_id),
@@ -63,8 +63,7 @@ plotData(d)
 
 # Filter ************** MODIFY ************** 
 
-The genes with lowly expressed level are filtered out to ensure that the
-observed transcript ratios are reliable. Genes may have many transcripts, and lowly expressed transcripts are removed using `min_samps_feature_expr`.
+The genes with low expression levels are filtered out to ensure that the observed transcript ratios are reliable. A single gene may have many transcripts, and lowly expressed transcripts are removed using `min_samps_feature_expr`.
 
 ```{r DRIMSeq-data-filter}
 d <- dmFilter(d, min_samps_gene_expr = 3, min_samps_feature_expr = 3,
@@ -74,9 +73,9 @@ plotData(d)
 
 # Define design. ************** MODIFY ************** 
 
-Here you must specify the variable(s) by which your samples are divided in groups. As mentioned in the wiki, these variables should agree with the variables defined in the metadata text file.
+Here you must specify the variable(s) by which your samples are divided into groups. As mentioned in the wiki, these variables should agree with the variables defined in the metadata text file (see [06-Setting up the DGE analysis](https://github.com/csoneson/rnaseqworkflow/wiki/06-Setting-up-the-DGE-analysis)).
 
-We provide a dummy example to use with the example dataset.
+We provide a dummy example to use with the example dataset. However, you have to adjust the model matrix for you own data!
 ```{r DRIMSeq-define-design}
 # (des <- model.matrix(~ XXXX, data = samples(d)))
 (des <- model.matrix(~ 0 + group, data = samples(d)))
@@ -84,9 +83,9 @@ We provide a dummy example to use with the example dataset.
 
 # Calculate precision
 
-It would be more convenient computationally to estimate the precision before fit a Dirichlet-multinomial model to the data. The precision parameters are estimated using the Cox-Reid adjusted profile likelihood. By default, $10\%$ of randomly selected genes are used to estimate the initial value (the common precision). To get reproducible results, a random seed is used.
+Computationally, it is more convenient to first estimate the precision before you fit a Dirichlet-multinomial model to the data. The precision parameters are estimated using the Cox-Reid adjusted profile likelihood. By default, $10\%$ of randomly selected genes are used to estimate the initial value (the common precision). To get reproducible results, a random seed is used.
 
-To inspect the behavior of precision estimates, they are plotted against the mean gene expression.
+To inspect the behavior of the precision estimates, they are plotted against the mean gene expression.
 Typically, precision increases for genes with higher mean expression in RNA-seq data.
 
 ```{r DRIMSeq-calculate-precision}
@@ -97,7 +96,7 @@ plotPrecision(d)
 
 # Fit model
 
-At gene-level, the maximun likelihood is used to estimate the coefficients of the Dirichlet-multinomial (DM) regression and the fitted transcript proportions in each sample. At the transcript-level, the beta-binomial regression is applied to each transcript separately.
+At the gene-level, the maximun likelihood is used to estimate the coefficients of the Dirichlet-multinomial (DM) regression and the fitted transcript proportions in each sample. At the transcript-level, the beta-binomial regression is applied to each transcript separately.
 
 ```{r DRIMSeq-fit-model}
 d <- dmFit(d, design = des, verbose = 1)
@@ -114,7 +113,7 @@ The contrasts should be defined based on what you want to test for.
 
 # Perform tests ************** MODIFY **************
 
-The test could be performed on the gene level (`level <- 'gene'`) or the transcript level (`level <- 'feature'`) using the likelihood ratio test. The results are stored as `DRIMSeq_res` and `DRIMSeq_feature_res` for the gene and the transcript level, respectively.
+The test can be performed on the gene-level (`level <- 'gene'`) or the transcript-level (`level <- 'feature'`) using the likelihood ratio test. The results are stored as `DRIMSeq_res` and `DRIMSeq_feature_res` for the gene and the transcript-level, respectively.
 ```{r DRIMSeq-result-genes}
 level <- "gene" 
 signif3 <- function(x) signif(x, digits = 3)
@@ -163,7 +162,7 @@ if (class(DRIMSeq_res) == "data.frame") {
 
 # Output results as `SummarizedExperiment` object
 
-Here, we store the results on the gene level with the original data. The result table `DRIMSeq_res` is appended on the `rowData` of the original  `SummarizedExperiment` object `sg`. For genes that were filtered out, `NA` values are used in the results. The updated `sg` could be feed to the R package `iSEE` to perform more exploratory and visual analysis.
+Here, we store the results on the gene-level together with the original data. The result table `DRIMSeq_res` is appended to the `rowData` of the original  `SummarizedExperiment` object `sg`. For genes that were filtered out, `NA` values are used in the results. The updated `sg` can be feed to the R package `iSEE` to perform more exploratory and visual analysis.
 
 ```{r DRIMSeq-se-gene}
 ## add rows (NA) for genes that are filtered out (if any)
@@ -233,8 +232,8 @@ for (i in seq_along(DRIMSeq_resA)) {
 }
 ```
 
-Here, we store the results on the transcript level with the original data. The result table `DRIMSeq_feature_res` is appended on the `rowData` of the original  `SummarizedExperiment` object `st`.
-For transcripts that were filtered out, `NA` values are used in the results. The updated `st` could be feed to the R package `iSEE` to perform more exploratory and visual analysis.
+Here, we store the results on the transcript-level together with the original data. The result table `DRIMSeq_feature_res` is appended to the `rowData` of the original  `SummarizedExperiment` object `st`.
+For transcripts that were filtered out, `NA` values are used in the results. The updated `st` can be feed to the R package `iSEE` to perform more exploratory and visual analysis.
 ```{r DRIMSeq-se-tx}
 ## add rows (NA) for genes that are filtered out (if any)
 DRIMSeq_resB <- lapply(seq_along(DRIMSeq_feature_res), FUN = function(x) {
