@@ -542,12 +542,12 @@ rule camera:
 	    outputdir + "Rout/pkginstall_state.txt",
 		rds = outputdir + "outputR/tximeta_se.rds",
 		script = "scripts/run_render_camera.R",
-		template = "scripts/camera_gsa.Rmd",
+		template = "scripts/camera_gsa.Rmd"
 	output:
 		html = outputdir + "outputR/camera_gsa.html",
 		rds = outputdir + "outputR/camera_gsa.rds"
 	params:
-		directory = outputdir + "outputR"
+		directory = outputdir + "outputR",
 		organism = config["organism"]
 	log:
 		outputdir + "Rout/run_gsa_camera.Rout"
