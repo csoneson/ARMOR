@@ -125,7 +125,7 @@ generateReport <- function(se, gtffile = NULL, organism = NULL,
     if (!is(organism, "character") || length(organism) != 1) {
       stop("organism must be a character string")
     }
-    organism <- gsub("_", "", organism)
+    organism <- gsub("_", " ", organism)
     if (!organism %in% msigdbr::msigdbr_show_species()) {
       stop("organism must be one of the organisms listed in ",
            "msigdbr::msigdbr_show_species()")
