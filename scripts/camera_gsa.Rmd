@@ -278,8 +278,8 @@ saveRDS(list(cameraRes = camera_res,
 The analyses above were performed with the following package versions:
 
 ```{r camera-session-info}
-date()
 sessionInfo()
+date()
 ```
 
 # References
