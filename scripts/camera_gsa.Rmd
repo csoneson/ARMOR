@@ -44,7 +44,7 @@ references:
   issued:
     year: 2010
 - id: Soneson2016tximport
-  title: Differential analyses for RNA-seq: transcript-level estimates improve gene-level inferences [version 2; referees: 2 approved]
+  title: Differential analyses for RNA-seq- transcript-level estimates improve gene-level inferences
   author:
   - family: Soneson
     given: Charlotte
@@ -60,7 +60,7 @@ references:
   issued:
     year: 2016
 - id: Wu2012camera
-  title: Camera: a competitive gene set test accounting for inter-gene correlation
+  title: Camera- a competitive gene set test accounting for inter-gene correlation
   author:
   - family: Wu
     given: Di
@@ -72,7 +72,6 @@ references:
   type: article-journal
   issued:
     year: 2012
-
 ---
 
 ```{r camera-setup, include=FALSE}
