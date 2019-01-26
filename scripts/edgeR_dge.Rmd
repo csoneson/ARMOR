@@ -68,7 +68,7 @@ knitr::opts_chunk$set(echo = TRUE, dev = c("png", "pdf"))
 Here, we perform differential gene expression analysis with edgeR 
 [@Robinson2010edgeR], based on
 abundance estimates from Salmon. For more detailed information of every step, 
-please refer to the [edgeR user guide](https://www.bioconductor.org/packages/devel/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf).
+please refer to the [edgeR user guide](https://www.bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf).
 
 # Load packages
 
