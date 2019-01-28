@@ -100,12 +100,8 @@ plotData(d)
 
 # Define design. ******** DEFINE PROPER DESIGN ******** 
 
-Here we specify the sample annotation that will be included in the statistical
-model. These variables should agree with the variables defined in the metadata
-text file (see 
-[06-Setting up the DGE analysis](https://github.com/csoneson/rnaseqworkflow/wiki/06-Setting-up-the-DGE-analysis)).
+Here, we specify the design matrix used for the Dirichlet-multinomial model in the later step.
 
-We provide a dummy example to use with the example dataset. However, you have to adjust the model matrix for you own data!
 
 ```{r DRIMSeq-define-design}
 # (des <- model.matrix(~ XXXX, data = samples(d)))
@@ -143,7 +139,7 @@ d <- dmFit(d, design = des, verbose = 1)
 
 # Define contrasts. ******** DEFINE PROPER CONTRASTS ******** 
 
-The contrasts should be defined based on what you want to test for.
+The contrasts are defined to do comparision between specified groups.
 
 ```{r DRIMSeq-define-contrasts}
 #(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
