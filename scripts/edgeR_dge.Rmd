@@ -155,11 +155,8 @@ assay(sg, "logcpm") <- logcpms
 
 # Define design. ******** DEFINE PROPER DESIGN ******** 
 
-Here you must specify the variable(s) by which your samples are divided in
-groups. As mentioned in the wiki, these variables should agree with the
-variables defined in the metadata text file.
-
-We provide a dummy example to use with the example dataset.
+Here we specify the variable(s) by which your samples are divided in
+groups.
 
 ```{r edgeR-define-design}
 stopifnot(all(colnames(dge0) == metadata$names))
