@@ -36,8 +36,7 @@ Rbin = config["Rbin"]
 rule all:
 	input:
 		outputdir + "MultiQC/multiqc_report.html",
-		outputdir + "outputR/shiny_sce.rds",
-		outputdir + "outputR/camera_gsa.rds"
+		outputdir + "outputR/shiny_sce.rds"
 
 ## Install R packages	
 rule pkginstall:
@@ -467,13 +466,14 @@ rule edgeR:
 		html = outputdir + "outputR/edgeR_dge.html",
 		rds = outputdir + "outputR/edgeR_dge.rds"
 	params:
-		directory = outputdir + "outputR"
+		directory = outputdir + "outputR",
+		organism = config["organism"]
 	log: 
 		outputdir + "Rout/run_dge_edgeR.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='edgeR_dge.html'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' organism='{params.organism}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='edgeR_dge.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage
@@ -533,28 +533,6 @@ rule Shiny:
 		Renv
 	shell:
 		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' gtffile='{input.gtf}' rmdtemplate='{input.template}' outputfile='prepare_shiny.html' {params.p}" {input.script} {log}'''
-
-## ------------------------------------------------------------------------------------ ##
-## camera gene set analysis
-## ------------------------------------------------------------------------------------ ##
-rule camera:
-	input:
-	    outputdir + "Rout/pkginstall_state.txt",
-		rds = outputdir + "outputR/tximeta_se.rds",
-		script = "scripts/run_render_camera.R",
-		template = "scripts/camera_gsa.Rmd"
-	output:
-		html = outputdir + "outputR/camera_gsa.html",
-		rds = outputdir + "outputR/camera_gsa.rds"
-	params:
-		directory = outputdir + "outputR",
-		organism = config["organism"]
-	log:
-		outputdir + "Rout/run_gsa_camera.Rout"
-	conda:
-		Renv
-	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' organism='{params.organism}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='camera_gsa.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Success and failure messages
