@@ -181,12 +181,22 @@ generateReport <- function(se, gtffile = NULL, organism = NULL,
   templateFile <- rmdTemplate
   if (file.exists(templateFile)) {
     if (file.exists(outputRmd)) {
-      stop("There is already an .Rmd file ", outputRmd,
-           ". Please remove or rename this file, or choose another ",
-           "outputFile name.", call. = FALSE)
-    } else {
-      file.copy(from = templateFile, to = outputRmd, overwrite = FALSE)
+      if (!forceOverwrite) {
+        stop("There is already an .Rmd file ", outputRmd,
+             ". Please remove or rename this file, or choose another ",
+             "outputFile name.", call. = FALSE)
+      } else {
+        warning("There is already an .Rmd file ", outputRmd, 
+                ". That file will be renamed with a suffix '_conflicting'",
+                ", a time stamp and a random sequence. If you did not ", 
+                "explicitly create this file, it can be removed.", 
+                call. = FALSE)
+        file.rename(from = outputRmd, 
+                    to = paste0(outputRmd, "_conflicting_", Sys.Date(), "_", 
+                                round(1e6*runif(1))))
+      }
     }
+    file.copy(from = templateFile, to = outputRmd, overwrite = FALSE)
   } else {
     stop("The Rmd template file ", templateFile, " does not exist.",
          call. = FALSE)

@@ -556,6 +556,11 @@ rule camera:
 	shell:
 		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' organism='{params.organism}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='camera_gsa.html'" {input.script} {log}'''
 
+## ------------------------------------------------------------------------------------ ##
+## Success and failure messages
+## ------------------------------------------------------------------------------------ ##
+onsuccess:
+	print("Success! The Snakemake workflow is completed.")
 
-
-
+onerror:
+	print("Error! The Snakemake workflow aborted.")
