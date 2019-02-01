@@ -100,6 +100,17 @@ metadata <- colData(sg)
 sg
 ```
 
+# Plot total number of reads per sample
+
+```{r edgeR-plot-totalcount}
+ggplot(data.frame(totCount = colSums(assay(sg, "counts")), 
+                  sample = colnames(assay(sg, "counts")), 
+                  stringsAsFactors = FALSE), 
+       aes(x = sample, y = totCount)) + geom_bar(stat = "identity") + 
+  theme_bw() + xlab("") + ylab("Total read count") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+```
+
 # Create DGEList and include average transcript length offsets
 
 A `DGEList` is the main object `edgeR` requires to perform the DGE analysis. It
