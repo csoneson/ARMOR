@@ -519,7 +519,7 @@ rule Shiny:
 		shiny_input,
 		rds = outputdir + "outputR/DRIMSeq_dtu.rds" if config["run_DRIMSeq"] 
 			else outputdir + "outputR/edgeR_dge.rds",
-		script = "scripts/run_render_shiny.R",
+		script = "scripts/run_render.R",
 		gtf = config["gtf"],
 		template = "scripts/prepare_shiny.Rmd"
 	output:
