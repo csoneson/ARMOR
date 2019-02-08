@@ -1,5 +1,5 @@
 # ARMOR workflow
-[![Build Status](https://travis-ci.com/csoneson/rnaseqworkflow.svg?branch=master)](https://travis-ci.com/csoneson/rnaseqworkflow)
+[![Build Status](https://travis-ci.com/csoneson/ARMOR.svg?branch=master)](https://travis-ci.com/csoneson/ARMOR)
 
 **ARMOR** (**A**utomated **R**eproducible **MO**dular **R**NA-seq) is a [Snakemake workflow](https://snakemake.readthedocs.io/en/stable/index.html), aimed at performing a typical RNA-seq workflow in a reproducible, automated, and partially contained manner. It is implemented such that alternative or similar analysis can be added or removed. 
 
@@ -11,7 +11,7 @@ By default, the pipeline performs all the steps shown in the [diagram](dag_nice3
 
 
 ## Using the ARMOR workflow
-To use the ARMOR workflow on your own data, follow the steps outlined in the [wiki](https://github.com/csoneson/rnaseqworkflow/wiki).
+To use the ARMOR workflow on your own data, follow the steps outlined in the [wiki](https://github.com/csoneson/ARMOR/wiki).
 
 ## Workflow graph
 ![DAG](img/dag_nice4.png)  
