@@ -164,7 +164,7 @@ transcript level (`level <- 'feature'`) using the likelihood ratio test. The
 results are stored as `DRIMSeq_res` and `DRIMSeq_feature_res` for the gene and
 the transcript-level, respectively.
 
-```{r DRIMSeq-result-genes}
+```{r DRIMSeq-result-genes, warning = FALSE}
 level <- "gene" 
 signif3 <- function(x) signif(x, digits = 3)
 DRIMSeq_fits <- lapply(contrasts, function(cm) {
@@ -178,7 +178,7 @@ DRIMSeq_res <- lapply(DRIMSeq_fits, function(dr) {
 })
 ```
 
-```{r DRIMSeq-result-transcripts}
+```{r DRIMSeq-result-transcripts, warning = FALSE}
 level <- "feature" 
 DRIMSeq_feature_fits <- lapply(contrasts, function(cm) {
   dr <- dmTest(d, contrast = cm, verbose = 1)

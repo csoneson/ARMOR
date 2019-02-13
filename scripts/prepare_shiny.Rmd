@@ -136,8 +136,6 @@ and the result table on the transcript level from `DRIMSeq`.
 The `colData` of `sce_tx` stores the sample information, the bigWig file names
 and condition information.
 
-The multidimensional scale data is stored in `reducedDims`.
-
 ```{r shiny-sce-tx}
 nam <- colData(st)$names
 
@@ -161,8 +159,10 @@ saveRDS(list(sce_tx = sce_tx,
 
 # Session info
 
+The analyses above were performed with the following package versions:
+
 ```{r shiny-session-info}
-date()
 sessionInfo()
+date()
 ```
 

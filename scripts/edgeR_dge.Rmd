@@ -57,6 +57,19 @@ references:
   URL: https://f1000research.com/articles/4-1521/v2
   issued:
     year: 2016
+- id: Wu2012camera
+  title: Camera- a competitive gene set test accounting for inter-gene correlation
+  author:
+  - family: Wu
+    given: Di
+  - family: Smyth
+    given: Gordon K
+  container-title: Nucleic Acids Research
+  volume: 40
+  page: e133
+  type: article-journal
+  issued:
+    year: 2012
 ---
 
 ```{r edgeR-setup, include=FALSE}
@@ -66,9 +79,10 @@ knitr::opts_chunk$set(echo = TRUE, dev = c("png", "pdf"))
 # Introduction
 
 Here, we perform differential gene expression analysis with edgeR 
-[@Robinson2010edgeR], based on
-abundance estimates from Salmon. For more detailed information of every step, 
-please refer to the [edgeR user guide](https://www.bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf).
+[@Robinson2010edgeR] followed by gene set analysis with camera [@Wu2012camera],
+based on abundance estimates from Salmon. For more detailed information of each
+step, please refer to the 
+[edgeR user guide](https://www.bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf).
 
 # Load packages
 
@@ -80,6 +94,7 @@ suppressPackageStartupMessages({
   library(SummarizedExperiment)
   library(edgeR)
   library(ggplot2)
+  library(msigdbr)
 })
 ```
 
@@ -166,8 +181,8 @@ assay(sg, "logcpm") <- logcpms
 
 # Define design. ******** DEFINE PROPER DESIGN ******** 
 
-Here we specify the variable(s) by which your samples are divided in
-groups.
+Next, we specify the design matrix of the experiment, defining which sample 
+annotations will be taken into account in the statistical modeling.
 
 ```{r edgeR-define-design}
 stopifnot(all(colnames(dge0) == metadata$names))
@@ -178,8 +193,8 @@ stopifnot(all(colnames(dge0) == metadata$names))
 
 # Filter out lowly expressed genes
 
-Now we determine which genes have sufficiently large counts to be retained in
-the statistical analysis, and remove the rest. After removing genes, we must
+Next we determine which genes have sufficiently large counts to be retained in
+the statistical analysis, and remove the rest. After removing genes, we 
 recalculate the normalization factors.
 
 ```{r edgeR-filter-genes}
@@ -190,7 +205,7 @@ dge <- calcNormFactors(dge)
 dim(dge)
 ```
 
-# Estimate dispersion
+# Estimate dispersion and fit QL model
 
 We model the count data using a quasi-likelihood (QL) negative binomial (NB)
 generalized log-linear model, which accounts for gene-specific variability from
@@ -223,7 +238,7 @@ we wish to test for. Here we represent the constrasts as a numeric matrix:
 )))
 ```
 
-# Perform tests
+# Perform DGE tests
 
 Now we perform genewise tests for every contrast defined above, and save the
 results for every contrast.
@@ -258,10 +273,9 @@ if (is(edgeR_res, "data.frame")) {
 }
 ```
 
-# Write results to text files
+# Write DGE results to text files
 
-Finally we export the results into text files that can be opened using your
-favorite editor.
+We export the results into text files that can be opened using any text editor.
 
 ```{r edgeR-save-results}
 ## Write results to text files and make MA plots
@@ -278,7 +292,7 @@ if (is(edgeR_res, "data.frame")) {
 }
 ```
 
-# Output results as list of `SummarizedExperiment` objects
+# Output DGE results as list of `SummarizedExperiment` objects
 
 Here, we store the analysis results with the original data. The results are
 appended on the `rowData` of the original gene-level `SummarizedExperiment`
@@ -349,6 +363,77 @@ is updated and `st` stays the same.
 ```{r edgeR-save-se}
 analysis_se <- list(sg = sg, st = se$st)
 saveRDS(analysis_se, file = "edgeR_dge.rds")
+```
+
+# Load gene sets ******** CONFIRM CATEGORIES ********
+
+We will use `camera` to perform an enrichment analysis for a collection of 
+gene sets from the [mSigDB](http://software.broadinstitute.org/gsea/msigdb), 
+packaged in the `msigdbr` R package. Here, we load the gene set definitions 
+and select which ones to include in the analysis.
+
+```{r camera-load-genesets}
+m_df = msigdbr(species = organism,
+               category = c("H", "C5"))
+```
+
+# Perform tests ******** CONFIRM GENE SET SIZE LIMITS AND INTER.GENE.COR PARAMETER ********
+
+Next, we perform the gene set analysis. We consider only gene sets where the 
+number of genes shared with the data set is not too small and not too large. 
+`camera` is a competitive gene set test that accounts for correlations among 
+the genes within a gene set. 
+
+```{r camera-perform-tests}
+minSize <- 3
+maxSize <- 500
+
+## Get index for genes in each gene set in the DGEList
+indexList <- limma::ids2indices(
+  gene.sets = lapply(split(m_df, f = m_df$gs_name), function(w) w$gene_symbol),
+  identifiers = dge$genes$gene_name,
+  remove.empty = TRUE
+)
+
+## Filter out too small or too large gene sets
+gsSizes <- vapply(indexList, length, 0)
+indexList <- indexList[gsSizes >= minSize & gsSizes <= maxSize]
+
+camera_res <- lapply(contrasts, function(cm) {
+  camera(dge, index = indexList, design = des, contrast = cm, 
+         inter.gene.cor = NA)
+})
+```
+
+# Write gene set analysis results to text files
+
+The results from `camera` are written to a separate text file for each tested 
+contrast.
+
+```{r camera-save-results}
+## Write results to text files
+if (is(camera_res, "data.frame")) {
+  write.table(camera_res %>% tibble::rownames_to_column("GeneSet") %>%
+                dplyr::arrange(PValue), 
+              file = "camera_dge_results.txt", 
+              sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+} else {
+  for (nm in names(camera_res)) {
+    write.table(camera_res[[nm]] %>% 
+                  tibble::rownames_to_column("GeneSet") %>%
+                  dplyr::arrange(PValue), 
+                file = paste0("camera_dge_results_", nm, ".txt"), 
+                sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+  }
+}
+```
+
+The `camera` output, as well as the used gene sets, are saved to a file.
+
+```{r camera-save-se}
+geneSets <- lapply(indexList, function(i) dge$genes$gene_name[i])
+saveRDS(list(cameraRes = camera_res,
+             geneSets = geneSets), file = "camera_gsa.rds")
 ```
 
 # Session info

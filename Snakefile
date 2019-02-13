@@ -466,13 +466,14 @@ rule edgeR:
 		html = outputdir + "outputR/edgeR_dge.html",
 		rds = outputdir + "outputR/edgeR_dge.rds"
 	params:
-		directory = outputdir + "outputR"
+		directory = outputdir + "outputR",
+		organism = config["organism"]
 	log: 
 		outputdir + "Rout/run_dge_edgeR.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='edgeR_dge.html'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' organism='{params.organism}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='edgeR_dge.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage
@@ -518,7 +519,7 @@ rule Shiny:
 		shiny_input,
 		rds = outputdir + "outputR/DRIMSeq_dtu.rds" if config["run_DRIMSeq"] 
 			else outputdir + "outputR/edgeR_dge.rds",
-		script = "scripts/run_render_shiny.R",
+		script = "scripts/run_render.R",
 		gtf = config["gtf"],
 		template = "scripts/prepare_shiny.Rmd"
 	output:
