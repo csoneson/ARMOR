@@ -6,7 +6,7 @@ suppressPackageStartupMessages({
 #'
 #' Generate a report based on a Rmarkdown template file.
 #' 
-#' @param se,gtffile,bigwigdir,groupvar,organism Arguments that are passed to
+#' @param se,gtffile,bigwigdir,organism Arguments that are passed to
 #'   the provided Rmarkdown template
 #' @param rmdTemplate Path to a .Rmd template file.
 #' @param outputFile File name of the output report. The file name extension
@@ -52,11 +52,11 @@ suppressPackageStartupMessages({
 #'   returns (invisibly) the name of the generated report.
 #'
 generateReport <- function(se, gtffile = NULL, organism = NULL, 
-                           bigwigdir = NULL, groupvar = NULL, 
-                           rmdTemplate, outputFile, outputDir = "./",
-                           outputFormat = NULL, showCode = FALSE,
-                           forceOverwrite = FALSE, knitrProgress = FALSE,
-                           quiet = FALSE, ignorePandoc = FALSE, ...) {
+                           bigwigdir = NULL, rmdTemplate, outputFile, 
+                           outputDir = "./", outputFormat = NULL, 
+                           showCode = FALSE, forceOverwrite = FALSE, 
+                           knitrProgress = FALSE, quiet = FALSE, 
+                           ignorePandoc = FALSE, ...) {
   ## This function was inspired by code from Nicholas Hamilton, provided at
   ## http://stackoverflow.com/questions/37097535/generate-report-in-r
   
