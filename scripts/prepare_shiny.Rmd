@@ -64,7 +64,7 @@ if (!is.null(gtffile)) {
 }
 ```
 
-# Vector with bigWig file names and condition information
+# Vector with bigWig file names 
 
 ```{r shiny-bigwig}
 metadata <- colData(sg)
@@ -72,14 +72,8 @@ if (!is.null(bigwigdir)) {
     bwfiles <- normalizePath(list.files(bigwigdir, pattern = "\\.bw$", 
                                         full.names = TRUE))
     names(bwfiles) <- gsub("_Aligned.sortedByCoord.out.bw", "", basename(bwfiles))
-    condition <- metadata[[groupvar]][match(names(bwfiles), metadata$names)]
-    names(condition) <- names(bwfiles)
-    ordr <- order(condition)
-    condition <- condition[ordr]
-    bwfiles <- bwfiles[ordr]
 } else {
     bwfiles <- NA
-    condition <- NA
 }
 ```
 
@@ -119,7 +113,6 @@ reducedData <- as.matrix(reducedData)
 
 ## column data
 colData(sg)$bwFiles <- bwfiles[nam]
-colData(sg)$bwCond <- condition[nam]
 
 sce_gene <- SingleCellExperiment(assays = assays(sg), 
                                  rowData = rowData(sg),
@@ -141,7 +134,6 @@ nam <- colData(st)$names
 
 ## column data
 colData(st)$bwFiles <- bwfiles[nam]
-colData(st)$bwCond <- condition[nam]
 
 sce_tx <- SingleCellExperiment(assays = assays(st), 
                                rowData = rowData(st),
