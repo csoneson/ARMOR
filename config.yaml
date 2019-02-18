@@ -41,9 +41,7 @@ fldSD: 25
 ## type: either SE or PE, indicating whether the sample was analyzed 
 ## via single-end or paired-end sequencing.
 metatxt: example_data/metadata.txt
-## The column in the metadata text file that will be used to color samples in exploratory 
-## analysis plots.
-groupvar: celline
+
 
 ## The maximal number of cores to use for FastQC, STAR and Salmon.
 ## Note that the actual number of cores available to Snakemake is determined by
