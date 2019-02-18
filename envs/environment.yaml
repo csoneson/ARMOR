@@ -11,3 +11,5 @@ dependencies:
 - cutadapt=1.16
 - bedtools=2.27.1
 - ucsc-bedgraphtobigwig=366
+- pandoc
+- pandoc-citeproc
