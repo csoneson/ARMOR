@@ -507,8 +507,7 @@ def shiny_input(wildcards):
 	return input
 
 def shiny_params(wildcards):
-	param = ["outputdir='" + outputdir + "outputR'", 
-		"groupvar='" + config["groupvar"]+ "'"] 
+	param = ["outputdir='" + outputdir + "outputR'"] 
 	if config["run_STAR"]:
 		param.append("bigwigdir='" + outputdir + "STARbigwig'")
 	return param

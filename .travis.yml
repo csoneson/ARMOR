@@ -4,11 +4,6 @@ python:
   ## We don't actually use the Travis Python, but this keeps it organized.
   - "3.6"
 
-addons:
-  apt_packages:
-    - pandoc
-    - pandoc-citeproc
-    
 before_install:
   - mkdir -p ~/.R
   - echo -e 'MAKEFLAGS = -j8' > ~/.R/Makevars
