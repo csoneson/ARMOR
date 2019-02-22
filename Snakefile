@@ -43,11 +43,6 @@ rule setup:
 		outputdir + "Rout/pkginstall_state.txt",
 		outputdir + "Rout/softwareversions.done"
 
-rule makeenv:
-	input:
-	conda:
-		envs/environment.yaml
-
 ## Install R packages	
 rule pkginstall:
 	input:
