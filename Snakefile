@@ -38,6 +38,16 @@ rule all:
 		outputdir + "MultiQC/multiqc_report.html",
 		outputdir + "outputR/shiny_sce.rds"
 
+rule setup:
+	input:
+		pkginstall
+		softwareversions
+
+rule makeenv:
+	input:
+	conda:
+		envs/environment.yaml
+		
 ## Install R packages	
 rule pkginstall:
 	input:
