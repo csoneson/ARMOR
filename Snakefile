@@ -40,14 +40,14 @@ rule all:
 
 rule setup:
 	input:
-		pkginstall
-		softwareversions
+		outputdir + "Rout/pkginstall_state.txt",
+		outputdir + "Rout/softwareversions.done"
 
 rule makeenv:
 	input:
 	conda:
 		envs/environment.yaml
-		
+
 ## Install R packages	
 rule pkginstall:
 	input:
@@ -103,6 +103,8 @@ rule listpackages:
 
 ## Print the versions of all software packages
 rule softwareversions:
+	output: 
+		touch(outputdir + "Rout/softwareversions.done")
 	conda:
 		"envs/environment.yaml"
 	shell:
