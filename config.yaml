@@ -50,11 +50,16 @@ ncores: 1
 ##---------------------------------------------------------------------------------------------
 
 
-## Path to a folder containing gzipped fastq files. Note that the workflow makes 
-## some assumptions about the format of the names of the FASTQ files, please consult 
-## the documentation to make sure that your files are properly named.
+## Path to a folder containing gzipped fastq files. If you have paired-end fastq files, 
+## you also need to define the suffix distinguishing the two read files. 
+## More precisely, ARMOR assumes that paired-end fastq files are named 
+## <sample-name>_<fqext1>.fastq.gz and <sample-name>_<fqext2>.fastq.gz.
+## Single-end fastq files are supposed to be named 
+## <sample-name>.fastq.gz.
 ##---------------------------------------------------------------------------------------------
 FASTQ: example_data/FASTQ
+fqext1: R1
+fqext2: R2
 ##---------------------------------------------------------------------------------------------
 
 
