@@ -38,6 +38,11 @@ rule all:
 		outputdir + "MultiQC/multiqc_report.html",
 		outputdir + "outputR/shiny_sce.rds"
 
+rule setup:
+	input:
+		outputdir + "Rout/pkginstall_state.txt",
+		outputdir + "Rout/softwareversions.done"
+
 ## Install R packages	
 rule pkginstall:
 	input:
@@ -93,6 +98,8 @@ rule listpackages:
 
 ## Print the versions of all software packages
 rule softwareversions:
+	output: 
+		touch(outputdir + "Rout/softwareversions.done")
 	conda:
 		"envs/environment.yaml"
 	shell:
