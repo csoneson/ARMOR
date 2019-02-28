@@ -37,11 +37,16 @@ fldMean: 250
 fldSD: 25
 
 ## Path to metadata text file. This file must contain at least the following columns:
-## ID: the sample identifiers = the names of the FASTQ files (excluding the _R1/R2.fastq.gz part)
+## names: the sample identifiers = the names of the FASTQ files (excluding the _R1/R2.fastq.gz part)
 ## type: either SE or PE, indicating whether the sample was analyzed 
 ## via single-end or paired-end sequencing.
 metatxt: example_data/metadata.txt
 
+## Variables used for model fitting
+## group: variable used in the model fit (note: always fit as ~ 0 + 'group')
+## contrast: (comma-separated if multiple) list of contrasts to estimate in edgeR_dge.Rmd
+group: celline
+contrast: cellineN61311-cellineN052611
 
 ## The maximal number of cores to use for FastQC, STAR and Salmon.
 ## Note that the actual number of cores available to Snakemake is determined by
@@ -84,5 +89,5 @@ Rbin: /usr/local/R/R-3.5.1/bin/R
 ## Should read trimming, STAR mapping and DRIMSeq analysis be performed? Set to False if the step is not required.
 run_trimming: True
 run_STAR: True
-run_DRIMSeq: True
+run_DRIMSeq: False
 ##---------------------------------------------------------------------------------------------
