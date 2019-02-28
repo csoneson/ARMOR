@@ -186,6 +186,11 @@ annotations will be taken into account in the statistical modeling.
 
 ```{r edgeR-define-design}
 stopifnot(all(colnames(dge0) == metadata$names))
+
+print(metadata)
+print(group)
+print(contrast)
+
 #(des <- model.matrix(~ XXXX, data = metadata))
 #e.g.
 (des <- model.matrix(~ 0 + celline, data = metadata))

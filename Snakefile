@@ -1,5 +1,6 @@
 ## Configuration file
-configfile: "config.yaml"
+#if config["DIR"] != "":
+#        configfile: str(config["DIR"]) + "/config.yaml"
 
 ## Read metadata
 import pandas as pd
@@ -474,13 +475,15 @@ rule edgeR:
 		rds = outputdir + "outputR/edgeR_dge.rds"
 	params:
 		directory = outputdir + "outputR",
-		organism = config["organism"]
+		organism = config["organism"],
+		group = config["group"],
+		contrast = config["contrast"]
 	log: 
 		outputdir + "Rout/run_dge_edgeR.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' organism='{params.organism}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='edgeR_dge.html'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' organism='{params.organism}' group='{params.group}' contrast='{params.contrast}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='edgeR_dge.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage
