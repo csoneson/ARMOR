@@ -61,15 +61,15 @@ rule pkginstall:
 ## FastQC on original (untrimmed) files
 rule runfastqc:
 	input:
-		expand(outputdir + "FastQC/{sample}_R1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_R2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_" + str(config["fqext1"]) + "_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_" + str(config["fqext2"]) + "_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
 		expand(outputdir + "FastQC/{sample}_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist())
 
 ## Trimming and FastQC on trimmed files
 rule runtrimming:
 	input:
-		expand(outputdir + "FastQC/{sample}_R1_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_R2_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_" + str(config["fqext1"]) + "_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(outputdir + "FastQC/{sample}_" + str(config["fqext2"]) + "_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
 		expand(outputdir + "FastQC/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist())
 
 ## Salmon quantification
@@ -186,7 +186,7 @@ rule starindex:
 ## FastQC, original reads
 rule fastqc:
 	input:
-		fastq = FASTQdir + "{sample}.fastq.gz"
+		fastq = FASTQdir + "{sample}." + str(config["fqsuffix"]) + ".gz"
 	output:
 		outputdir + "FastQC/{sample}_fastqc.zip"
 	params:
@@ -225,16 +225,16 @@ rule fastqc2:
 def multiqc_input(wildcards):
 	input = []
 	input.extend(expand(outputdir + "FastQC/{sample}_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()))
-	input.extend(expand(outputdir + "FastQC/{sample}_R1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
-	input.extend(expand(outputdir + "FastQC/{sample}_R2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
+	input.extend(expand(outputdir + "FastQC/{sample}_" + str(config["fqext1"]) + "_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
+	input.extend(expand(outputdir + "FastQC/{sample}_" + str(config["fqext2"]) + "_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
 	input.extend(expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()))
 	if config["run_trimming"]:
 		input.extend(expand(outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz", sample = samples.names[samples.type == 'SE'].values.tolist()))
-		input.extend(expand(outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()))
-		input.extend(expand(outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()))
+		input.extend(expand(outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext1"]) + "_val_1.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()))
+		input.extend(expand(outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext2"]) + "_val_2.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()))
 		input.extend(expand(outputdir + "FastQC/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()))
-		input.extend(expand(outputdir + "FastQC/{sample}_R1_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
-		input.extend(expand(outputdir + "FastQC/{sample}_R2_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
+		input.extend(expand(outputdir + "FastQC/{sample}_" + str(config["fqext1"]) + "_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
+		input.extend(expand(outputdir + "FastQC/{sample}_" + str(config["fqext2"]) + "_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
 	if config["run_STAR"]:
 		input.extend(expand(outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist()))
 	return input
@@ -273,7 +273,7 @@ rule multiqc:
 # TrimGalore!
 rule trimgaloreSE:
 	input:
-		fastq = FASTQdir + "{sample}.fastq.gz"
+		fastq = FASTQdir + "{sample}." + str(config["fqsuffix"]) + ".gz"
 	output:
 		outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz"
 	params:
@@ -288,11 +288,11 @@ rule trimgaloreSE:
 
 rule trimgalorePE:
 	input:
-		fastq1 = FASTQdir + "{sample}_R1.fastq.gz",
-		fastq2 = FASTQdir + "{sample}_R2.fastq.gz"
+		fastq1 = FASTQdir + "{sample}_" + str(config["fqext1"]) + "." + str(config["fqsuffix"]) + ".gz",
+		fastq2 = FASTQdir + "{sample}_" + str(config["fqext2"]) + "." + str(config["fqsuffix"]) + ".gz"
 	output:
-		outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz",
-		outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz"
+		outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext1"]) + "_val_1.fq.gz",
+		outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext2"]) + "_val_2.fq.gz"
 	params:
 		FASTQtrimmeddir = outputdir + "FASTQtrimmed"
 	log:
@@ -311,7 +311,7 @@ rule trimgalorePE:
 rule salmonSE:
 	input:
 		index = config["salmonindex"] + "/hash.bin",
-		fastq = outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}.fastq.gz"
+		fastq = outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}." + str(config["fqsuffix"]) + ".gz"
 	output:
 		outputdir + "salmon/{sample}/quant.sf"
 	log:
@@ -334,8 +334,8 @@ rule salmonSE:
 rule salmonPE:
 	input:
 		index = config["salmonindex"] + "/hash.bin",
-		fastq1 = outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_R1.fastq.gz",
-		fastq2 = outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_R2.fastq.gz"
+		fastq1 = outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext1"]) + "_val_1.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_" + str(config["fqext1"]) + "." + str(config["fqsuffix"]) + ".gz",
+		fastq2 = outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext2"]) + "_val_2.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_" + str(config["fqext2"]) + "." + str(config["fqsuffix"]) + ".gz"
 	output:
 		outputdir + "salmon/{sample}/quant.sf"
 	log:
@@ -362,7 +362,7 @@ rule salmonPE:
 rule starSE:
 	input:
 		index = config["STARindex"] + "/SA",
-		fastq = outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}.fastq.gz"
+		fastq = outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}." + str(config["fqsuffix"]) + ".gz"
 	output:
 		outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
 	threads: 
@@ -383,8 +383,8 @@ rule starSE:
 rule starPE:
 	input:
 		index = config["STARindex"] + "/SA",
-		fastq1 = outputdir + "FASTQtrimmed/{sample}_R1_val_1.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_R1.fastq.gz",
-		fastq2 = outputdir + "FASTQtrimmed/{sample}_R2_val_2.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_R2.fastq.gz"
+		fastq1 = outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext1"]) + "_val_1.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_" + str(config["fqext1"]) + "." + str(config["fqsuffix"]) + ".gz",
+		fastq2 = outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext2"]) + "_val_2.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_" + str(config["fqext2"]) + "." + str(config["fqsuffix"]) + ".gz"
 	output:
 		outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
 	threads: 
