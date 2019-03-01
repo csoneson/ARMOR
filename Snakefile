@@ -1,5 +1,10 @@
 ## Configuration file
-configfile: "config.yaml"
+import os
+if len(config) == 0:
+  if os.path.isfile("./config.yaml"):
+    configfile: "./config.yaml"
+  else:
+    sys.exit("Make sure there is a config.yaml file in " + os.getcwd() + " or specify one with the --configfile commandline parameter.")
 
 ## Read metadata
 import pandas as pd
