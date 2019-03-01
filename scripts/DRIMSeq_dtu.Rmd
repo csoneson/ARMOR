@@ -90,7 +90,9 @@ counts <- data.frame(feature_id = rownames(st),
 
 metadata <- data.frame(colData(st))
 metadata <- metadata %>% 
-    dplyr::select(sample_id = names, group  = celline)
+    dplyr::mutate(sample_id = names) %>% 
+    dplyr::select(-names)
+    
   
 d <- dmDSdata(counts = counts, samples = metadata)
 plotData(d)
@@ -113,10 +115,9 @@ plotData(d)
 
 Here, we specify the design matrix used for the Dirichlet-multinomial model in the later step.
 
-
 ```{r DRIMSeq-define-design}
 # (des <- model.matrix(~ XXXX, data = samples(d)))
-(des <- model.matrix(~ 0 + group, data = samples(d)))
+(des <- model.matrix(~ 0 + celline, data = samples(d)))
 ```
 
 # Calculate precision
@@ -154,7 +155,7 @@ The contrasts are defined to do comparision between specified groups.
 
 ```{r DRIMSeq-define-contrasts}
 #(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
-(contrasts <- as.data.frame(makeContrasts("groupN61311-groupN052611", levels = des)))
+(contrasts <- as.data.frame(makeContrasts("cellineN61311-cellineN052611", levels = des)))
 ```
 
 # Perform tests
