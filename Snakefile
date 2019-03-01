@@ -499,13 +499,16 @@ rule DRIMSeq:
 		html = outputdir + "outputR/DRIMSeq_dtu.html",
 		rds = outputdir + "outputR/DRIMSeq_dtu.rds"
 	params:
-		directory = outputdir + "outputR"
+		directory = outputdir + "outputR",
+		organism = config["organism"],
+		group = config["group"],
+		contrast = config["contrast"]
 	log:
 		outputdir + "Rout/run_dtu_drimseq.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='DRIMSeq_dtu.html'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' group='{params.group}' contrast='{params.contrast}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='DRIMSeq_dtu.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Shiny app
