@@ -164,6 +164,7 @@ The contrasts are defined to do comparision between specified groups.
 
 ```{r DRIMSeq-define-contrasts}
 #(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
+print(contrast)
 (contrasts <- as.data.frame(makeContrasts(contrasts = contrast, levels = des)))
 ```
 
