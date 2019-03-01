@@ -1,6 +1,5 @@
 ## Configuration file
-#if config["DIR"] != "":
-#        configfile: str(config["DIR"]) + "/config.yaml"
+configfile: "config.yaml"
 
 ## Read metadata
 import pandas as pd
