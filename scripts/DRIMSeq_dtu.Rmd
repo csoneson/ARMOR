@@ -90,8 +90,7 @@ counts <- data.frame(feature_id = rownames(st),
 
 metadata <- data.frame(colData(st))
 metadata <- metadata %>% 
-    dplyr::mutate(sample_id = names) %>% 
-    dplyr::select(-names)
+    dplyr::rename(sample_id = names)
     
   
 d <- dmDSdata(counts = counts, samples = metadata)
