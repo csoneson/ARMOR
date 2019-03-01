@@ -80,8 +80,8 @@ output: example_data/output
 ##---------------------------------------------------------------------------------------------
 ## Specify "True" if R should be installed in a conda environment or "False" if you want to use 
 ## your own R installation (then you have to set the path to your library in the .Renviron file)
-useCondaR: False
-Rbin: /usr/local/R/R-3.5.1/bin/R
+useCondaR: True
+Rbin: 
 ##---------------------------------------------------------------------------------------------
 
 ## Conditional conda rules
