@@ -189,11 +189,10 @@ stopifnot(all(colnames(dge0) == metadata$names))
 
 print(metadata)
 print(group)
-print(contrast)
 
 #(des <- model.matrix(~ XXXX, data = metadata))
 #e.g.
-(des <- model.matrix(~ 0 + celline, data = metadata))
+(des <- model.matrix(as.formula(paste0("~ 0 +",group)), data = metadata))
 ```
 
 # Filter out lowly expressed genes
@@ -236,11 +235,11 @@ Before testing for differences in gene expression, we define the contrasts
 we wish to test for. Here we represent the constrasts as a numeric matrix:
 
 ```{r edgeR-define-contrasts}
+print(contrast)
+
 #(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
 #e.g.
-(contrasts <- as.data.frame(makeContrasts(
-  contrasts = "cellineN61311-cellineN052611", levels = des
-)))
+(contrasts <- as.data.frame(makeContrasts(contrasts = contrast, levels = des)))
 ```
 
 # Perform DGE tests
