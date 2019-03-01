@@ -23,6 +23,7 @@ if (exists("group")) {
 }
 
 if (exists("contrast")) {
+  contrast <- strsplit(gsub(" ","",contrast), ",")[[1]]
   print(contrast)
 } else {
   contrast <- NULL

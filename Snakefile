@@ -481,7 +481,7 @@ rule edgeR:
 		directory = outputdir + "outputR",
 		organism = config["organism"],
 		group = config["group"],
-		contrast = config["contrast"]
+		contrast = config["contrast"].replace(" ", "")
 	log: 
 		outputdir + "Rout/run_dge_edgeR.Rout"
 	conda:
@@ -506,7 +506,7 @@ rule DRIMSeq:
 		directory = outputdir + "outputR",
 		organism = config["organism"],
 		group = config["group"],
-		contrast = config["contrast"]
+		contrast = config["contrast"].replace(" ", "")
 	log:
 		outputdir + "Rout/run_dtu_drimseq.Rout"
 	conda:

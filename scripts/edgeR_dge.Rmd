@@ -239,6 +239,7 @@ print(contrast)
 
 #(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
 #e.g.
+print(contrast)
 (contrasts <- as.data.frame(makeContrasts(contrasts = contrast, levels = des)))
 ```
 
