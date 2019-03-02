@@ -181,6 +181,7 @@ assay(sg, "logcpm") <- logcpms
 
 # Define design. 
 
+
 Next, we specify the design matrix of the experiment, defining which sample 
 annotations will be taken into account in the statistical modeling.
 
@@ -188,9 +189,9 @@ annotations will be taken into account in the statistical modeling.
 stopifnot(all(colnames(dge0) == metadata$names))
 
 print(metadata)
-print(group)
+print(design)
 
-(des <- model.matrix(as.formula(paste0("~ 0 +",group)), data = metadata))
+(des <- model.matrix(as.formula(design), data = metadata))
 ```
 
 # Filter out lowly expressed genes

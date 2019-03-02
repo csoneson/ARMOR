@@ -45,7 +45,7 @@ metatxt: example_data/metadata.txt
 ## Variables used for model fitting
 ## group: variable used in the model fit (note: always fit as ~ 0 + 'group')
 ## contrast: (comma-separated if multiple) list of contrasts to estimate in edgeR_dge.Rmd
-group: celline
+design: "~0+celline"
 contrast: cellineN61311-cellineN052611
 
 ## The maximal number of cores to use for FastQC, STAR and Salmon.
@@ -80,8 +80,8 @@ output: example_data/output
 ##---------------------------------------------------------------------------------------------
 ## Specify "True" if R should be installed in a conda environment or "False" if you want to use 
 ## your own R installation (then you have to set the path to your library in the .Renviron file)
-useCondaR: True
-Rbin: R
+useCondaR: False
+Rbin: /usr/local/bin/R
 ##---------------------------------------------------------------------------------------------
 
 ## Conditional conda rules
