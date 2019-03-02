@@ -43,10 +43,11 @@ fldSD: 25
 metatxt: example_data/metadata.txt
 
 ## Variables used for model fitting
-## group: variable used in the model fit (note: always fit as ~ 0 + 'group')
+## design: design formula for use with edgeR, camera and DRIMSeq. Must be a string 
+## of the form "~ <predictors>"
 ## contrast: (comma-separated if multiple) list of contrasts to estimate in edgeR_dge.Rmd
-design: "~0+celline"
-contrast: cellineN61311-cellineN052611
+design: "~ 0 + celline"
+contrast: cellineN61311-cellineN052611,cellineN052611-cellineN61311
 
 ## The maximal number of cores to use for FastQC, STAR and Salmon.
 ## Note that the actual number of cores available to Snakemake is determined by
