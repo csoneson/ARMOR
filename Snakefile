@@ -480,7 +480,7 @@ rule edgeR:
 	params:
 		directory = outputdir + "outputR",
 		organism = config["organism"],
-		design = config["design"],
+		design = config["design"].replace(" ", ""),
 		contrast = config["contrast"].replace(" ", "")
 	log: 
 		outputdir + "Rout/run_dge_edgeR.Rout"
@@ -505,7 +505,7 @@ rule DRIMSeq:
 	params:
 		directory = outputdir + "outputR",
 		organism = config["organism"],
-		design = config["design"],
+		design = config["design"].replace(" ", ""),
 		contrast = config["contrast"].replace(" ", "")
 	log:
 		outputdir + "Rout/run_dtu_drimseq.Rout"
