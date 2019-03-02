@@ -179,7 +179,7 @@ stopifnot(all(rownames(logcpms) == rownames(sg)),
 assay(sg, "logcpm") <- logcpms
 ```
 
-# Define design. ******** DEFINE PROPER DESIGN ******** 
+# Define design. 
 
 Next, we specify the design matrix of the experiment, defining which sample 
 annotations will be taken into account in the statistical modeling.
@@ -190,8 +190,6 @@ stopifnot(all(colnames(dge0) == metadata$names))
 print(metadata)
 print(group)
 
-#(des <- model.matrix(~ XXXX, data = metadata))
-#e.g.
 (des <- model.matrix(as.formula(paste0("~ 0 +",group)), data = metadata))
 ```
 
@@ -229,16 +227,12 @@ qlfit <- glmQLFit(dge, design = des)
 plotBCV(dge)
 ```
 
-# Define contrasts ******** DEFINE PROPER CONTRASTS ******** 
+# Define contrasts 
 
 Before testing for differences in gene expression, we define the contrasts
 we wish to test for. Here we represent the constrasts as a numeric matrix:
 
 ```{r edgeR-define-contrasts}
-print(contrast)
-
-#(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
-#e.g.
 print(contrast)
 (contrasts <- as.data.frame(makeContrasts(contrasts = contrast, levels = des)))
 ```
