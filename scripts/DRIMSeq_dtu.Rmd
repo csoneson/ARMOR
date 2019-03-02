@@ -100,7 +100,7 @@ d <- dmDSdata(counts = counts, samples = metadata)
 plotData(d)
 ```
 
-# Filter ******** CONFIRM FILTER PARAMETERS ******** 
+# Filter 
 
 The genes with low expression levels are filtered out to ensure that the
 observed transcript ratios are reliable. A single gene may have many

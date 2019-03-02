@@ -6,7 +6,7 @@ suppressPackageStartupMessages({
 #'
 #' Generate a report based on a Rmarkdown template file.
 #' 
-#' @param se,gtffile,bigwigdir,organism,contrast Arguments that are passed to
+#' @param se,gtffile,bigwigdir,genesets,organism,contrast Arguments that are passed to
 #'   the provided Rmarkdown template
 #' @param rmdTemplate Path to a .Rmd template file.
 #' @param outputFile File name of the output report. The file name extension
@@ -53,7 +53,7 @@ suppressPackageStartupMessages({
 #'
 
 generateReport <- function(se, gtffile = NULL, organism = NULL, 
-                           bigwigdir = NULL, design = NULL, 
+                           bigwigdir = NULL, design = NULL, genesets = NULL, 
                            contrast = NULL, rmdTemplate, outputFile, 
                            outputDir = "./", outputFormat = NULL, 
                            showCode = FALSE, forceOverwrite = FALSE, 
@@ -145,6 +145,13 @@ generateReport <- function(se, gtffile = NULL, organism = NULL,
   if (!is.null(contrast)) {
     if (!is(contrast, "character")) {
       stop("contrast must be a character string")
+    }
+  }
+  
+  ## genesets
+  if (!is.null(genesets)) {
+    if (!is(genesets, "character")) {
+      stop("genesets must be a character string")
     }
   }
   

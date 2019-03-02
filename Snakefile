@@ -481,13 +481,14 @@ rule edgeR:
 		directory = outputdir + "outputR",
 		organism = config["organism"],
 		design = config["design"].replace(" ", ""),
-		contrast = config["contrast"].replace(" ", "")
+		contrast = config["contrast"].replace(" ", ""),
+		genesets = config["genesets"].replace(" ", "")
 	log: 
 		outputdir + "Rout/run_dge_edgeR.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' organism='{params.organism}' design='{params.design}' contrast='{params.contrast}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='edgeR_dge.html'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' organism='{params.organism}' design='{params.design}' contrast='{params.contrast}' genesets='{params.genesets}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='edgeR_dge.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage

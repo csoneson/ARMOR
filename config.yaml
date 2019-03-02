@@ -49,6 +49,11 @@ metatxt: example_data/metadata.txt
 design: "~ 0 + celline"
 contrast: cellineN61311-cellineN052611,cellineN052611-cellineN61311
 
+## Gene sets used for gene set analysis with camera
+## Comma-separated list of gene set categories to test with camera. 
+## Must be a subset of H,C1,C2,C3,C4,C5,C6,C7
+genesets: H,C5
+
 ## The maximal number of cores to use for FastQC, STAR and Salmon.
 ## Note that the actual number of cores available to Snakemake is determined by
 ## the arguments given when it is invoked.
