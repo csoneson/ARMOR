@@ -117,16 +117,14 @@ d <- dmFilter(d, min_samps_gene_expr = 3, min_samps_feature_expr = 3,
 plotData(d)
 ```
 
-# Define design. ******** DEFINE PROPER DESIGN ******** 
+# Define design.
 
 Here, we specify the design matrix used for the Dirichlet-multinomial model in the later step.
 
 
 ```{r DRIMSeq-define-design}
-# (des <- model.matrix(~ XXXX, data = samples(d)))
+print(samples(d))
 (des <- model.matrix(as.formula(paste0("~ 0 +",group)), data = samples(d)))
-
-#(des <- model.matrix(~ 0 + group, data = samples(d)))
 ```
 
 # Calculate precision
@@ -158,12 +156,11 @@ applied to each transcript separately.
 d <- dmFit(d, design = des, verbose = 1)
 ```
 
-# Define contrasts. ******** DEFINE PROPER CONTRASTS ******** 
+# Define contrasts.
 
 The contrasts are defined to do comparision between specified groups.
 
 ```{r DRIMSeq-define-contrasts}
-#(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
 print(contrast)
 (contrasts <- as.data.frame(makeContrasts(contrasts = contrast, levels = des)))
 ```
