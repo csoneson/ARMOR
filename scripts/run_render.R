@@ -29,13 +29,18 @@ if (exists("contrast")) {
   contrast <- NULL
 }
 
+if (exists("genesets")) {
+  genesets <- strsplit(gsub(" ","",genesets), ",")[[1]]
+  print(genesets)
+} else {
+  genesets <- NULL
+}
 
 if (exists("gtffile")) {
   print(gtffile)
 } else {
   gtffile <- NULL
 }
-
 
 if (exists("bigwigdir")) {
   bigwigdir <- normalizePath(bigwigdir)
@@ -47,7 +52,7 @@ if (exists("bigwigdir")) {
 source("scripts/generate_report.R")
 
 generateReport(se = se, organism = organism, gtffile = gtffile,
-               contrast = contrast, design = design,
+               contrast = contrast, design = design, genesets = genesets, 
                bigwigdir = bigwigdir, rmdTemplate = rmdtemplate, 
                outputDir = outputdir, outputFile = outputfile, 
                forceOverwrite = TRUE, showCode = TRUE)

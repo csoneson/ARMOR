@@ -365,7 +365,7 @@ analysis_se <- list(sg = sg, st = se$st)
 saveRDS(analysis_se, file = "edgeR_dge.rds")
 ```
 
-# Load gene sets ******** CONFIRM CATEGORIES ********
+# Load gene sets 
 
 We will use `camera` to perform an enrichment analysis for a collection of 
 gene sets from the [mSigDB](http://software.broadinstitute.org/gsea/msigdb), 
@@ -373,11 +373,12 @@ packaged in the `msigdbr` R package. Here, we load the gene set definitions
 and select which ones to include in the analysis.
 
 ```{r camera-load-genesets}
+print(genesets)
 m_df = msigdbr(species = organism,
-               category = c("H", "C5"))
+               category = genesets)
 ```
 
-# Perform tests ******** CONFIRM GENE SET SIZE LIMITS AND INTER.GENE.COR PARAMETER ********
+# Perform tests
 
 Next, we perform the gene set analysis. We consider only gene sets where the 
 number of genes shared with the data set is not too small and not too large. 
