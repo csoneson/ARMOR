@@ -1,5 +1,10 @@
 ## Configuration file
-configfile: "config.yaml"
+import os
+if len(config) == 0:
+  if os.path.isfile("./config.yaml"):
+    configfile: "./config.yaml"
+  else:
+    sys.exit("Make sure there is a config.yaml file in " + os.getcwd() + " or specify one with the --configfile commandline parameter.")
 
 ## Read metadata
 import pandas as pd
@@ -474,13 +479,16 @@ rule edgeR:
 		rds = outputdir + "outputR/edgeR_dge.rds"
 	params:
 		directory = outputdir + "outputR",
-		organism = config["organism"]
+		organism = config["organism"],
+		design = config["design"].replace(" ", ""),
+		contrast = config["contrast"].replace(" ", ""),
+		genesets = config["genesets"].replace(" ", "")
 	log: 
 		outputdir + "Rout/run_dge_edgeR.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' organism='{params.organism}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='edgeR_dge.html'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' organism='{params.organism}' design='{params.design}' contrast='{params.contrast}' genesets='{params.genesets}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='edgeR_dge.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage
@@ -496,13 +504,16 @@ rule DRIMSeq:
 		html = outputdir + "outputR/DRIMSeq_dtu.html",
 		rds = outputdir + "outputR/DRIMSeq_dtu.rds"
 	params:
-		directory = outputdir + "outputR"
+		directory = outputdir + "outputR",
+		organism = config["organism"],
+		design = config["design"].replace(" ", ""),
+		contrast = config["contrast"].replace(" ", "")
 	log:
 		outputdir + "Rout/run_dtu_drimseq.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='DRIMSeq_dtu.html'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' design='{params.design}' contrast='{params.contrast}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='DRIMSeq_dtu.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Shiny app

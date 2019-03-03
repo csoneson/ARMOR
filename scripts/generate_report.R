@@ -6,7 +6,7 @@ suppressPackageStartupMessages({
 #'
 #' Generate a report based on a Rmarkdown template file.
 #' 
-#' @param se,gtffile,bigwigdir,organism Arguments that are passed to
+#' @param se,gtffile,bigwigdir,genesets,organism,contrast Arguments that are passed to
 #'   the provided Rmarkdown template
 #' @param rmdTemplate Path to a .Rmd template file.
 #' @param outputFile File name of the output report. The file name extension
@@ -51,8 +51,10 @@ suppressPackageStartupMessages({
 #' @return Generates a summary report in the \code{outputDir} directory, and
 #'   returns (invisibly) the name of the generated report.
 #'
+
 generateReport <- function(se, gtffile = NULL, organism = NULL, 
-                           bigwigdir = NULL, rmdTemplate, outputFile, 
+                           bigwigdir = NULL, design = NULL, genesets = NULL, 
+                           contrast = NULL, rmdTemplate, outputFile, 
                            outputDir = "./", outputFormat = NULL, 
                            showCode = FALSE, forceOverwrite = FALSE, 
                            knitrProgress = FALSE, quiet = FALSE, 
@@ -129,6 +131,27 @@ generateReport <- function(se, gtffile = NULL, organism = NULL,
     if (!organism %in% msigdbr::msigdbr_show_species()) {
       stop("organism must be one of the organisms listed in ",
            "msigdbr::msigdbr_show_species()")
+    }
+  }
+
+  ## design
+  if (!is.null(design)) {
+    if (!is(design, "character") || length(design) != 1) {
+      stop("design must be a character string")
+    }
+  }
+
+  ## contrasts
+  if (!is.null(contrast)) {
+    if (!is(contrast, "character")) {
+      stop("contrast must be a character string")
+    }
+  }
+  
+  ## genesets
+  if (!is.null(genesets)) {
+    if (!is(genesets, "character")) {
+      stop("genesets must be a character string")
     }
   }
   

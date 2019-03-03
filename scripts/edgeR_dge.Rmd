@@ -179,16 +179,19 @@ stopifnot(all(rownames(logcpms) == rownames(sg)),
 assay(sg, "logcpm") <- logcpms
 ```
 
-# Define design. ******** DEFINE PROPER DESIGN ******** 
+# Define design. 
+
 
 Next, we specify the design matrix of the experiment, defining which sample 
 annotations will be taken into account in the statistical modeling.
 
 ```{r edgeR-define-design}
 stopifnot(all(colnames(dge0) == metadata$names))
-#(des <- model.matrix(~ XXXX, data = metadata))
-#e.g.
-(des <- model.matrix(~ 0 + celline, data = metadata))
+
+print(metadata)
+print(design)
+
+(des <- model.matrix(as.formula(design), data = metadata))
 ```
 
 # Filter out lowly expressed genes
@@ -225,17 +228,14 @@ qlfit <- glmQLFit(dge, design = des)
 plotBCV(dge)
 ```
 
-# Define contrasts ******** DEFINE PROPER CONTRASTS ******** 
+# Define contrasts 
 
 Before testing for differences in gene expression, we define the contrasts
 we wish to test for. Here we represent the constrasts as a numeric matrix:
 
 ```{r edgeR-define-contrasts}
-#(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
-#e.g.
-(contrasts <- as.data.frame(makeContrasts(
-  contrasts = "cellineN61311-cellineN052611", levels = des
-)))
+print(contrast)
+(contrasts <- as.data.frame(makeContrasts(contrasts = contrast, levels = des)))
 ```
 
 # Perform DGE tests
@@ -365,7 +365,7 @@ analysis_se <- list(sg = sg, st = se$st)
 saveRDS(analysis_se, file = "edgeR_dge.rds")
 ```
 
-# Load gene sets ******** CONFIRM CATEGORIES ********
+# Load gene sets 
 
 We will use `camera` to perform an enrichment analysis for a collection of 
 gene sets from the [mSigDB](http://software.broadinstitute.org/gsea/msigdb), 
@@ -373,11 +373,12 @@ packaged in the `msigdbr` R package. Here, we load the gene set definitions
 and select which ones to include in the analysis.
 
 ```{r camera-load-genesets}
+print(genesets)
 m_df = msigdbr(species = organism,
-               category = c("H", "C5"))
+               category = genesets)
 ```
 
-# Perform tests ******** CONFIRM GENE SET SIZE LIMITS AND INTER.GENE.COR PARAMETER ********
+# Perform tests
 
 Next, we perform the gene set analysis. We consider only gene sets where the 
 number of genes shared with the data set is not too small and not too large. 

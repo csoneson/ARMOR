@@ -83,20 +83,25 @@ the samples (`metadata`) and a `data.frame` with counts (`counts`). The
 `dmDSdata` object is used to create a data summary plot.
 
 ```{r DRIMSeq-dmDSdata}
+
+print(contrast)
+print(design)
+
 counts <- data.frame(feature_id = rownames(st),
                      gene_id = unlist(rowData(st)$gene_id),
                      assays(st)[["counts"]],
-                     row.names = NULL)
+                     row.names = NULL,
+                     check.names = FALSE)
 
 metadata <- data.frame(colData(st))
 metadata <- metadata %>% 
-    dplyr::select(sample_id = names, group  = celline)
-  
+    dplyr::rename(sample_id = names)
+
 d <- dmDSdata(counts = counts, samples = metadata)
 plotData(d)
 ```
 
-# Filter ******** CONFIRM FILTER PARAMETERS ******** 
+# Filter 
 
 The genes with low expression levels are filtered out to ensure that the
 observed transcript ratios are reliable. A single gene may have many
@@ -109,14 +114,14 @@ d <- dmFilter(d, min_samps_gene_expr = 3, min_samps_feature_expr = 3,
 plotData(d)
 ```
 
-# Define design. ******** DEFINE PROPER DESIGN ******** 
+# Define design.
 
 Here, we specify the design matrix used for the Dirichlet-multinomial model in the later step.
 
 
 ```{r DRIMSeq-define-design}
-# (des <- model.matrix(~ XXXX, data = samples(d)))
-(des <- model.matrix(~ 0 + group, data = samples(d)))
+print(samples(d))
+(des <- model.matrix(as.formula(design), data = samples(d)))
 ```
 
 # Calculate precision
@@ -148,13 +153,13 @@ applied to each transcript separately.
 d <- dmFit(d, design = des, verbose = 1)
 ```
 
-# Define contrasts. ******** DEFINE PROPER CONTRASTS ******** 
+# Define contrasts.
 
 The contrasts are defined to do comparision between specified groups.
 
 ```{r DRIMSeq-define-contrasts}
-#(contrasts <- as.data.frame(makeContrasts(XXXX, levels = des)))
-(contrasts <- as.data.frame(makeContrasts("groupN61311-groupN052611", levels = des)))
+print(contrast)
+(contrasts <- as.data.frame(makeContrasts(contrasts = contrast, levels = des)))
 ```
 
 # Perform tests
