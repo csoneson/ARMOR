@@ -90,7 +90,8 @@ print(design)
 counts <- data.frame(feature_id = rownames(st),
                      gene_id = unlist(rowData(st)$gene_id),
                      assays(st)[["counts"]],
-                     row.names = NULL)
+                     row.names = NULL,
+                     check.names = FALSE)
 
 metadata <- data.frame(colData(st))
 metadata <- metadata %>% 
