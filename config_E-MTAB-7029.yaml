@@ -3,7 +3,7 @@
 ## Specify "Ensembl" or "Gencode" depending on your choice
 annotation: Ensembl
 
-organism: Mus_musculus # separate with underscore
+organism: Homo_sapiens # separate with underscore
 build: GRCh38
 release: 95
 ##--------------------------------------------------------------------------------------------
