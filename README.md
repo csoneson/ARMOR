@@ -14,7 +14,7 @@ By default, the pipeline performs all the steps shown in the [diagram](dag_nice3
 To use the ARMOR workflow on your own data, follow the steps outlined in the [wiki](https://github.com/csoneson/ARMOR/wiki).
 
 ## Workflow graph
-![DAG](img/dag_nice4.png)  
+![DAG](img/dag_nice5.png)  
 Blue circles are rules run in `R`, orange circles from software called as shell commands. Dashed lines and light-colored circles are optional rules, controlled in `config.yaml`
 
 ## Contributors
