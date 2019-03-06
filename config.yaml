@@ -52,6 +52,7 @@ contrast: cellineN61311-cellineN052611,cellineN052611-cellineN61311
 ## Gene sets used for gene set analysis with camera
 ## Comma-separated list of gene set categories to test with camera. 
 ## Must be a subset of H,C1,C2,C3,C4,C5,C6,C7
+## Only required if variable "run_camera: is True (see below).
 genesets: H,C5
 
 ## The maximal number of cores to use for FastQC, STAR and Salmon.
@@ -92,8 +93,10 @@ Rbin: R
 
 ## Conditional conda rules
 ##---------------------------------------------------------------------------------------------
-## Should read trimming, STAR mapping and DRIMSeq analysis be performed? Set to False if the step is not required.
+## Should read trimming, STAR mapping, DRIMSeq analysis and gene set analysis be performed? Set
+## to False if the step is not required.
 run_trimming: True
 run_STAR: True
 run_DRIMSeq: True
+run_camera: True
 ##---------------------------------------------------------------------------------------------

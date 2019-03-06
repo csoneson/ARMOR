@@ -365,27 +365,31 @@ analysis_se <- list(sg = sg, st = se$st)
 saveRDS(analysis_se, file = "edgeR_dge.rds")
 ```
 
-# Load gene sets 
+
+```{r camera_text1, echo = FALSE, results = 'asis', eval = !is.null(genesets)}
+cat("# Load gene sets 
 
 We will use `camera` to perform an enrichment analysis for a collection of 
 gene sets from the [mSigDB](http://software.broadinstitute.org/gsea/msigdb), 
 packaged in the `msigdbr` R package. Here, we load the gene set definitions 
-and select which ones to include in the analysis.
+and select which ones to include in the analysis.")
+```
 
-```{r camera-load-genesets}
-print(genesets)
+```{r camera-load-genesets, eval = !is.null(genesets), include = !is.null(genesets)}
 m_df = msigdbr(species = organism,
                category = genesets)
 ```
 
-# Perform tests
+```{r camera_text2, echo= FALSE, results = 'asis', eval = !is.null(genesets)}
+cat("# Perform tests
 
 Next, we perform the gene set analysis. We consider only gene sets where the 
 number of genes shared with the data set is not too small and not too large. 
 `camera` is a competitive gene set test that accounts for correlations among 
-the genes within a gene set. 
+the genes within a gene set. ")
+```
 
-```{r camera-perform-tests}
+```{r camera-perform-tests, eval = !is.null(genesets), include = !is.null(genesets)}
 minSize <- 3
 maxSize <- 500
 
@@ -406,12 +410,14 @@ camera_res <- lapply(contrasts, function(cm) {
 })
 ```
 
-# Write gene set analysis results to text files
+```{r camera_text3, echo= FALSE, results = 'asis', eval = !is.null(genesets)}
+cat("# Write gene set analysis results to text files
 
 The results from `camera` are written to a separate text file for each tested 
-contrast.
+contrast.")
+```
 
-```{r camera-save-results}
+```{r camera-save-results, eval = !is.null(genesets), include = !is.null(genesets)}
 ## Write results to text files
 if (is(camera_res, "data.frame")) {
   write.table(camera_res %>% tibble::rownames_to_column("GeneSet") %>%
@@ -429,9 +435,11 @@ if (is(camera_res, "data.frame")) {
 }
 ```
 
-The `camera` output, as well as the used gene sets, are saved to a file.
+```{r camera_text4, echo = FALSE, results = 'asis', eval = !is.null(genesets)}
+cat("The `camera` output, as well as the used gene sets, are saved to a file.")
+```
 
-```{r camera-save-se}
+```{r camera-save-se, eval = !is.null(genesets), include = !is.null(genesets)}
 geneSets <- lapply(indexList, function(i) dge$genes$gene_name[i])
 saveRDS(list(cameraRes = camera_res,
              geneSets = geneSets), file = "camera_gsa.rds")
