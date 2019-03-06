@@ -469,10 +469,10 @@ rule tximeta:
 ## Differential expression
 ## ------------------------------------------------------------------------------------ ##
 def geneset_param(wildcards):
-	if config["genesets"] is None:
-		return ""
-	else:
+	if config["run_camera"]:
 		return "genesets='" + config["genesets"].replace(" ", "") + "'"
+	else:
+		return ""
 
 
 rule edgeR:
