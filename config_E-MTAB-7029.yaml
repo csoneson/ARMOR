@@ -90,7 +90,7 @@ useCondaR: True
 Rbin: R
 ##---------------------------------------------------------------------------------------------
 
-## Conditional conda rules
+# Conditional conda rules
 ##---------------------------------------------------------------------------------------------
 ## Should read trimming, STAR mapping, DRIMSeq analysis and gene set analysis be performed? Set
 ## to False if the step is not required.
