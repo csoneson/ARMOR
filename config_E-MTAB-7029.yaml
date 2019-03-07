@@ -86,14 +86,16 @@ output: E-MTAB-7029/output
 ##---------------------------------------------------------------------------------------------
 ## Specify "True" if R should be installed in a conda environment or "False" if you want to use 
 ## your own R installation (then you have to set the path to your library in the .Renviron file)
-useCondaR: False
-Rbin: /usr/local/R/R-3.5.1/bin/R
+useCondaR: True
+Rbin: R
 ##---------------------------------------------------------------------------------------------
 
 ## Conditional conda rules
 ##---------------------------------------------------------------------------------------------
-## Should read trimming, STAR mapping and DRIMSeq analysis be performed? Set to False if the step is not required.
+## Should read trimming, STAR mapping, DRIMSeq analysis and gene set analysis be performed? Set
+## to False if the step is not required.
 run_trimming: True
 run_STAR: True
 run_DRIMSeq: True
+run_camera: True
 ##---------------------------------------------------------------------------------------------
