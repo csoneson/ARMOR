@@ -546,7 +546,7 @@ rule DRIMSeq:
 		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' design='{params.design}' contrast='{params.contrast}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='DRIMSeq_dtu.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
-## Shiny app
+## shiny app
 ## ------------------------------------------------------------------------------------ ##
 def shiny_input(wildcards):
 	input = [outputdir + "Rout/pkginstall_state.txt"]
@@ -560,8 +560,8 @@ def shiny_params(wildcards):
 		param.append("bigwigdir='" + outputdir + "STARbigwig'")
 	return param
 
-## Shiny
-rule Shiny:
+## shiny
+rule shiny:
 	input:
 		shiny_input,
 		rds = outputdir + "outputR/DRIMSeq_dtu.rds" if config["run_DRIMSeq"]
