@@ -8,8 +8,8 @@ library(edgeR)
 
 
 ## ----------------The input arguments------------------------------------------
-print(metafile);
-print(outFile);
+print(metafile)
+print(outFile)
 
 msg0 <- try({
     if (exists("design")) {
@@ -32,6 +32,7 @@ msg1 <- try({
 ## ---------------------------Test run -------------------------------
 ## Read metadata
 metadata <- read.delim(metafile, header = TRUE, as.is = TRUE, sep = "\t")
+rownames(metadata) <- metadata$names
 metadata
 
 ## Define design matrix
