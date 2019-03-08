@@ -48,13 +48,13 @@ rule setup:
 		outputdir + "Rout/pkginstall_state.txt",
 		outputdir + "Rout/softwareversions.done"
 
-## Install R packages	
+## Install R packages
 rule pkginstall:
 	input:
 		script = "scripts/install_pkgs.R"
 	output:
 	    outputdir + "Rout/pkginstall_state.txt"
-	priority: 
+	priority:
 		50
 	conda:
 		Renv
@@ -103,7 +103,7 @@ rule listpackages:
 
 ## Print the versions of all software packages
 rule softwareversions:
-	output: 
+	output:
 		touch(outputdir + "Rout/softwareversions.done")
 	conda:
 		"envs/environment.yaml"
@@ -141,16 +141,16 @@ rule salmonindex:
     fi
     """
 
-## Generate linkedTxome mapping
-rule linkedTxome:
+## Generate linkedtxome mapping
+rule linkedtxome:
 	input:
 		txome = config["txome"],
 		gtf = config["gtf"],
 		salmonidx = config["salmonindex"] + "/hash.bin",
-		script = "scripts/generate_linkedTxome.R",
+		script = "scripts/generate_linkedtxome.R",
 		install = outputdir + "Rout/pkginstall_state.txt"
 	log:
-		outputdir + "Rout/generate_linkedTxome.Rout"
+		outputdir + "Rout/generate_linkedtxome.Rout"
 	output:
 		config["salmonindex"] + ".json"
 	params:
@@ -178,7 +178,7 @@ rule starindex:
 		readlength = config["readlength"]
 	conda:
 		"envs/environment.yaml"
-	threads: 
+	threads:
 		config["ncores"]
 	shell:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
@@ -200,7 +200,7 @@ rule fastqc:
 		outputdir + "logs/fastqc_{sample}.log"
 	conda:
 		"envs/environment.yaml"
-	threads: 
+	threads:
 		config["ncores"]
 	shell:
 		"echo 'FastQC version:\n' > {log}; fastqc --version >> {log}; "
@@ -218,7 +218,7 @@ rule fastqc2:
 		outputdir + "logs/fastqc_trimmed_{sample}.log"
 	conda:
 		"envs/environment.yaml"
-	threads: 
+	threads:
 		config["ncores"]
 	shell:
 		"echo 'FastQC version:\n' > {log}; fastqc --version >> {log}; "
@@ -246,7 +246,7 @@ def multiqc_input(wildcards):
 
 ## Determine the input directories for MultiQC depending on the config file
 def multiqc_params(wildcards):
-	param = [outputdir + "FastQC", 
+	param = [outputdir + "FastQC",
 	outputdir + "salmon"]
 	if config["run_trimming"]:
 		param.append(outputdir + "FASTQtrimmed")
@@ -321,7 +321,7 @@ rule salmonSE:
 		outputdir + "salmon/{sample}/quant.sf"
 	log:
 		outputdir + "logs/salmon_{sample}.log"
-	threads: 
+	threads:
 		config["ncores"]
 	params:
 		salmonindex = config["salmonindex"],
@@ -345,7 +345,7 @@ rule salmonPE:
 		outputdir + "salmon/{sample}/quant.sf"
 	log:
 		outputdir + "logs/salmon_{sample}.log"
-	threads: 
+	threads:
 		config["ncores"]
 	params:
 		salmonindex = config["salmonindex"],
@@ -370,7 +370,7 @@ rule starSE:
 		fastq = outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}." + str(config["fqsuffix"]) + ".gz"
 	output:
 		outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
-	threads: 
+	threads:
 		config["ncores"]
 	log:
 		outputdir + "logs/STAR_{sample}.log"
@@ -392,7 +392,7 @@ rule starPE:
 		fastq2 = outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext2"]) + "_val_2.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_" + str(config["fqext2"]) + "." + str(config["fqsuffix"]) + ".gz"
 	output:
 		outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
-	threads: 
+	threads:
 		config["ncores"]
 	log:
 		outputdir + "logs/STAR_{sample}.log"
@@ -464,6 +464,29 @@ rule tximeta:
 	shell:
 		'''{Rbin} CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
 
+## ------------------------------------------------------------------------------------ ##
+## Input variable  check
+## ------------------------------------------------------------------------------------ ##
+## check design matrix and contrasts
+rule checkinputs:
+    input:
+        "config.yaml",
+        metatxt = config["metatxt"],
+        script = "scripts/check_input.R"
+    output:
+        outputdir + "Rout/check_input.txt"
+    log:
+        outputdir + "Rout/check_input.Rout"
+    params:
+        design = config["design"].replace(" ", ""),
+        contrast = config["contrast"].replace(" ", "")
+    conda:
+	    Renv
+    shell:
+        '''{Rbin} CMD BATCH --no-restore --no-save "--args metafile='{input.metatxt}' design='{params.design}' contrast='{params.contrast}' outFile='{output}'" {input.script} {log};
+        cat {output}
+        '''
+       
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential expression
@@ -490,7 +513,7 @@ rule edgeR:
 		design = config["design"].replace(" ", ""),
 		contrast = config["contrast"].replace(" ", ""),
 		genesets = geneset_param
-	log: 
+	log:
 		outputdir + "Rout/run_dge_edgeR.Rout"
 	conda:
 		Renv
@@ -523,25 +546,25 @@ rule DRIMSeq:
 		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' design='{params.design}' contrast='{params.contrast}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='DRIMSeq_dtu.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
-## Shiny app
+## shiny app
 ## ------------------------------------------------------------------------------------ ##
 def shiny_input(wildcards):
-	input = [outputdir + "Rout/pkginstall_state.txt"] 
+	input = [outputdir + "Rout/pkginstall_state.txt"]
 	if config["run_STAR"]:
 		input.extend(expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()))
 	return input
 
 def shiny_params(wildcards):
-	param = ["outputdir='" + outputdir + "outputR'"] 
+	param = ["outputdir='" + outputdir + "outputR'"]
 	if config["run_STAR"]:
 		param.append("bigwigdir='" + outputdir + "STARbigwig'")
 	return param
 
-## Shiny
-rule Shiny:
+## shiny
+rule shiny:
 	input:
 		shiny_input,
-		rds = outputdir + "outputR/DRIMSeq_dtu.rds" if config["run_DRIMSeq"] 
+		rds = outputdir + "outputR/DRIMSeq_dtu.rds" if config["run_DRIMSeq"]
 			else outputdir + "outputR/edgeR_dge.rds",
 		script = "scripts/run_render.R",
 		gtf = config["gtf"],
