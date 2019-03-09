@@ -1,3 +1,6 @@
+library(iSEE)
+## BiocManager::install("Gviz") # if not already installed
+
 sce <- readRDS("E-MTAB-7029/output/outputR/shiny_sce.rds")
 sce <- sce$sce_gene
 rownames(sce) <- paste0(rowData(sce)$gene_id, "__", rowData(sce)$symbol)
@@ -32,8 +35,9 @@ saveRDS(gtf, file = "E-MTAB-7029/reference/Homo_sapiens.GRCh38.95.gtf.rds")
 
 cdp <- customDataPlotDefaults(sce, 2)
 cdp$Function <- c("customGviz")
-cdp$Arguments <- c("bigwig_files E-MTAB-7029/output/STARbigwig/Q10-Chir-1_R1_Aligned.sortedByCoord.out.bw,E-MTAB-7029/output/STARbigwig/Q10-Chir-2_R1_Aligned.sortedByCoord.out.bw,E-MTAB-7029/output/STARbigwig/Q10-Chir-3_R1_Aligned.sortedByCoord.out.bw,E-MTAB-7029/output/STARbigwig/Q10-unstim-1_R1_Aligned.sortedByCoord.out.bw,E-MTAB-7029/output/STARbigwig/Q10-unstim-2_R1_Aligned.sortedByCoord.out.bw,E-MTAB-7029/output/STARbigwig/Q10-unstim-3_R1_Aligned.sortedByCoord.out.bw\nbigwig_names Q10-Chir-1_R1,Q10-Chir-2_R1,Q10-Chir-3_R1,Q10-unstim-1_R1,Q10-unstim-2_R1,Q10-unstim-3_R1\nbigwig_condition d4Tcf__chir,d4Tcf__chir,d4Tcf__chir,d4Tcf__unstim,d4Tcf__unstim,d4Tcf__unstim\ngranges Homo_sapiens.GRCh38.95.gtf.rds\nchr 1\nstart 6.1e6\nend 6.2e6\nshowgene HMOX1")
+cdp$Arguments <- c("bigwig_files E-MTAB-7029/output/STARbigwig/Q10-Chir-1_R1_Aligned.sortedByCoord.out.bw,E-MTAB-7029/output/STARbigwig/Q10-Chir-2_R1_Aligned.sortedByCoord.out.bw,E-MTAB-7029/output/STARbigwig/Q10-Chir-3_R1_Aligned.sortedByCoord.out.bw,E-MTAB-7029/output/STARbigwig/Q10-unstim-1_R1_Aligned.sortedByCoord.out.bw,E-MTAB-7029/output/STARbigwig/Q10-unstim-2_R1_Aligned.sortedByCoord.out.bw,E-MTAB-7029/output/STARbigwig/Q10-unstim-3_R1_Aligned.sortedByCoord.out.bw\nbigwig_names Q10-Chir-1_R1,Q10-Chir-2_R1,Q10-Chir-3_R1,Q10-unstim-1_R1,Q10-unstim-2_R1,Q10-unstim-3_R1\nbigwig_condition d4Tcf__chir,d4Tcf__chir,d4Tcf__chir,d4Tcf__unstim,d4Tcf__unstim,d4Tcf__unstim\ngranges E-MTAB-7029/reference/Homo_sapiens.GRCh38.95.gtf.rds\nchr 1\nstart 6.1e6\nend 6.2e6\nshowgene HMOX1")
 
+options(ucscChromosomeNames=FALSE)
 iSEE(sce, 
      redDimArgs = reddim,
      rowDataArgs = rowdata,
