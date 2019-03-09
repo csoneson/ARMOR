@@ -37,18 +37,16 @@ cdp <- customDataPlotDefaults(sce, 2)
 cdp$Function <- c("customGviz")
 cdp$Arguments <- c("bigwig_files E-MTAB-7029/output/STARbigwig/Q10-Chir-1_R1_Aligned.sortedByCoord.out.bw,E-MTAB-7029/output/STARbigwig/Q10-Chir-2_R1_Aligned.sortedByCoord.out.bw,E-MTAB-7029/output/STARbigwig/Q10-Chir-3_R1_Aligned.sortedByCoord.out.bw,E-MTAB-7029/output/STARbigwig/Q10-unstim-1_R1_Aligned.sortedByCoord.out.bw,E-MTAB-7029/output/STARbigwig/Q10-unstim-2_R1_Aligned.sortedByCoord.out.bw,E-MTAB-7029/output/STARbigwig/Q10-unstim-3_R1_Aligned.sortedByCoord.out.bw\nbigwig_names Q10-Chir-1_R1,Q10-Chir-2_R1,Q10-Chir-3_R1,Q10-unstim-1_R1,Q10-unstim-2_R1,Q10-unstim-3_R1\nbigwig_condition d4Tcf__chir,d4Tcf__chir,d4Tcf__chir,d4Tcf__unstim,d4Tcf__unstim,d4Tcf__unstim\ngranges E-MTAB-7029/reference/Homo_sapiens.GRCh38.95.gtf.rds\nchr 1\nstart 6.1e6\nend 6.2e6\nshowgene HMOX1")
 
-options(ucscChromosomeNames=FALSE)
-iSEE(sce, 
-     redDimArgs = reddim,
-     rowDataArgs = rowdata,
-     rowStatArgs = rowstat, 
-     featAssayArgs = featassay, 
-     customDataArgs = cdp, 
-     customDataFun = list(customGviz = customGviz),
-     initialPanels = DataFrame(
-         Name = c("Reduced dimension plot 1", "Custom data plot 1",
-                  "Row data plot 1", "Row statistics table 1", 
-                  "Feature assay plot 1", "Row statistics table 2"),
-         Width = c(4, 8, 3, 3, 3, 3)
-     ))
-
+app <- iSEE(sce, 
+            redDimArgs = reddim,
+            rowDataArgs = rowdata,
+            rowStatArgs = rowstat, 
+            featAssayArgs = featassay, 
+            customDataArgs = cdp, 
+            customDataFun = list(customGviz = customGviz),
+            initialPanels = DataFrame(
+              Name = c("Reduced dimension plot 1", "Custom data plot 1",
+                       "Row data plot 1", "Row statistics table 1",
+                       "Feature assay plot 1", "Row statistics table 2"),
+              Width = c(4, 8, 3, 3, 3, 3) ))
+shiny::runApp(app)
