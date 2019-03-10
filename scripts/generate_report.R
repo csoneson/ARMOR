@@ -1,5 +1,5 @@
 suppressPackageStartupMessages({
-  library(rmarkdown)
+    library(rmarkdown)
 })
 
 #' Generate report

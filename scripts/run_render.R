@@ -1,5 +1,5 @@
 args <- (commandArgs(trailingOnly = TRUE))
-for (i in 1:length(args)) {
+for (i in seq_len(length(args))) {
     eval(parse(text = args[[i]]))
 }
 
