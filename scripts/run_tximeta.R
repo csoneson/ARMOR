@@ -7,7 +7,7 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(tximport)
   library(tximeta)
-  library(SummarizedExperiment)
+  library(SingleCellExperiment)
 })
 
 print(salmondir)
@@ -55,6 +55,10 @@ rowData(st) <- rowData(st) %>%
     data.frame() %>%
     left_join(data.frame(rowData(sg))) %>%
     DataFrame()
+
+# Coerce the object from SummarizedExperiment to SingleCellExperiment
+as(st, "SingleCellExperiment")
+as(sg, "SingleCellExperiment")
 
 saveRDS(list(st = st, sg = sg), file = outrds)
 
