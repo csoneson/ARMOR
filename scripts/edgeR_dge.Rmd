@@ -91,7 +91,7 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(tximport)
   library(tximeta)
-  library(SummarizedExperiment)
+  library(SingleCellExperiment)
   library(edgeR)
   library(ggplot2)
   library(msigdbr)
@@ -248,7 +248,8 @@ signif3 <- function(x) signif(x, digits = 3)
 edgeR_res <- lapply(contrasts, function(cm) {
   qlf <- glmQLFTest(qlfit, contrast = cm)
   tt <- topTags(qlf, n = Inf, sort.by = "none")$table
-  tt %>% dplyr::mutate_if(is.numeric, signif3)
+  tt %>% dplyr::mutate_if(is.numeric, signif3) %>%
+      dplyr::mutate(mlog10PValue = -log10(PValue))
 })
 ```
 
