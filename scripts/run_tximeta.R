@@ -56,6 +56,9 @@ rowData(st) <- rowData(st) %>%
     left_join(data.frame(rowData(sg))) %>%
     DataFrame()
 
+## Change the row names in sg to have geneID__geneSymbol
+rownames(sg) <- paste(rowData(sg)$gene_id, rowData(sg)$symbol, sep = "__")
+
 # Coerce the object from SummarizedExperiment to SingleCellExperiment
 as(st, "SingleCellExperiment")
 as(sg, "SingleCellExperiment")
