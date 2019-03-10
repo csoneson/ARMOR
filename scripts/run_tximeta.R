@@ -60,8 +60,8 @@ rowData(st) <- rowData(st) %>%
 rownames(sg) <- paste(rowData(sg)$gene_id, rowData(sg)$symbol, sep = "__")
 
 # Coerce the object from SummarizedExperiment to SingleCellExperiment
-as(st, "SingleCellExperiment")
-as(sg, "SingleCellExperiment")
+st <- as(st, "SingleCellExperiment")
+sg <- as(sg, "SingleCellExperiment")
 
 saveRDS(list(st = st, sg = sg), file = outrds)
 
