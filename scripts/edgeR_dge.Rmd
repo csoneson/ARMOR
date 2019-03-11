@@ -157,7 +157,6 @@ dge0 <- edgeR::DGEList(cts)
 dge0 <- edgeR::scaleOffset(dge0, offset = t(t(log(normMat)) + o))
 dge0 <- edgeR::calcNormFactors(dge0)
 
-## Add gene annotation to the DGEList object
 dge0$genes <- as.data.frame(rowRanges(sg))
 ```
 
@@ -311,7 +310,7 @@ edgeR_resA <- lapply(seq_along(edgeR_res), FUN = function(x) {
   ## Genes that are not filtered out
   resX <- edgeR_res[[x]]
   resX <- resX %>% 
-    dplyr::select(c("gene_id", "symbol", "logFC", "logCPM", 
+    dplyr::select(c("gene_id", "gene_name", "logFC", "logCPM", 
                     "F", "FDR", "PValue")) 
   rownames(resX) <- resX$gene_id
   
@@ -328,7 +327,7 @@ edgeR_resA <- lapply(seq_along(edgeR_res), FUN = function(x) {
                                    colnames(resX))) 
     resO <- data.frame(matO)
     resO$gene_id <- geneO
-    resO$symbol <- rowData(sg)$symbol[match(geneO, rowData(sg)$gene_id)]
+    resO$gene_name <- rowData(sg)$gene_name[match(geneO, rowData(sg)$gene_id)]
         
     ## Combine the result tables 
     resA <- resO %>%
@@ -342,7 +341,7 @@ edgeR_resA <- lapply(seq_along(edgeR_res), FUN = function(x) {
   }
   
   ## Use gene column as rownames
-  rownames(resA) <- paste(resA$gene_id, resA$symbol, sep = "__")
+  rownames(resA) <- paste(resA$gene_id, resA$gene_name, sep = "__")
     
   ## convert to DataFrame
   resA <- S4Vectors::DataFrame(resA)
@@ -375,6 +374,13 @@ We will use `camera` to perform an enrichment analysis for a collection of
 gene sets from the [mSigDB](http://software.broadinstitute.org/gsea/msigdb), 
 packaged in the `msigdbr` R package. Here, we load the gene set definitions 
 and select which ones to include in the analysis.")
+```
+
+
+```{r check-gene_names-column, eval = !is.null(genesets), include = !is.null(genesets)}
+
+test_gene_names <- sg$gene_names
+stopifnot(!exists("test_gene_names")) 
 ```
 
 ```{r camera-load-genesets, eval = !is.null(genesets), include = !is.null(genesets)}
