@@ -45,7 +45,7 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(tximport)
   library(tximeta)
-  library(SummarizedExperiment)
+  library(SingleCellExperiment)
   library(edgeR)
   library(DRIMSeq)
   library(ggplot2)
