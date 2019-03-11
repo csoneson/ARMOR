@@ -292,7 +292,7 @@ names(DRIMSeq_resA) <- names(DRIMSeq_res)
 for (i in seq_along(DRIMSeq_resA)) {
     nam <- names(DRIMSeq_resA)[i]
     namI <- paste("DRIMSeq:", nam, sep = "")
-    stopifnot(all(rownames(sg) == rownames(DRIMSeq_resA[[i]])))
+    stopifnot(all(rowData(sg)$gene_id == rownames(DRIMSeq_resA[[i]])))
     rowData(sg)[[namI]] <- DRIMSeq_resA[[i]] 
 }
 ```
@@ -374,7 +374,7 @@ names(DRIMSeq_resB) <- names(DRIMSeq_feature_res)
 for (i in seq_along(DRIMSeq_resB)) {
     nam <- names(DRIMSeq_resB)[i]
     namI <- paste("DRIMSeq:", nam, sep = "")
-    stopifnot(all(rownames(st) == rownames(DRIMSeq_resB[[i]])))
+    stopifnot(all(rowData(st)$tx_id == rownames(DRIMSeq_resB[[i]])))
     rowData(st)[[namI]] <- DRIMSeq_resB[[i]] 
 }
 ```
