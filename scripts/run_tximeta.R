@@ -35,6 +35,16 @@ st <- tximeta(coldata)
 ## Summarize to gene level
 sg <- summarizeToGene(st)
 
+## Add gene_names for gencode reference
+if(annotation == "Gencode") {
+  if(organism == "Homo_sapiens") {
+    library(org.Hs.eg.db)
+  } else {
+    library(org.Mm.eg.db)
+  }
+  sg <- addIds(sg, "SYMBOL", gene = TRUE)
+}
+
 ## If rowData(st)$gene_id is a CharacterList, convert it to character to allow 
 ## the joining below
 if (is(rowData(st)$gene_id, "CharacterList")) {
@@ -59,18 +69,7 @@ rowData(st) <- rowData(st) %>%
     DataFrame()
 
 ## Change the row names in sg to have geneID__geneSymbol
-rownames(sg) <- paste(rowData(sg)$gene_id, rowData(sg)$symbol, sep = "__")
-
-## Add gene_names for gencode reference
-if(annotation == "Gencode") {
-  if(organism == "Homo_sapiens") {
-    library(org.Hs.eg.db)
-  } else {
-    library(org.Mm.eg.db)
-  }
-  sg <- addIds(sg, "SYMBOL", gene = TRUE)
-  rowData(sg)$gene_name <- rowData(sg)$SYMBOL
-}
+rownames(sg) <- paste(rowData(sg)$gene_id, rowData(sg)$gene_name, sep = "__")
 
 # Coerce the object from SummarizedExperiment to SingleCellExperiment
 st <- as(st, "SingleCellExperiment")
