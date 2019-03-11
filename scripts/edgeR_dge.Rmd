@@ -367,6 +367,11 @@ saveRDS(analysis_se, file = "edgeR_dge.rds")
 ```
 
 
+```{r check-gene_names-column, eval = !is.null(genesets), include = !is.null(genesets)}
+if(!"gene_name" %in% colnames(rowData(sg)))
+genesets = NULL
+```
+
 ```{r camera_text1, echo = FALSE, results = 'asis', eval = !is.null(genesets)}
 cat("# Load gene sets 
 
@@ -374,13 +379,6 @@ We will use `camera` to perform an enrichment analysis for a collection of
 gene sets from the [mSigDB](http://software.broadinstitute.org/gsea/msigdb), 
 packaged in the `msigdbr` R package. Here, we load the gene set definitions 
 and select which ones to include in the analysis.")
-```
-
-
-```{r check-gene_names-column, eval = !is.null(genesets), include = !is.null(genesets)}
-
-test_gene_names <- sg$gene_names
-stopifnot(!exists("test_gene_names")) 
 ```
 
 ```{r camera-load-genesets, eval = !is.null(genesets), include = !is.null(genesets)}

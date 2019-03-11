@@ -43,6 +43,7 @@ if(annotation == "Gencode") {
     library(org.Mm.eg.db)
   }
   sg <- addIds(sg, "SYMBOL", gene = TRUE)
+  rowData(sg)$gene_name <- rowData(sg)$SYMBOL
 }
 
 ## If rowData(st)$gene_id is a CharacterList, convert it to character to allow 
