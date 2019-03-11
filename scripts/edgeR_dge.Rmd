@@ -378,7 +378,9 @@ and select which ones to include in the analysis.")
 
 
 ```{r check-gene_names-column, eval = !is.null(genesets), include = !is.null(genesets)}
-any(sg$gene_names)
+
+test_gene_names <- sg$gene_names
+stopifnot(!exists("test_gene_names")) 
 ```
 
 ```{r camera-load-genesets, eval = !is.null(genesets), include = !is.null(genesets)}
