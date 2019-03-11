@@ -3,7 +3,9 @@ for (i in seq_len(length(args))) {
     eval(parse(text = args[[i]]))
 }
 
-suppressPackageStartupMessages(library(tximeta)) 
+suppressPackageStartupMessages({
+    library(tximeta)
+})
 
 print(transcriptfasta)
 print(salmonidx)
@@ -17,14 +19,14 @@ print(release)
 print(build)
 print(output)
 
-makeLinkedTxome(indexDir=dirname(salmonidx),
-                source=annotation,
-                organism=organism,
-                release=release,
-                genome=build,
-                fasta=transcriptfasta,
-                gtf=gtf,
-                write=TRUE, 
+makeLinkedTxome(indexDir = dirname(salmonidx),
+                source = annotation,
+                organism = organism,
+                release = release,
+                genome = build,
+                fasta = transcriptfasta,
+                gtf = gtf,
+                write = TRUE, 
                 jsonFile = output)
 
 sessionInfo()

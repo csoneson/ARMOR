@@ -16,7 +16,6 @@ editor_options:
 
 ```{r shiny-setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, dev = c("png", "pdf"), root.dir = "../")
-#knitr::opts_knit$set(root.dir = "../")
 ```
 
 # Introduction
@@ -27,11 +26,11 @@ This script prepares the data to be used for shiny app.
 
 ```{r shiny-load-pkg}
 suppressPackageStartupMessages({
+  library(tibble)
   library(dplyr)
   library(tidyr)
   library(limma)
   library(edgeR)
-  library(rtracklayer)
   library(reshape2)
   library(SingleCellExperiment)
   library(S4Vectors)
@@ -67,7 +66,6 @@ if (!is.null(gtffile)) {
 # Vector with bigWig file names 
 
 ```{r shiny-bigwig}
-metadata <- colData(sg)
 if (!is.null(bigwigdir)) {
     bwfiles <- normalizePath(list.files(bigwigdir, pattern = "\\.bw$", 
                                         full.names = TRUE))
@@ -85,9 +83,9 @@ mds <- limma::plotMDS(logcpms, top = 500, labels = NULL, pch = NULL,
                       cex = 1, dim.plot = c(1, 2), ndim = min(7, ncol(logcpms) - 1),
                       gene.selection = "common",
                       xlab = NULL, ylab = NULL, plot = FALSE)$cmdscale.out
-colnames(mds) <- paste0("MDS", 1:min(7, ncol(logcpms) - 1))
+colnames(mds) <- paste0("MDS", seq_len(ncol(mds)))
 mds <- as.data.frame(mds) %>% tibble::rownames_to_column(var = "names") %>%
-    dplyr::full_join(data.frame(metadata), by = "names")
+    dplyr::full_join(data.frame(colData(sg)), by = "names")
 ```
 
 # SingleCellExperiment on gene level
@@ -108,6 +106,9 @@ nam <- colData(sg)$names
 ## low dimensional representation
 reducedData <- mds %>%
     dplyr::arrange(match(names, nam)) %>%
+    as.data.frame() %>% 
+    dplyr::mutate(namestmp = names) %>%
+    tibble::column_to_rownames("namestmp") %>%
     dplyr::select(-one_of(colnames(colData(sg))))
 reducedData <- as.matrix(reducedData)
 

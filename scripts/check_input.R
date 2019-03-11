@@ -3,9 +3,9 @@ for (i in seq_len(length(args))) {
     eval(parse(text = args[[i]]))
 }
 
-# load libraries
-library(edgeR)
-
+suppressPackageStartupMessages({
+    library(edgeR)
+})
 
 ## ----------------The input arguments------------------------------------------
 print(metafile)
@@ -51,9 +51,6 @@ isError <- unlist(isError)
 msg <- msgL[isError]
 
 if (length(msg) > 0) {
-    #mm <- "check (design) and (contrast) in the config.yaml file..."
-    #errList <- list(msg[[1]], mm)
-    #capture.output(lapply(errList, writeLines), file = outFile)
     capture.output(writeLines(msg[[1]]), file = outFile)
 } else {
     mylist <- list("Design matrix" = des, "Contrasts matrix" = contrasts)

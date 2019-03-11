@@ -1,6 +1,7 @@
 suppressPackageStartupMessages({
     library(ggplot2)
     library(rtracklayer)
+    library(iSEE)
 })
 
 options(ucscChromosomeNames = FALSE)
@@ -231,12 +232,12 @@ customVolcano <- function(se, rows, columns, contrasts) {
 # Set up a cache for the GRanges object
 caching <- new.env()
 
-# gtf <- prepareGtf("reference/Homo_sapiens.GRCh38.93.1.1.10M.gtf")
-# saveRDS(gtf, file = "reference/Homo_sapiens.GRCh38.93.1.1.10M.granges.rds")
+# gtf <- prepareGtf("example_data/reference/Homo_sapiens.GRCh38.93.1.1.10M.gtf")
+# saveRDS(gtf, file = "example_data/reference/Homo_sapiens.GRCh38.93.1.1.10M.granges.rds")
 # 
 # cdp <- customDataPlotDefaults(sce, 2)
 # cdp$Function <- c("customGviz", "customVolcano")
-# cdp$Arguments <- c("bigwig_files output/STARbigwig/SRR1039508_Aligned.sortedByCoord.out.bw,output/STARbigwig/SRR1039509_Aligned.sortedByCoord.out.bw,output/STARbigwig/SRR1039512_Aligned.sortedByCoord.out.bw,output/STARbigwig/SRR1039513_Aligned.sortedByCoord.out.bw\nbigwig_names SRR1039508,SRR1039509,SRR1039512,SRR1039513\nbigwig_condition Untreated,Dexamethasone,Untreated,Dexamethasone\ngranges reference/Homo_sapiens.GRCh38.93.1.1.10M.granges.rds\nchr 1\nstart 6.1e6\nend 6.2e6\nshowgene DDX11L1", 
+# cdp$Arguments <- c("bigwig_files example_data/output/STARbigwig/SRR1039508_Aligned.sortedByCoord.out.bw,example_data/output/STARbigwig/SRR1039509_Aligned.sortedByCoord.out.bw,example_data/output/STARbigwig/SRR1039512_Aligned.sortedByCoord.out.bw,example_data/output/STARbigwig/SRR1039513_Aligned.sortedByCoord.out.bw\nbigwig_names SRR1039508,SRR1039509,SRR1039512,SRR1039513\nbigwig_condition Untreated,Dexamethasone,Untreated,Dexamethasone\ngranges example_data/reference/Homo_sapiens.GRCh38.93.1.1.10M.granges.rds\nchr 1\nstart 6.1e6\nend 6.2e6\nshowgene DDX11L1", 
 #                    "contrasts cellineN61311-cellineN052611")
 # 
 # iSEE(sce, 

@@ -6,8 +6,8 @@ suppressPackageStartupMessages({
 #'
 #' Generate a report based on a Rmarkdown template file.
 #' 
-#' @param se,gtffile,bigwigdir,genesets,organism,contrast Arguments that are passed to
-#'   the provided Rmarkdown template
+#' @param se,gtffile,bigwigdir,genesets,organism,design,contrast Arguments that
+#'   are passed to the provided Rmarkdown template
 #' @param rmdTemplate Path to a .Rmd template file.
 #' @param outputFile File name of the output report. The file name extension
 #'   must be either \code{.html} or \code{.pdf}, and consistent with the value
@@ -128,7 +128,8 @@ generateReport <- function(se, gtffile = NULL, organism = NULL,
             stop("organism must be a character string")
         }
         organism <- gsub("_", " ", organism)
-        if (!organism %in% msigdbr::msigdbr_show_species()) {
+        if (!is.null(genesets) && 
+            !organism %in% msigdbr::msigdbr_show_species()) {
             stop("organism must be one of the organisms listed in ",
                  "msigdbr::msigdbr_show_species()")
         }
