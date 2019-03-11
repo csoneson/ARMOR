@@ -141,16 +141,16 @@ rule salmonindex:
     fi
     """
 
-## Generate linkedTxome mapping
-rule linkedTxome:
+## Generate linkedtxome mapping
+rule linkedtxome:
 	input:
 		txome = config["txome"],
 		gtf = config["gtf"],
 		salmonidx = config["salmonindex"] + "/hash.bin",
-		script = "scripts/generate_linkedTxome.R",
+		script = "scripts/generate_linkedtxome.R",
 		install = outputdir + "Rout/pkginstall_state.txt"
 	log:
-		outputdir + "Rout/generate_linkedTxome.Rout"
+		outputdir + "Rout/generate_linkedtxome.Rout"
 	output:
 		config["salmonindex"] + ".json"
 	params:
@@ -468,7 +468,7 @@ rule tximeta:
 ## Input variable  check
 ## ------------------------------------------------------------------------------------ ##
 ## check design matrix and contrasts
-rule inputCheck:
+rule checkinputs:
     input:
         "config.yaml",
         metatxt = config["metatxt"],
@@ -546,7 +546,7 @@ rule DRIMSeq:
 		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' design='{params.design}' contrast='{params.contrast}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='DRIMSeq_dtu.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
-## Shiny app
+## shiny app
 ## ------------------------------------------------------------------------------------ ##
 def shiny_input(wildcards):
 	input = [outputdir + "Rout/pkginstall_state.txt"]
@@ -560,8 +560,8 @@ def shiny_params(wildcards):
 		param.append("bigwigdir='" + outputdir + "STARbigwig'")
 	return param
 
-## Shiny
-rule Shiny:
+## shiny
+rule shiny:
 	input:
 		shiny_input,
 		rds = outputdir + "outputR/DRIMSeq_dtu.rds" if config["run_DRIMSeq"]

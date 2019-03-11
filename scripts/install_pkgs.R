@@ -1,6 +1,6 @@
 args <- (commandArgs(trailingOnly = TRUE))
-for (i in 1:length(args)) {
-  eval(parse(text = args[[i]]))
+for (i in seq_len(length(args))) {
+    eval(parse(text = args[[i]]))
 }
 
 print(outtxt)
@@ -13,13 +13,8 @@ usePackage <- function(pkgs) {
     # install BiocManager package
     isBiocM <- "BiocManager" %in% installed.packages()[, 1]
     if (!isBiocM) {
-       # if (is.null(mirror)) {
-            install.packages("BiocManager", repos = "http://cran.rstudio.com/",
-                             lib = .libPaths()[1])
-       # } else {
-       #     install.packages("BiocManager",
-        #                      lib = .libPaths()[1])
-        # }
+        install.packages("BiocManager", repos = "http://cran.rstudio.com/",
+                         lib = .libPaths()[1])
     }
     
     # install the other packages
@@ -55,15 +50,12 @@ print(paths)
 
 ## Install packages
 pkgs.use <- c("dplyr", "ggplot2", "tidyr", "remotes", "limma", "edgeR", 
-          "S4Vectors", "DRIMSeq", "SingleCellExperiment", "tximeta", "msigdbr")
+              "S4Vectors", "DRIMSeq", "SingleCellExperiment", "tximeta", "msigdbr")
 
 usePackage(pkgs = pkgs.use)
 
 
-## More information
+## Session info
 sessionInfo()
 date()
-
-
-
 

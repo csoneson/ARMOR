@@ -1,6 +1,6 @@
 args <- (commandArgs(trailingOnly = TRUE))
-for (i in 1:length(args)) {
-  eval(parse(text = args[[i]]))
+for (i in seq_len(length(args))) {
+    eval(parse(text = args[[i]]))
 }
 
 ## Mandatory arguments
@@ -11,42 +11,42 @@ print(outputfile)
 
 ## Arguments that are only used for some of the reports
 if (exists("organism")) {
-  print(organism)
+    print(organism)
 } else {
-  organism <- NULL
+    organism <- NULL
 }
 
 if (exists("design")) {
-  print(design)
+    print(design)
 } else {
-  design <- NULL
+    design <- NULL
 }
 
 if (exists("contrast")) {
-  contrast <- strsplit(gsub(" ","",contrast), ",")[[1]]
-  print(contrast)
+    contrast <- strsplit(gsub(" ","",contrast), ",")[[1]]
+    print(contrast)
 } else {
-  contrast <- NULL
+    contrast <- NULL
 }
 
 if (exists("genesets")) {
-  genesets <- strsplit(gsub(" ","",genesets), ",")[[1]]
-  print(genesets)
+    genesets <- strsplit(gsub(" ","",genesets), ",")[[1]]
+    print(genesets)
 } else {
-  genesets <- NULL
+    genesets <- NULL
 }
 
 if (exists("gtffile")) {
-  print(gtffile)
+    print(gtffile)
 } else {
-  gtffile <- NULL
+    gtffile <- NULL
 }
 
 if (exists("bigwigdir")) {
-  bigwigdir <- normalizePath(bigwigdir)
-  print(bigwigdir)
+    bigwigdir <- normalizePath(bigwigdir)
+    print(bigwigdir)
 } else {
-  bigwigdir <- NULL
+    bigwigdir <- NULL
 }
 
 source("scripts/generate_report.R")

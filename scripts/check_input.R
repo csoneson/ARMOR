@@ -1,5 +1,5 @@
 args <- (commandArgs(trailingOnly = TRUE))
-for (i in 1:length(args)) {
+for (i in seq_len(length(args))) {
     eval(parse(text = args[[i]]))
 }
 
@@ -8,8 +8,8 @@ library(edgeR)
 
 
 ## ----------------The input arguments------------------------------------------
-print(metafile);
-print(outFile);
+print(metafile)
+print(outFile)
 
 msg0 <- try({
     if (exists("design")) {
@@ -32,6 +32,7 @@ msg1 <- try({
 ## ---------------------------Test run -------------------------------
 ## Read metadata
 metadata <- read.delim(metafile, header = TRUE, as.is = TRUE, sep = "\t")
+rownames(metadata) <- metadata$names
 metadata
 
 ## Define design matrix
