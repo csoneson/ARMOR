@@ -179,7 +179,9 @@ DRIMSeq_fits <- lapply(contrasts, function(cm) {
 })
 
 DRIMSeq_res <- lapply(DRIMSeq_fits, function(dr) {
-  results(dr, level = level) %>% dplyr::mutate_if(is.numeric, signif3)
+  results(dr, level = level) %>% 
+        dplyr::mutate_if(is.numeric, signif3) %>%
+        dplyr::mutate(mlog10PValue = -log10(pvalue))
 })
 ```
 
@@ -192,7 +194,9 @@ DRIMSeq_feature_fits <- lapply(contrasts, function(cm) {
 })
 
 DRIMSeq_feature_res <- lapply(DRIMSeq_feature_fits, function(dr) {
-  results(dr, level = level) %>% dplyr::mutate_if(is.numeric, signif3)
+  results(dr, level = level) %>% 
+        dplyr::mutate_if(is.numeric, signif3) %>%
+        dplyr::mutate(mlog10PValue = -log10(pvalue))
 })
 ```
 
@@ -215,7 +219,7 @@ if (class(DRIMSeq_res) == "data.frame") {
 ```
 
 
-# Output results as `SummarizedExperiment` object
+# Output results as `SingleCellExperiment` object
 
 Here, we store the results on the gene level together with the original data.
 The result table `DRIMSeq_res` is appended to the `rowData` of the original
