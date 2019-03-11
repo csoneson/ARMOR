@@ -88,13 +88,13 @@ step, please refer to the
 
 ```{r edgeR-load-pkg}
 suppressPackageStartupMessages({
-  library(dplyr)
-  library(tximport)
-  library(tximeta)
-  library(SingleCellExperiment)
-  library(edgeR)
-  library(ggplot2)
-  library(msigdbr)
+    library(dplyr)
+    library(tximport)
+    library(tximeta)
+    library(SingleCellExperiment)
+    library(edgeR)
+    library(ggplot2)
+    library(msigdbr)
 })
 ```
 
@@ -122,8 +122,8 @@ ggplot(data.frame(totCount = colSums(assay(sg, "counts")),
                   sample = colnames(assay(sg, "counts")), 
                   stringsAsFactors = FALSE), 
        aes(x = sample, y = totCount)) + geom_bar(stat = "identity") + 
-  theme_bw() + xlab("") + ylab("Total read count") + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+    theme_bw() + xlab("") + ylab("Total read count") + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 ```
 
 # Create DGEList and include average transcript length offsets
@@ -179,7 +179,6 @@ assay(sg, "logcpm") <- logcpms
 ```
 
 # Define design. 
-
 
 Next, we specify the design matrix of the experiment, defining which sample 
 annotations will be taken into account in the statistical modeling.
@@ -245,10 +244,11 @@ results for every contrast.
 ```{r edgeR-perform-tests}
 signif3 <- function(x) signif(x, digits = 3)
 edgeR_res <- lapply(contrasts, function(cm) {
-  qlf <- glmQLFTest(qlfit, contrast = cm)
-  tt <- topTags(qlf, n = Inf, sort.by = "none")$table
-  tt %>% dplyr::mutate_if(is.numeric, signif3) %>%
-      dplyr::mutate(mlog10PValue = -log10(PValue))
+    qlf <- glmQLFTest(qlfit, contrast = cm)
+    tt <- topTags(qlf, n = Inf, sort.by = "none")$table
+    tt %>%
+        dplyr::mutate(mlog10PValue = -log10(PValue)) %>% 
+        dplyr::mutate_if(is.numeric, signif3)
 })
 ```
 
@@ -260,16 +260,16 @@ FDR threshold). A plot is drawn for every contrast.
 
 ```{r edgeR-ma-plots}
 if (is(edgeR_res, "data.frame")) {
-  print(ggplot(edgeR_res, aes(x = logCPM, y = logFC, color = FDR <= 0.05)) + 
-          geom_point() + theme_bw() + 
-          scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black")))
+    print(ggplot(edgeR_res, aes(x = logCPM, y = logFC, color = FDR <= 0.05)) + 
+              geom_point() + theme_bw() + 
+              scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black")))
 } else {
-  for (nm in names(edgeR_res)) {
-    print(ggplot(edgeR_res[[nm]], aes(x = logCPM, y = logFC, color = FDR <= 0.05)) + 
-            geom_point() + theme_bw() + 
-            scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black")) + 
-            ggtitle(nm))
-  }
+    for (nm in names(edgeR_res)) {
+        print(ggplot(edgeR_res[[nm]], aes(x = logCPM, y = logFC, color = FDR <= 0.05)) + 
+                  geom_point() + theme_bw() + 
+                  scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black")) + 
+                  ggtitle(nm))
+    }
 }
 ```
 
@@ -280,15 +280,15 @@ We export the results into text files that can be opened using any text editor.
 ```{r edgeR-save-results}
 ## Write results to text files and make MA plots
 if (is(edgeR_res, "data.frame")) {
-  write.table(edgeR_res %>% dplyr::arrange(PValue), 
-              file = "edgeR_dge_results.txt", 
-              sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
-} else {
-  for (nm in names(edgeR_res)) {
-    write.table(edgeR_res[[nm]] %>% dplyr::arrange(PValue), 
-                file = paste0("edgeR_dge_results_", nm, ".txt"), 
+    write.table(edgeR_res %>% dplyr::arrange(PValue), 
+                file = "edgeR_dge_results.txt", 
                 sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
-  }
+} else {
+    for (nm in names(edgeR_res)) {
+        write.table(edgeR_res[[nm]] %>% dplyr::arrange(PValue), 
+                    file = paste0("edgeR_dge_results_", nm, ".txt"), 
+                    sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+    }
 }
 ```
 
@@ -303,58 +303,58 @@ perform more exploratory and visual analysis.
 ```{r edgeR-se}
 ## add rows (NA) for genes that are filtered out (if any)
 edgeR_resA <- lapply(seq_along(edgeR_res), FUN = function(x) {
-  
-  ## All genes
-  geneA <- rowData(sg)$gene_id
-  
-  ## Genes that are not filtered out
-  resX <- edgeR_res[[x]]
-  resX <- resX %>% 
-    dplyr::select(c("gene_id", "gene_name", "logFC", "logCPM", 
-                    "F", "FDR", "PValue")) 
-  rownames(resX) <- resX$gene_id
-  
-  ## Genes that are filtered out 
-  geneO <- setdiff(geneA, resX$gene_id)
-  
-  ## results for all genes
-  if (length(geneO) > 0) {
-    ## create a data frame with values NA as the results of the genes that
-    ## are filtered out
-    matO <- matrix(NA, nrow = length(geneO),
-                   ncol = ncol(resX),
-                   dimnames = list(geneO, 
-                                   colnames(resX))) 
-    resO <- data.frame(matO)
-    resO$gene_id <- geneO
-    resO$gene_name <- rowData(sg)$gene_name[match(geneO, rowData(sg)$gene_id)]
-        
-    ## Combine the result tables 
-    resA <- resO %>%
-      dplyr::bind_rows(resX) %>%
-      dplyr::arrange(match(gene_id, geneA)) %>%
-      dplyr::mutate(contrast = names(edgeR_res)[[x]]) 
-  } else {
-    resA <- resX %>%
-      dplyr::arrange(match(gene_id, geneA)) %>%
-      dplyr::mutate(contrast = names(edgeR_res)[[x]]) 
-  }
-  
-  ## Use gene column as rownames
-  rownames(resA) <- paste(resA$gene_id, resA$gene_name, sep = "__")
     
-  ## convert to DataFrame
-  resA <- S4Vectors::DataFrame(resA)
-  return(resA)
+    ## All genes
+    geneA <- rowData(sg)$gene_id
+    
+    ## Genes that are not filtered out
+    resX <- edgeR_res[[x]]
+    resX <- resX %>% 
+        dplyr::select(c("gene_id", "gene_name", "logFC", "logCPM", 
+                        "F", "FDR", "PValue", "mlogPValue")) 
+    rownames(resX) <- resX$gene_id
+    
+    ## Genes that are filtered out 
+    geneO <- setdiff(geneA, resX$gene_id)
+    
+    ## results for all genes
+    if (length(geneO) > 0) {
+        ## create a data frame with values NA as the results of the genes that
+        ## are filtered out
+        matO <- matrix(NA, nrow = length(geneO),
+                       ncol = ncol(resX),
+                       dimnames = list(geneO, 
+                                       colnames(resX))) 
+        resO <- data.frame(matO)
+        resO$gene_id <- geneO
+        resO$gene_name <- rowData(sg)$gene_name[match(geneO, rowData(sg)$gene_id)]
+        
+        ## Combine the result tables 
+        resA <- resO %>%
+            dplyr::bind_rows(resX) %>%
+            dplyr::arrange(match(gene_id, geneA)) %>%
+            dplyr::mutate(contrast = names(edgeR_res)[[x]]) 
+    } else {
+        resA <- resX %>%
+            dplyr::arrange(match(gene_id, geneA)) %>%
+            dplyr::mutate(contrast = names(edgeR_res)[[x]]) 
+    }
+    
+    ## Use gene column as rownames
+    rownames(resA) <- paste(resA$gene_id, resA$gene_name, sep = "__")
+    
+    ## convert to DataFrame
+    resA <- S4Vectors::DataFrame(resA)
+    return(resA)
 })
 names(edgeR_resA) <- names(edgeR_res)
 
 ## Put the result tables in rowData 
 for (i in seq_along(edgeR_resA)) {
-  nam <- names(edgeR_resA)[i]
-  namI <- paste("edgeR:", nam, sep = "")
-  stopifnot(all(rownames(sg) == rownames(edgeR_resA[[i]])))
-  rowData(sg)[[namI]] <- edgeR_resA[[i]] 
+    nam <- names(edgeR_resA)[i]
+    namI <- paste("edgeR:", nam, sep = "")
+    stopifnot(all(rownames(sg) == rownames(edgeR_resA[[i]])))
+    rowData(sg)[[namI]] <- edgeR_resA[[i]] 
 }
 ```
 
@@ -367,12 +367,13 @@ saveRDS(analysis_se, file = "edgeR_dge.rds")
 ```
 
 
-```{r check-gene_names-column, eval = !is.null(genesets), include = !is.null(genesets)}
-if(!"gene_name" %in% colnames(rowData(sg)))
-genesets = NULL
+```{r check-gene_names-column, eval = !is.null(genesets), include = FALSE}
+if(!("gene_name" %in% colnames(rowData(sg)))) {
+    genesets <- NULL
+}
 ```
 
-```{r camera_text1, echo = FALSE, results = 'asis', eval = !is.null(genesets)}
+```{r camera-text1, echo = FALSE, results = 'asis', eval = !is.null(genesets)}
 cat("# Load gene sets 
 
 We will use `camera` to perform an enrichment analysis for a collection of 
@@ -382,11 +383,11 @@ and select which ones to include in the analysis.")
 ```
 
 ```{r camera-load-genesets, eval = !is.null(genesets), include = !is.null(genesets)}
-m_df = msigdbr(species = organism,
-               category = genesets)
+m_df <- msigdbr(species = organism,
+                category = genesets)
 ```
 
-```{r camera_text2, echo= FALSE, results = 'asis', eval = !is.null(genesets)}
+```{r camera-text2, echo= FALSE, results = 'asis', eval = !is.null(genesets)}
 cat("# Perform tests
 
 Next, we perform the gene set analysis. We consider only gene sets where the 
@@ -401,9 +402,9 @@ maxSize <- 500
 
 ## Get index for genes in each gene set in the DGEList
 indexList <- limma::ids2indices(
-  gene.sets = lapply(split(m_df, f = m_df$gs_name), function(w) w$gene_symbol),
-  identifiers = dge$genes$gene_name,
-  remove.empty = TRUE
+    gene.sets = lapply(split(m_df, f = m_df$gs_name), function(w) w$gene_symbol),
+    identifiers = dge$genes$gene_name,
+    remove.empty = TRUE
 )
 
 ## Filter out too small or too large gene sets
@@ -411,12 +412,12 @@ gsSizes <- vapply(indexList, length, 0)
 indexList <- indexList[gsSizes >= minSize & gsSizes <= maxSize]
 
 camera_res <- lapply(contrasts, function(cm) {
-  camera(dge, index = indexList, design = des, contrast = cm, 
-         inter.gene.cor = NA)
+    camera(dge, index = indexList, design = des, contrast = cm, 
+           inter.gene.cor = NA)
 })
 ```
 
-```{r camera_text3, echo= FALSE, results = 'asis', eval = !is.null(genesets)}
+```{r camera-text3, echo= FALSE, results = 'asis', eval = !is.null(genesets)}
 cat("# Write gene set analysis results to text files
 
 The results from `camera` are written to a separate text file for each tested 
@@ -426,22 +427,22 @@ contrast.")
 ```{r camera-save-results, eval = !is.null(genesets), include = !is.null(genesets)}
 ## Write results to text files
 if (is(camera_res, "data.frame")) {
-  write.table(camera_res %>% tibble::rownames_to_column("GeneSet") %>%
-                dplyr::arrange(PValue), 
-              file = "camera_dge_results.txt", 
-              sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
-} else {
-  for (nm in names(camera_res)) {
-    write.table(camera_res[[nm]] %>% 
-                  tibble::rownames_to_column("GeneSet") %>%
-                  dplyr::arrange(PValue), 
-                file = paste0("camera_dge_results_", nm, ".txt"), 
+    write.table(camera_res %>% tibble::rownames_to_column("GeneSet") %>%
+                    dplyr::arrange(PValue), 
+                file = "camera_dge_results.txt", 
                 sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
-  }
+} else {
+    for (nm in names(camera_res)) {
+        write.table(camera_res[[nm]] %>% 
+                        tibble::rownames_to_column("GeneSet") %>%
+                        dplyr::arrange(PValue), 
+                    file = paste0("camera_dge_results_", nm, ".txt"), 
+                    sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+    }
 }
 ```
 
-```{r camera_text4, echo = FALSE, results = 'asis', eval = !is.null(genesets)}
+```{r camera-text4, echo = FALSE, results = 'asis', eval = !is.null(genesets)}
 cat("The `camera` output, as well as the used gene sets, are saved to a file.")
 ```
 

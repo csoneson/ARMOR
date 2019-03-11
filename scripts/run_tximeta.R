@@ -4,10 +4,10 @@ for (i in seq_len(length(args))) {
 }
 
 suppressPackageStartupMessages({
-  library(dplyr)
-  library(tximport)
-  library(tximeta)
-  library(SingleCellExperiment)
+    library(dplyr)
+    library(tximport)
+    library(tximeta)
+    library(SingleCellExperiment)
 })
 
 print(salmondir)
@@ -30,20 +30,20 @@ names(salmonfiles) <- metadata$names
 ## Add file column to metadata and import annotated abundances
 ## In transcript level
 coldata <- cbind(metadata, files = salmonfiles, stringsAsFactors = FALSE)
-st <- tximeta(coldata)
+st <- tximeta::tximeta(coldata)
 
 ## Summarize to gene level
 sg <- summarizeToGene(st)
 
-## Add gene_names for gencode reference
+## Add gene_names for Gencode reference
 if(annotation == "Gencode") {
-  if(organism == "Homo_sapiens") {
-    library(org.Hs.eg.db)
-  } else {
-    library(org.Mm.eg.db)
-  }
-  sg <- addIds(sg, "SYMBOL", gene = TRUE)
-  rowData(sg)$gene_name <- rowData(sg)$SYMBOL
+    if(organism == "Homo_sapiens") {
+        library(org.Hs.eg.db)
+    } else {
+        library(org.Mm.eg.db)
+    }
+    sg <- tximeta::addIds(sg, "SYMBOL", gene = TRUE)
+    rowData(sg)$gene_name <- rowData(sg)$SYMBOL
 }
 
 ## If rowData(st)$gene_id is a CharacterList, convert it to character to allow 
@@ -66,7 +66,7 @@ if (is(rowData(st)$tx_id, "integer")) {
 ## transcript-level SE
 rowData(st) <- rowData(st) %>%
     data.frame() %>%
-    left_join(data.frame(rowData(sg))) %>%
+    dplyr::left_join(data.frame(rowData(sg))) %>%
     DataFrame()
 
 ## Change the row names in sg to have geneID__geneSymbol

@@ -42,13 +42,13 @@ we refer to the [DRIMSeq vignette](http://bioconductor.org/packages/release/bioc
 
 ```{r DRIMSeq-load-pkg}
 suppressPackageStartupMessages({
-  library(dplyr)
-  library(tximport)
-  library(tximeta)
-  library(SingleCellExperiment)
-  library(edgeR)
-  library(DRIMSeq)
-  library(ggplot2)
+    library(dplyr)
+    library(tximport)
+    library(tximeta)
+    library(SingleCellExperiment)
+    library(edgeR)
+    library(DRIMSeq)
+    library(ggplot2)
 })
 ```
 
@@ -71,8 +71,8 @@ ggplot(data.frame(totCount = colSums(assay(sg, "counts")),
                   sample = colnames(assay(sg, "counts")), 
                   stringsAsFactors = FALSE), 
        aes(x = sample, y = totCount)) + geom_bar(stat = "identity") + 
-  theme_bw() + xlab("") + ylab("Total read count") + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+    theme_bw() + xlab("") + ylab("Total read count") + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 ```
 
 # Create dmDSdata object
@@ -83,13 +83,12 @@ the samples (`metadata`) and a `data.frame` with counts (`counts`). The
 `dmDSdata` object is used to create a data summary plot.
 
 ```{r DRIMSeq-dmDSdata}
-
 print(contrast)
 print(design)
 
 counts <- data.frame(feature_id = rownames(st),
                      gene_id = unlist(rowData(st)$gene_id),
-                     assays(st)[["counts"]],
+                     assay(st, "counts"),
                      row.names = NULL,
                      check.names = FALSE)
 
@@ -118,7 +117,6 @@ plotData(d)
 
 Here, we specify the design matrix used for the Dirichlet-multinomial model in the later step.
 
-
 ```{r DRIMSeq-define-design}
 print(samples(d))
 (des <- model.matrix(as.formula(design), data = samples(d)))
@@ -144,9 +142,9 @@ plotPrecision(d)
 
 # Fit model
 
-At the gene level, the maximun likelihood is used to estimate the coefficients
+At the gene level, the maximum likelihood is used to estimate the coefficients
 of the Dirichlet-multinomial (DM) regression and the fitted transcript
-proportions in each sample. At the transcript-level, beta-binomial regression is
+proportions in each sample. At the transcript level, beta-binomial regression is
 applied to each transcript separately.
 
 ```{r DRIMSeq-fit-model}
@@ -155,7 +153,7 @@ d <- dmFit(d, design = des, verbose = 1)
 
 # Define contrasts.
 
-The contrasts are defined to do comparision between specified groups.
+The contrasts are defined to do comparisons between specified groups.
 
 ```{r DRIMSeq-define-contrasts}
 print(contrast)
@@ -167,36 +165,36 @@ print(contrast)
 The test can be performed on the gene level (`level <- 'gene'`) or the
 transcript level (`level <- 'feature'`) using the likelihood ratio test. The
 results are stored as `DRIMSeq_res` and `DRIMSeq_feature_res` for the gene and
-the transcript-level, respectively.
+the transcript level, respectively.
 
 ```{r DRIMSeq-result-genes, warning = FALSE}
 level <- "gene" 
 signif3 <- function(x) signif(x, digits = 3)
 DRIMSeq_fits <- lapply(contrasts, function(cm) {
-  dr <- dmTest(d, contrast = cm, verbose = 1)
-  print(plotPValues(dr, level = level))
-  dr
+    dr <- dmTest(d, contrast = cm, verbose = 1)
+    print(plotPValues(dr, level = level))
+    dr
 })
 
 DRIMSeq_res <- lapply(DRIMSeq_fits, function(dr) {
-  results(dr, level = level) %>% 
-        dplyr::mutate_if(is.numeric, signif3) %>%
-        dplyr::mutate(mlog10PValue = -log10(pvalue))
+    results(dr, level = level) %>%
+        dplyr::mutate(mlog10PValue = -log10(pvalue)) %>% 
+        dplyr::mutate_if(is.numeric, signif3)
 })
 ```
 
 ```{r DRIMSeq-result-transcripts, warning = FALSE}
 level <- "feature" 
 DRIMSeq_feature_fits <- lapply(contrasts, function(cm) {
-  dr <- dmTest(d, contrast = cm, verbose = 1)
-  print(plotPValues(dr, level = level))
-  dr
+    dr <- dmTest(d, contrast = cm, verbose = 1)
+    print(plotPValues(dr, level = level))
+    dr
 })
 
 DRIMSeq_feature_res <- lapply(DRIMSeq_feature_fits, function(dr) {
-  results(dr, level = level) %>% 
-        dplyr::mutate_if(is.numeric, signif3) %>%
-        dplyr::mutate(mlog10PValue = -log10(pvalue))
+    results(dr, level = level) %>%
+        dplyr::mutate(mlog10PValue = -log10(pvalue)) %>% 
+        dplyr::mutate_if(is.numeric, signif3)
 })
 ```
 
@@ -206,18 +204,17 @@ The gene-level results are exported to text files.
 
 ```{r DRIMSeq-save-result}
 if (class(DRIMSeq_res) == "data.frame") {
-  write.table(DRIMSeq_res %>% dplyr::arrange(pvalue), 
-              file = "DRIMSeq_dtu_results.txt", 
-              sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
-} else {
-  for (nm in names(DRIMSeq_res)) {
-    write.table(DRIMSeq_res[[nm]] %>% dplyr::arrange(pvalue), 
-                file = paste0("DRIMSeq_dtu_results_", nm, ".txt"), 
+    write.table(DRIMSeq_res %>% dplyr::arrange(pvalue), 
+                file = "DRIMSeq_dtu_results.txt", 
                 sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
-  }
+} else {
+    for (nm in names(DRIMSeq_res)) {
+        write.table(DRIMSeq_res[[nm]] %>% dplyr::arrange(pvalue), 
+                    file = paste0("DRIMSeq_dtu_results_", nm, ".txt"), 
+                    sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
+    }
 }
 ```
-
 
 # Output results as `SingleCellExperiment` object
 
@@ -278,6 +275,10 @@ DRIMSeq_resA <- lapply(seq_along(DRIMSeq_res), FUN = function(x) {
             dplyr::mutate(contrast = names(DRIMSeq_res)[[x]]) 
     }
     
+    # round numeric columns to 3 significant digits
+    resA <- resA  %>% 
+        dplyr::mutate_if(is.numeric, signif3)
+
     # use gene column as rownames
     rownames(resA) <- resA$gene_id
     
@@ -291,6 +292,7 @@ names(DRIMSeq_resA) <- names(DRIMSeq_res)
 for (i in seq_along(DRIMSeq_resA)) {
     nam <- names(DRIMSeq_resA)[i]
     namI <- paste("DRIMSeq:", nam, sep = "")
+    stopifnot(all(rownames(sg) == rownames(DRIMSeq_resA[[i]])))
     rowData(sg)[[namI]] <- DRIMSeq_resA[[i]] 
 }
 ```
@@ -355,6 +357,10 @@ DRIMSeq_resB <- lapply(seq_along(DRIMSeq_feature_res), FUN = function(x) {
             dplyr::mutate(contrast = names(DRIMSeq_feature_res)[[x]]) 
     }
     
+    # round numeric columns to 3 significant digits
+    resA <- resA  %>% 
+        dplyr::mutate_if(is.numeric, signif3)
+
     # use gene column as rownames
     rownames(resA) <- resA$feature_id
     
@@ -368,6 +374,7 @@ names(DRIMSeq_resB) <- names(DRIMSeq_feature_res)
 for (i in seq_along(DRIMSeq_resB)) {
     nam <- names(DRIMSeq_resB)[i]
     namI <- paste("DRIMSeq:", nam, sep = "")
+    stopifnot(all(rownames(st) == rownames(DRIMSeq_resB[[i]])))
     rowData(st)[[namI]] <- DRIMSeq_resB[[i]] 
 }
 ```
