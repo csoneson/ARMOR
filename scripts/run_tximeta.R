@@ -14,6 +14,8 @@ print(salmondir)
 print(json)
 print(metafile)
 print(outrds)
+print(annotation)
+print(organism)
 
 ## Load json linkedTxome
 loadLinkedTxome(json)
@@ -58,6 +60,17 @@ rowData(st) <- rowData(st) %>%
 
 ## Change the row names in sg to have geneID__geneSymbol
 rownames(sg) <- paste(rowData(sg)$gene_id, rowData(sg)$symbol, sep = "__")
+
+## Add gene_names for gencode reference
+if(annotation == "Gencode") {
+  if(organism == "Homo_sapiens") {
+    library(org.Hs.eg.db)
+  } else {
+    library(org.Mm.eg.db)
+  }
+  sg <- addIds(sg, "SYMBOL", gene = TRUE)
+  rowData(sg)$gene_name <- rowData(sg)$SYMBOL
+}
 
 # Coerce the object from SummarizedExperiment to SingleCellExperiment
 st <- as(st, "SingleCellExperiment")
