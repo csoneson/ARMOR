@@ -1,13 +1,13 @@
 args <- (commandArgs(trailingOnly = TRUE))
-for (i in 1:length(args)) {
+for (i in seq_len(length(args))) {
     eval(parse(text = args[[i]]))
 }
 
 suppressPackageStartupMessages({
-  library(dplyr)
-  library(tximport)
-  library(tximeta)
-  library(SummarizedExperiment)
+    library(dplyr)
+    library(tximport)
+    library(tximeta)
+    library(SummarizedExperiment)
 })
 
 print(salmondir)
@@ -36,17 +36,17 @@ sg <- summarizeToGene(st)
 ## If rowData(st)$gene_id is a CharacterList, convert it to character to allow 
 ## the joining below
 if (is(rowData(st)$gene_id, "CharacterList")) {
-  if (any(vapply(rowData(st)$gene_id, length, 1) > 1)) {
-    warning("Some elements of rowData(st)$gene_id consisted of more than one",
-            "object. Only the first one is retained.")
-  }
-  rowData(st)$gene_id <- vapply(rowData(st)$gene_id, function(w) w[[1]], "")
+    if (any(vapply(rowData(st)$gene_id, length, 1) > 1)) {
+        warning("Some elements of rowData(st)$gene_id consisted of more than one",
+                "object. Only the first one is retained.")
+    }
+    rowData(st)$gene_id <- vapply(rowData(st)$gene_id, function(w) w[[1]], "")
 }
 
 ## If rowData(st)$tx_id is of class integer, replace it with the tx_name 
 ## column
 if (is(rowData(st)$tx_id, "integer")) {
-  rowData(st)$tx_id <- rowData(st)$tx_name
+    rowData(st)$tx_id <- rowData(st)$tx_name
 }
 
 ## Add gene information, e.g. gene_name, entrezid, ... (if provided) to
