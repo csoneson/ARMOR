@@ -7,13 +7,15 @@ suppressPackageStartupMessages({
     library(dplyr)
     library(tximport)
     library(tximeta)
-    library(SummarizedExperiment)
+    library(SingleCellExperiment)
 })
 
 print(salmondir)
 print(json)
 print(metafile)
 print(outrds)
+print(annotation)
+print(organism)
 
 ## Load json linkedTxome
 loadLinkedTxome(json)
@@ -28,10 +30,21 @@ names(salmonfiles) <- metadata$names
 ## Add file column to metadata and import annotated abundances
 ## In transcript level
 coldata <- cbind(metadata, files = salmonfiles, stringsAsFactors = FALSE)
-st <- tximeta(coldata)
+st <- tximeta::tximeta(coldata)
 
 ## Summarize to gene level
 sg <- summarizeToGene(st)
+
+## Add gene_names for Gencode reference
+if(annotation == "Gencode") {
+    if(organism == "Homo_sapiens") {
+        library(org.Hs.eg.db)
+    } else {
+        library(org.Mm.eg.db)
+    }
+    sg <- tximeta::addIds(sg, "SYMBOL", gene = TRUE)
+    rowData(sg)$gene_name <- rowData(sg)$SYMBOL
+}
 
 ## If rowData(st)$gene_id is a CharacterList, convert it to character to allow 
 ## the joining below
@@ -53,8 +66,15 @@ if (is(rowData(st)$tx_id, "integer")) {
 ## transcript-level SE
 rowData(st) <- rowData(st) %>%
     data.frame() %>%
-    left_join(data.frame(rowData(sg))) %>%
+    dplyr::left_join(data.frame(rowData(sg))) %>%
     DataFrame()
+
+## Change the row names in sg to have geneID__geneSymbol
+rownames(sg) <- paste(rowData(sg)$gene_id, rowData(sg)$gene_name, sep = "__")
+
+# Coerce the object from SummarizedExperiment to SingleCellExperiment
+st <- as(st, "SingleCellExperiment")
+sg <- as(sg, "SingleCellExperiment")
 
 saveRDS(list(st = st, sg = sg), file = outrds)
 

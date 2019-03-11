@@ -19,7 +19,7 @@ for (f in lf) {
     idx3 <- which(x == "loaded via a namespace (and not attached):")
     if (length(idx1) != 0 & length(idx2) != 0 & length(idx3) != 0) {
         all_packages <- 
-            unique(c(all_packages, x[idx1+1],
+            unique(c(all_packages, x[idx1 + 1],
                      do.call(c, lapply((idx2 + 1):(idx3 - 2), function(i) {
                          grep("\\[", setdiff(setdiff(strsplit(x[i], " ")[[1]], " "), ""), 
                               value = TRUE, invert = TRUE)

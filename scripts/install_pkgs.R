@@ -4,6 +4,8 @@ for (i in seq_len(length(args))) {
 }
 
 print(outtxt)
+print(annotation)
+print(organism)
 
 (mirror <- getOption("repos"))
 
@@ -51,6 +53,17 @@ print(paths)
 ## Install packages
 pkgs.use <- c("dplyr", "ggplot2", "tidyr", "remotes", "limma", "edgeR", 
               "S4Vectors", "DRIMSeq", "SingleCellExperiment", "tximeta", "msigdbr")
+
+
+if(annotation == "Gencode") {
+  if(organism == "Homo_sapiens") {
+    pkgs.extra = "org.Hs.eg.db"
+  } else {
+    pkgs.extra = "org.Mm.eg.db"
+  }
+  pkgs.use <- c(pkgs.use, pkgs.extra)
+}
+  
 
 usePackage(pkgs = pkgs.use)
 

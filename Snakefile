@@ -53,7 +53,10 @@ rule pkginstall:
 	input:
 		script = "scripts/install_pkgs.R"
 	output:
-	    outputdir + "Rout/pkginstall_state.txt"
+	  outputdir + "Rout/pkginstall_state.txt"
+	params:
+		flag = config["annotation"],
+		organism = config["organism"]
 	priority:
 		50
 	conda:
@@ -61,7 +64,7 @@ rule pkginstall:
 	log:
 		outputdir + "Rout/install_pkgs.Rout"
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args outtxt='{output}' " {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args outtxt='{output}' annotation='{params.flag}' organism='{params.organism}'" {input.script} {log}'''
 
 ## FastQC on original (untrimmed) files
 rule runfastqc:
@@ -458,11 +461,13 @@ rule tximeta:
 	log:
 		outputdir + "Rout/tximeta_se.Rout"
 	params:
-		salmondir = outputdir + "salmon"
+		salmondir = outputdir + "salmon",
+		flag = config["annotation"],
+		organism = config["organism"]
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}' annotation='{params.flag}' organism='{params.organism}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Input variable  check
