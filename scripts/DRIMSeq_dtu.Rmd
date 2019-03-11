@@ -28,7 +28,7 @@ references:
 ---
 
 ```{r DRIMSeq-setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, dev = c("png", "pdf"))
 ```
 
 # Introduction
