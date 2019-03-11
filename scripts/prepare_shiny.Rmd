@@ -15,7 +15,7 @@ editor_options:
 ---
 
 ```{r shiny-setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, dev = c("png", "pdf"), root.dir = "../")
+knitr::opts_chunk$set(echo = TRUE, dev = c("png", "pdf"))
 ```
 
 # Introduction
