@@ -138,7 +138,7 @@ msg5 <- try({
       if (require("msigdbr")) {
           if (!(gsub("_"," ",organism) %in% msigdbr::msigdbr_show_species()))
               stop(gsub("_"," ",organism), 
-                   " not found in 'msigdbr' database; consider setting 'run_camera: False'")
+                   " not found in 'msigdbr::msigdbr_show_species()' database; fix the organism or consider setting 'run_camera: False'")
       } else {
           stop("msigdbr package is not yet installed; consider running 'snakemake [--use-conda] setup' before running 'snakemake [--use-conda] checkinputs'")
       }
