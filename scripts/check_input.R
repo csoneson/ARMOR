@@ -183,7 +183,7 @@ msg9 <- try({
 }, silent = TRUE)
 if(is(msg9, "try-error") && have_edgeR)
     msg9 <- try({
-        stop("ERROR in specified 'contrast' (n.b., could be due to 'design'): ", paste0(contrast, collapse=","))
+        stop("ERROR in specified 'contrast' (n.b., could be due to invalid 'design' specified): ", paste0(contrast, collapse=","))
     }, silent=TRUE)
 
 msgL <- list(msg0, msg1, msg2, msg3, msg4, msg5, msg6, msg7, msg8, msg9)

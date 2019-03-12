@@ -487,8 +487,8 @@ rule checkinputs:
         txome = config["txome"],
         fastqdir = config["FASTQ"],
         metatxt = config["metatxt"],
-        design = config["design"].replace(" ", ""),
-        contrast = config["contrast"].replace(" ", ""),
+        design = config["design"].replace(" ", "") if config["design"] is not None else "NULL",
+        contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else "NULL",
         fqsuffix = str(config["fqsuffix"]),
         fqext1 = str(config["fqext1"]),
         fqext2 = str(config["fqext2"]),
@@ -524,9 +524,9 @@ rule edgeR:
 		rds = outputdir + "outputR/edgeR_dge.rds"
 	params:
 		directory = outputdir + "outputR",
-		organism = config["organism"],
-		design = config["design"].replace(" ", ""),
-		contrast = config["contrast"].replace(" ", ""),
+		organism = config["organism"],        
+                design = config["design"].replace(" ", "") if config["design"] is not None else "",
+                contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else "",
 		genesets = geneset_param
 	log:
 		outputdir + "Rout/run_dge_edgeR.Rout"
@@ -551,8 +551,8 @@ rule DRIMSeq:
 	params:
 		directory = outputdir + "outputR",
 		organism = config["organism"],
-		design = config["design"].replace(" ", ""),
-		contrast = config["contrast"].replace(" ", "")
+                design = config["design"].replace(" ", "") if config["design"] is not None else "",
+                contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else ""
 	log:
 		outputdir + "Rout/run_dtu_drimseq.Rout"
 	conda:
