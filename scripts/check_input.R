@@ -167,6 +167,9 @@ msg7 <- try({
 ## Define design matrix
 msg8 <- try({des <- model.matrix(as.formula(design), data = metadata)},
             silent = TRUE)
+if(is(msg8, "try-error"))
+  msg8 <- try({stop("Error in design matrix: ", design)}, silent=TRUE)
+
 
 # Define contrasts
 msg9 <- try({
@@ -176,8 +179,9 @@ msg9 <- try({
     } else {
         stop("edgeR package is not yet installed; consider running 'snakemake [--use-conda] setup' before running 'snakemake [--use-conda] checkinputs'")
     }
-},
-            silent = TRUE)
+}, silent = TRUE)
+if(is(msg9, "try-error"))
+  msg9 <- try({stop("Error in specified contrasts: ", paste0(contrast, collapse=","))}, silent=TRUE)
 
 msgL <- list(msg0, msg1, msg2, msg3, msg4, msg5, msg6, msg7, msg8, msg9)
 isError <- lapply(msgL, FUN = function(x) {class(x) == "try-error"})
