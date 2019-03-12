@@ -478,17 +478,17 @@ rule tximeta:
 rule checkinputs:
     input:
         "config.yaml",
-        fastqdir = FASTQdir,
-        genome = config["genome"],
-        gtf = config["gtf"],
-        txome = config["txome"],
-        metatxt = config["metatxt"],
         script = "scripts/check_input.R"
     output:
         outputdir + "Rout/check_input.txt"
     log:
         outputdir + "Rout/check_input.Rout"
     params:
+        gtf = config["gtf"],
+        genome = config["genome"],
+        txome = config["txome"],
+        fastqdir = config["FASTQ"],
+        metatxt = config["metatxt"],
         design = config["design"].replace(" ", ""),
         contrast = config["contrast"].replace(" ", ""),
         fqsuffix = str(config["fqsuffix"]),
@@ -500,7 +500,7 @@ rule checkinputs:
     conda:
 	    Renv
     shell:
-        '''{Rbin} CMD BATCH --no-restore --no-save "--args metafile='{input.metatxt}' design='{params.design}' contrast='{params.contrast}' outFile='{output}' gtf='{input.gtf}' genome='{input.genome}' fastqdir='{input.fastqdir}' fqsuffix='{params.fqsuffix}' fqext1='{params.fqext1}' fqext2='{params.fqext2}' txome='{input.txome}' run_camera='{params.run_camera}' organism='{params.organism}'" {input.script} {log};
+        '''{Rbin} CMD BATCH --no-restore --no-save "--args metafile='{params.metatxt}' design='{params.design}' contrast='{params.contrast}' outFile='{output}' gtf='{params.gtf}' genome='{params.genome}' fastqdir='{params.fastqdir}' fqsuffix='{params.fqsuffix}' fqext1='{params.fqext1}' fqext2='{params.fqext2}' txome='{params.txome}' run_camera='{params.run_camera}' organism='{params.organism}'" {input.script} {log};
         cat {output}
         '''
        

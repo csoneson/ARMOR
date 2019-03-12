@@ -76,17 +76,19 @@ if (exists("run_camera")) {
 
 ## Read metadata
 msg0 <- try({
-    metadata <- read.delim(metafile, header = TRUE, 
-                           as.is = TRUE, sep = "\t");
-    rownames(metadata) <- metadata$names;
-    utype <- unique(metadata$type);
-    if (length(utype) == 1 & any(utype %in% c("PE", "SE"))) {
-        type <- metadata$type
-    } else{
-        error("The type column in the metadata should have either PE or SE. \n")
+    if(!file.exists(metafile)) {
+        error("The metafile ", metafile, " does not exist.\n")
+    } else {
+        metadata <- read.delim(metafile, header = TRUE, as.is = TRUE, sep = "\t");
+        rownames(metadata) <- metadata$names;
+        utype <- unique(metadata$type);
+        if (length(utype) == 1 & any(utype %in% c("PE", "SE"))) {
+            type <- metadata$type
+        } else{
+            error("The type column in the metadata should have either PE or SE. \n")
+        }
     }
-    }, 
-    silent = TRUE)
+}, silent = TRUE)
 
 
 msg1 <- try({
@@ -99,12 +101,11 @@ msg1 <- try({
         pt <- c(pt1, pt2)
     }
     
-    #(lf <- file.path(fastqdir, pt))
-    lf <- paste0(fastqdir, pt)
+    lf <- file.path(fastqdir, pt)
+    #lf <- paste0(fastqdir, pt)
     fe <- file.exists(lf)
     
     if (any(!fe)) {
-        
         stop(paste(lf[!fe], collapse=" "), " are/is not available. \n")
     }
 }, silent = TRUE)
@@ -189,8 +190,12 @@ isError <- unlist(isError)
 
 msg <- msgL[isError]
 
+print(msg)
+
 if (length(msg) > 0) {
     capture.output(writeLines(msg[[1]]), file = outFile)
+    xmsg <- sprintf("\n\n********************************************************************************************\n*************************************************************************************\n check for the error message above and fix the config.yaml or one of it's components.\n*************************************************************************************\n*************************************************************************************\n\n")
+    capture.output(xmsg, file = outFile, append = TRUE)
 } else {
     mylist <- list("Design matrix" = des, "Contrasts matrix" = contrasts)
     capture.output(mylist, file = outFile)
