@@ -472,7 +472,7 @@ rule tximeta:
 		'''{Rbin} CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}' annotation='{params.flag}' organism='{params.organism}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
-## Input variable  check
+## Input variable check
 ## ------------------------------------------------------------------------------------ ##
 ## check design matrix and contrasts
 rule checkinputs:
@@ -486,11 +486,15 @@ rule checkinputs:
         outputdir + "Rout/check_input.Rout"
     params:
         design = config["design"].replace(" ", ""),
-        contrast = config["contrast"].replace(" ", "")
+        contrast = config["contrast"].replace(" ", ""),
+        genome = config["genome"],
+        gtf = config["gtf"],
+        fqsuffix = str(config["fqsuffix"]),
+        fastqdir = FASTQdir
     conda:
 	    Renv
     shell:
-        '''{Rbin} CMD BATCH --no-restore --no-save "--args metafile='{input.metatxt}' design='{params.design}' contrast='{params.contrast}' outFile='{output}'" {input.script} {log};
+        '''{Rbin} CMD BATCH --no-restore --no-save "--args metafile='{input.metatxt}' design='{params.design}' contrast='{params.contrast}' outFile='{output}' gtf='{params.gtf}' genonme='{params.genome}' fastqdir='{params.fastqdir}' fqsuffix='{params.fqsuffix}'" {input.script} {log};
         cat {output}
         '''
        
