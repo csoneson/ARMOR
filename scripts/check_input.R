@@ -164,7 +164,9 @@ msg9 <- try({contrasts <- as.data.frame(makeContrasts(contrasts = contrast,
                                                       levels = des))},
             silent = TRUE)
 
-msgL <- list(msg0, msg1, msg2, msg3, msg4, msg5, msg6, msg7, msg8, msg9)
+msgL <- list(msg0, msg1, msg2, msg3, msg4, 
+             #msg5, 
+             msg6, msg7, msg8, msg9)
 isError <- lapply(msgL, FUN = function(x) {class(x) == "try-error"})
 isError <- unlist(isError)
 
