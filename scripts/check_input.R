@@ -1,3 +1,4 @@
+
 args <- (commandArgs(trailingOnly = TRUE))
 for (i in seq_len(length(args))) {
     eval(parse(text = args[[i]]))
@@ -14,6 +15,7 @@ print(gtf)
 print(genonme)
 print(fastqdir)
 print(fqsuffix)
+print(run_camera)
 
 msg0 <- try({
     pt <- paste0("\\.", fqsuffix, ".1gz")
@@ -36,6 +38,13 @@ msg2 <- try({
         stop("The gtf file doesn't exist. \n")
     }
 }, silent = TRUE)
+
+# msg3 <- try({
+#     if (run_camera == "True") {
+#     library(msigdbr)
+#         msigdbr_show_species()
+#     }
+# }, silent = TRUE)
 
 msg3 <- try({
     if (exists("design")) {

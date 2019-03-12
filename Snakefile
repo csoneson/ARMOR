@@ -488,11 +488,12 @@ rule checkinputs:
         genome = config["genome"],
         gtf = config["gtf"],
         fqsuffix = str(config["fqsuffix"]),
-        fastqdir = FASTQdir
+        fastqdir = FASTQdir,
+        run_camera = str(config["run_camera"])
     conda:
 	    Renv
     shell:
-        '''{Rbin} CMD BATCH --no-restore --no-save "--args metafile='{input.metatxt}' design='{params.design}' contrast='{params.contrast}' outFile='{output}' gtf='{params.gtf}' genonme='{params.genome}' fastqdir='{params.fastqdir}' fqsuffix='{params.fqsuffix}'" {input.script} {log};
+        '''{Rbin} CMD BATCH --no-restore --no-save "--args metafile='{input.metatxt}' design='{params.design}' contrast='{params.contrast}' outFile='{output}' gtf='{params.gtf}' genonme='{params.genome}' fastqdir='{params.fastqdir}' fqsuffix='{params.fqsuffix}' run_camera='{params.run_camera}'" {input.script} {log};
         cat {output}
         '''
        
