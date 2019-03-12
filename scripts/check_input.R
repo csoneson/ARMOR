@@ -27,11 +27,6 @@ if (exists("gtf")) {
     gtf <- NULL
 }
 
-if (exists("gtf")) {
-    print(gtf) 
-} else {
-    gtf <- NULL
-}
 
 if (exists("genome")) {
     print(genome) 
@@ -80,8 +75,10 @@ msg0 <- try({
     metadata <- read.delim(metafile, header = TRUE, 
                            as.is = TRUE, sep = "\t");
     rownames(metadata) <- metadata$names;
-    type <- metadata$type;
-    if (length(unique(type)) == 1 | any(type %in% c("PE", "SE"))) {
+    utype <- unique(metadata$type);
+    if (length(utype) == 1 & any(utype %in% c("PE", "SE"))) {
+        type <- metadata$type
+    } else{
         error("The type column in the metadata should have either PE or SE. \n")
     }
     }, 
@@ -89,7 +86,7 @@ msg0 <- try({
 
 
 msg1 <- try({
-    if (unique(type) == "SE") {
+    if (utype == "SE") {
         pt <- paste0(metadata$names, ".", fqsuffix, ".gz")
         
     } else {
@@ -98,13 +95,18 @@ msg1 <- try({
         pt <- c(pt1, pt2)
     }
     
-    lf <- file.path(fastqdir, pt)
+    #(lf <- file.path(fastqdir, pt))
+    lf <- paste0(fastqdir, pt)
     fe <- file.exists(lf)
+    
     if (any(!fe)) {
         
-        stop(fe[!fe], " are/is not available. \n")
+        stop(lf[!fe], " are/is not available. \n")
     }
 }, silent = TRUE)
+
+print(lf)
+print(fe)
 
 msg2 <- try({
     fe <- file.exists(genome)
@@ -165,7 +167,7 @@ msg9 <- try({contrasts <- as.data.frame(makeContrasts(contrasts = contrast,
             silent = TRUE)
 
 msgL <- list(msg0, msg1, msg2, msg3, msg4, 
-             #msg5, 
+        #msg5, 
              msg6, msg7, msg8, msg9)
 isError <- lapply(msgL, FUN = function(x) {class(x) == "try-error"})
 isError <- unlist(isError)
