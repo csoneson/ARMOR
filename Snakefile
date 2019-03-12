@@ -14,7 +14,7 @@ import pandas as pd
 samples = pd.read_table(config["metatxt"])
 
 if not set(['names','type']).issubset(samples.columns):
-  sys.exit("Make sure there is both a 'names' and 'type' column in " + config["metatxt"])
+  sys.exit("Make sure 'names' and 'type' are columns in " + config["metatxt"])
 
 
 ## Sanitize provided input and output directories
