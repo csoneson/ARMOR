@@ -101,7 +101,7 @@ msg1 <- try({
     
     if (any(!fe)) {
         
-        stop(lf[!fe], " are/is not available. \n")
+        stop(paste(lf[!fe], collapse=" "), " are/is not available. \n")
     }
 }, silent = TRUE)
 
