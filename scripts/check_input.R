@@ -80,12 +80,14 @@ msg0 <- try({
         error("The metafile ", metafile, " does not exist.\n")
     } else {
         metadata <- read.delim(metafile, header = TRUE, as.is = TRUE, sep = "\t");
+        if(!all(c("names","type") %in% colnames(metadata))
+            stop(paste0("ERROR: 'names' and 'type' columns must exist in ", metafile))
         rownames(metadata) <- metadata$names;
         utype <- unique(metadata$type);
         if (length(utype) == 1 & any(utype %in% c("PE", "SE"))) {
             type <- metadata$type
         } else{
-            error("The type column in the metadata should have either PE or SE. \n")
+            stop("ERROR: 'type' column in the metadata file must be PE or SE. \n")
         }
     }
 }, silent = TRUE)
@@ -94,19 +96,15 @@ msg0 <- try({
 msg1 <- try({
     if (utype == "SE") {
         pt <- paste0(metadata$names, ".", fqsuffix, ".gz")
-        
     } else {
         pt1 <- paste0(metadata$names, "_", fqext1, ".", fqsuffix, ".gz")
         pt2 <- paste0(metadata$names, "_", fqext2, ".", fqsuffix, ".gz")
         pt <- c(pt1, pt2)
     }
-    
     lf <- file.path(fastqdir, pt)
-    #lf <- paste0(fastqdir, pt)
     fe <- file.exists(lf)
-    
     if (any(!fe)) {
-        stop(paste(lf[!fe], collapse=" "), " are/is not available. \n")
+        stop(paste("ERROR: ", lf[!fe], collapse=" "), " are/is not available.\n")
     }
 }, silent = TRUE)
 
@@ -116,21 +114,21 @@ print(fe)
 msg2 <- try({
     fe <- file.exists(genome)
     if (!fe) {
-        stop("The genome file doesn't exist. \n")
+        stop(paste0("ERROR: The 'genome' file,", genome, ", doesn't exist.\n"))
     }
 }, silent = TRUE)
 
 msg3 <- try({
     fe <- file.exists(gtf)
     if (!fe) {
-        stop("The gtf file doesn't exist. \n")
+        stop(paste0("ERROR: The 'gtf' file, ", gtf, ", doesn't exist.\n"))
     }
 }, silent = TRUE)
 
 msg4 <- try({
     fe <- file.exists(txome)
     if (!fe) {
-        stop("The txome file doesn't exist. \n")
+        stop(paste0("ERROR: The 'txome' file, ", txome, ", doesn't exist.\n"))
     }
 }, silent = TRUE)
 
@@ -138,10 +136,9 @@ msg5 <- try({
     if (run_camera == "True")
       if (require("msigdbr")) {
           if (!(gsub("_"," ",organism) %in% msigdbr::msigdbr_show_species()))
-              stop(gsub("_"," ",organism), 
-                   " not found in 'msigdbr::msigdbr_show_species()' database; fix the organism or consider setting 'run_camera: False'")
+              stop(paste0("ERROR: ", gsub("_"," ",organism), " not found in 'msigdbr::msigdbr_show_species()' database; fix the organism or set 'run_camera: False'"))
       } else {
-          stop("msigdbr package is not yet installed; consider running 'snakemake [--use-conda] setup' before running 'snakemake [--use-conda] checkinputs'")
+          stop("Cannot check 'organism': msigdbr package not available; run 'snakemake [--use-conda] setup' before 'snakemake [--use-conda] checkinputs'")
       }
     }, silent = TRUE)
 
@@ -149,7 +146,7 @@ msg6 <- try({
     if (exists("design")) {
         print(design)
     } else {
-        design <- NULL
+        stop("ERROR: no 'design' specified; please specify one in the config file")
     }
 }, silent = TRUE)
 
@@ -159,17 +156,17 @@ msg7 <- try({
         contrast <- strsplit(gsub(" ","",contrast), ",")[[1]]
         print(contrast)
     } else {
-        contrast <- NULL
+        stop("ERROR: no 'contrast' specified; please specify one in the config file")
     }
 }, silent = TRUE)
-
-## ---------------------------Test run -------------------------------
 
 ## Define design matrix
 msg8 <- try({des <- model.matrix(as.formula(design), data = metadata)},
             silent = TRUE)
 if(is(msg8, "try-error"))
-  msg8 <- try({stop("Error in design matrix: ", design)}, silent=TRUE)
+    msg8 <- try({
+        stop("ERROR in 'design' value: ", design)
+    }, silent=TRUE)
 
 
 # Define contrasts
@@ -178,27 +175,37 @@ msg9 <- try({
         contrasts <- as.data.frame(makeContrasts(contrasts = contrast, 
                                                  levels = des))
     } else {
-        stop("edgeR package is not yet installed; consider running 'snakemake [--use-conda] setup' before running 'snakemake [--use-conda] checkinputs'")
+        stop("Cannot check 'contrast', since the edgeR package is not available; run 'snakemake [--use-conda] setup' before 'snakemake [--use-conda] checkinputs'")
     }
 }, silent = TRUE)
 if(is(msg9, "try-error"))
-  msg9 <- try({stop("Error in specified contrasts: ", paste0(contrast, collapse=","))}, silent=TRUE)
+    msg9 <- try({
+        stop("ERROR in specified contrasts: ", paste0(contrast, collapse=","))
+    }, silent=TRUE)
 
 msgL <- list(msg0, msg1, msg2, msg3, msg4, msg5, msg6, msg7, msg8, msg9)
-isError <- lapply(msgL, FUN = function(x) {class(x) == "try-error"})
-isError <- unlist(isError)
-
+isError <- sapply(msgL, FUN = function(x) {class(x) == "try-error"})
 msg <- msgL[isError]
-
 print(msg)
 
 if (length(msg) > 0) {
-    capture.output(writeLines(msg[[1]]), file = outFile)
-    xmsg <- sprintf("\n\n********************************************************************************************\n*************************************************************************************\n check for the error message above and fix the config.yaml or one of it's components.\n*************************************************************************************\n*************************************************************************************\n\n")
-    capture.output(xmsg, file = outFile, append = TRUE)
+    for(i in seq_len(length(msg))) {
+      m <- gsub("Error in try({ :", "", msg[[i]], fixed=TRUE)
+      capture.output(writeLines(m), file = outFile, append = !(i==1))
+    }
+    stars <- paste(strrep("*", 84), "\n", strrep("*", 84), sep="")
+    xmsg <- paste("check for the error message above and fix the config.yaml or one of it's components.", sep="")
+    capture.output(writeLines(stars), file = outFile, append = TRUE)
+    capture.output(writeLines(xmsg), file = outFile, append = TRUE)
+    capture.output(writeLines(stars), file = outFile, append = TRUE)
 } else {
     mylist <- list("Design matrix" = des, "Contrasts matrix" = contrasts)
     capture.output(mylist, file = outFile)
+    stars <- paste(strrep("*", 19), "\n", strrep("*", 19), sep="")
+    xmsg <- paste("No errors detected.", sep="")
+    capture.output(writeLines(stars), file = outFile, append = TRUE)
+    capture.output(writeLines(xmsg), file = outFile, append = TRUE)
+    capture.output(writeLines(stars), file = outFile, append = TRUE)
 }
 
 
