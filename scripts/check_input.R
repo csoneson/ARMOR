@@ -107,7 +107,6 @@ msg1 <- try({
 }, silent = TRUE)
 
 msg2 <- try({
-    
     fe <- file.exists(genome)
     if (!fe) {
         stop("The genonme file doesn't exist. \n")

@@ -492,7 +492,7 @@ rule checkinputs:
         fqext1 = str(config["fqext1"]),
         fqext2 = str(config["fqext2"]),
         run_camera = str(config["run_camera"]),
-        txome = config[txome]
+        txome = config["txome"]
     conda:
 	    Renv
     shell:
