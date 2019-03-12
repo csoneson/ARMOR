@@ -12,9 +12,10 @@ suppressPackageStartupMessages({
 print(metafile)
 print(outFile)
 print(gtf)
-print(genonme)
+print(genome)
 print(fastqdir)
 print(fqsuffix)
+print(txome)
 print(run_camera)
 
 msg0 <- try({
@@ -26,7 +27,7 @@ msg0 <- try({
 }, silent = TRUE)
 
 msg1 <- try({
-    fe <- file.exists(genonme)
+    fe <- file.exists(genome)
     if (!fe) {
         stop("The genonme file doesn't exist. \n")
     }
@@ -39,6 +40,13 @@ msg2 <- try({
     }
 }, silent = TRUE)
 
+msg3 <- trytry({
+    fe <- file.exists(txome)
+    if (!fe) {
+        stop("The txome file doesn't exist. \n")
+    }
+}, silent = TRUE)
+
 # msg3 <- try({
 #     if (run_camera == "True") {
 #     library(msigdbr)
@@ -46,7 +54,7 @@ msg2 <- try({
 #     }
 # }, silent = TRUE)
 
-msg3 <- try({
+msg5 <- try({
     if (exists("design")) {
         print(design)
     } else {
@@ -55,7 +63,7 @@ msg3 <- try({
 }, silent = TRUE)
 
 
-msg4 <- try({
+msg6 <- try({
     if (exists("contrast")) {
         contrast <- strsplit(gsub(" ","",contrast), ",")[[1]]
         print(contrast)
@@ -71,15 +79,15 @@ rownames(metadata) <- metadata$names
 metadata
 
 ## Define design matrix
-msg5 <- try({des <- model.matrix(as.formula(design), data = metadata)},
+msg7 <- try({des <- model.matrix(as.formula(design), data = metadata)},
             silent = TRUE)
 
 # Define contrasts
-msg6 <- try({contrasts <- as.data.frame(makeContrasts(contrasts = contrast, 
+msg8 <- try({contrasts <- as.data.frame(makeContrasts(contrasts = contrast, 
                                                       levels = des))},
             silent = TRUE)
 
-msgL <- list(msg0, msg1, msg2, msg3, msg4, msg5, msg6)
+msgL <- list(msg0, msg1, msg2, msg3, msg4, msg5, msg6, msg7, msg8)
 isError <- lapply(msgL, FUN = function(x) {class(x) == "try-error"})
 isError <- unlist(isError)
 
