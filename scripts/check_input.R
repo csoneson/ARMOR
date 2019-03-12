@@ -164,18 +164,19 @@ msg7 <- try({
 
 ## ---------------------------Test run -------------------------------
 
-suppressPackageStartupMessages({
-    library(edgeR)
-})
-
-
 ## Define design matrix
 msg8 <- try({des <- model.matrix(as.formula(design), data = metadata)},
             silent = TRUE)
 
 # Define contrasts
-msg9 <- try({contrasts <- as.data.frame(makeContrasts(contrasts = contrast, 
-                                                      levels = des))},
+msg9 <- try({
+    if (require("edgeR")) {
+        contrasts <- as.data.frame(makeContrasts(contrasts = contrast, 
+                                                 levels = des))
+    } else {
+        stop("edgeR package is not yet installed; consider running 'snakemake [--use-conda] setup' before running 'snakemake [--use-conda] checkinputs'")
+    }
+},
             silent = TRUE)
 
 msgL <- list(msg0, msg1, msg2, msg3, msg4, msg5, msg6, msg7, msg8, msg9)
