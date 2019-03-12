@@ -4,9 +4,6 @@ for (i in seq_len(length(args))) {
     eval(parse(text = args[[i]]))
 }
 
-suppressPackageStartupMessages({
-    library(edgeR)
-})
 
 ## ----------------The input arguments------------------------------------------
 if (exists("metafile")) {
@@ -14,6 +11,13 @@ if (exists("metafile")) {
     } else {
         metafile <- NULL
     }
+
+if (exists("organism")) {
+    print(organism)
+} else {
+    organism <- NULL
+}
+
 
 if (exists("outFile")) {
     print(outFile) 
@@ -111,7 +115,7 @@ print(fe)
 msg2 <- try({
     fe <- file.exists(genome)
     if (!fe) {
-        stop("The genonme file doesn't exist. \n")
+        stop("The genome file doesn't exist. \n")
     }
 }, silent = TRUE)
 
@@ -129,12 +133,16 @@ msg4 <- try({
     }
 }, silent = TRUE)
 
-# msg3 <- try({
-#     if (run_camera == "True") {
-#     library(msigdbr)
-#         msigdbr_show_species()
-#     }
-# }, silent = TRUE)
+msg5 <- try({
+    if (run_camera == "True")
+      if (require("msigdbr")) {
+          if (!(gsub("_"," ",organism) %in% msigdbr::msigdbr_show_species()))
+              stop(gsub("_"," ",organism), 
+                   " not found in 'msigdbr' database; consider setting 'run_camera: False'")
+      } else {
+          stop("msigdbr package is not yet installed; consider running 'snakemake [--use-conda] setup' before running 'snakemake [--use-conda] checkinputs'")
+      }
+    }, silent = TRUE)
 
 msg6 <- try({
     if (exists("design")) {
@@ -156,6 +164,10 @@ msg7 <- try({
 
 ## ---------------------------Test run -------------------------------
 
+suppressPackageStartupMessages({
+    library(edgeR)
+})
+
 
 ## Define design matrix
 msg8 <- try({des <- model.matrix(as.formula(design), data = metadata)},
@@ -166,9 +178,7 @@ msg9 <- try({contrasts <- as.data.frame(makeContrasts(contrasts = contrast,
                                                       levels = des))},
             silent = TRUE)
 
-msgL <- list(msg0, msg1, msg2, msg3, msg4, 
-        #msg5, 
-             msg6, msg7, msg8, msg9)
+msgL <- list(msg0, msg1, msg2, msg3, msg4, msg5, msg6, msg7, msg8, msg9)
 isError <- lapply(msgL, FUN = function(x) {class(x) == "try-error"})
 isError <- unlist(isError)
 

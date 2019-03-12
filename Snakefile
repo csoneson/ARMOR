@@ -494,12 +494,13 @@ rule checkinputs:
         fqsuffix = str(config["fqsuffix"]),
         fqext1 = str(config["fqext1"]),
         fqext2 = str(config["fqext2"]),
-        run_camera = str(config["run_camera"])
+        run_camera = str(config["run_camera"]),
+	organism = config["organism"]
         
     conda:
 	    Renv
     shell:
-        '''{Rbin} CMD BATCH --no-restore --no-save "--args metafile='{input.metatxt}' design='{params.design}' contrast='{params.contrast}' outFile='{output}' gtf='{input.gtf}' genome='{input.genome}' fastqdir='{input.fastqdir}' fqsuffix='{params.fqsuffix}' fqext1='{params.fqext1}' fqext2='{params.fqext2}' txome='{input.txome}' run_camera='{params.run_camera}'" {input.script} {log};
+        '''{Rbin} CMD BATCH --no-restore --no-save "--args metafile='{input.metatxt}' design='{params.design}' contrast='{params.contrast}' outFile='{output}' gtf='{input.gtf}' genome='{input.genome}' fastqdir='{input.fastqdir}' fqsuffix='{params.fqsuffix}' fqext1='{params.fqext1}' fqext2='{params.fqext2}' txome='{input.txome}' run_camera='{params.run_camera}' organism='{params.organism}'" {input.script} {log};
         cat {output}
         '''
        
