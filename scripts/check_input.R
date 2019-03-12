@@ -77,10 +77,10 @@ if (exists("run_camera")) {
 ## Read metadata
 msg0 <- try({
     if(!file.exists(metafile)) {
-        error("The metafile ", metafile, " does not exist.\n")
+        error("The metafile, ", metafile, ", does not exist.\n")
     } else {
         metadata <- read.delim(metafile, header = TRUE, as.is = TRUE, sep = "\t");
-        if(!all(c("names","type") %in% colnames(metadata))
+        if(!all(c("names","type") %in% colnames(metadata)))
             stop(paste0("ERROR: 'names' and 'type' columns must exist in ", metafile))
         rownames(metadata) <- metadata$names;
         utype <- unique(metadata$type);
@@ -104,7 +104,7 @@ msg1 <- try({
     lf <- file.path(fastqdir, pt)
     fe <- file.exists(lf)
     if (any(!fe)) {
-        stop(paste("ERROR: ", lf[!fe], collapse=" "), " are/is not available.\n")
+        stop(paste0("ERROR: ", paste(lf[!fe], collapse=" "), " are/is not available.\n"))
     }
 }, silent = TRUE)
 
@@ -114,7 +114,7 @@ print(fe)
 msg2 <- try({
     fe <- file.exists(genome)
     if (!fe) {
-        stop(paste0("ERROR: The 'genome' file,", genome, ", doesn't exist.\n"))
+        stop(paste0("ERROR: The 'genome' file, ", genome, ", doesn't exist.\n"))
     }
 }, silent = TRUE)
 
@@ -136,7 +136,7 @@ msg5 <- try({
     if (run_camera == "True")
       if (require("msigdbr")) {
           if (!(gsub("_"," ",organism) %in% msigdbr::msigdbr_show_species()))
-              stop(paste0("ERROR: ", gsub("_"," ",organism), " not found in 'msigdbr::msigdbr_show_species()' database; fix the organism or set 'run_camera: False'"))
+              stop(paste0("ERROR: '", gsub("_"," ",organism), "' not found in 'msigdbr::msigdbr_show_species()' database; fix the organism or set 'run_camera: False'"))
       } else {
           stop("Cannot check 'organism': msigdbr package not available; run 'snakemake [--use-conda] setup' before 'snakemake [--use-conda] checkinputs'")
       }
@@ -161,8 +161,9 @@ msg7 <- try({
 }, silent = TRUE)
 
 ## Define design matrix
-msg8 <- try({des <- model.matrix(as.formula(design), data = metadata)},
-            silent = TRUE)
+msg8 <- try({
+    des <- model.matrix(as.formula(design), data = metadata)
+}, silent = TRUE)
 if(is(msg8, "try-error"))
     msg8 <- try({
         stop("ERROR in 'design' value: ", design)
@@ -171,16 +172,18 @@ if(is(msg8, "try-error"))
 
 # Define contrasts
 msg9 <- try({
+    have_edgeR <<- FALSE
     if (require("edgeR")) {
+        have_edgeR <<- TRUE
         contrasts <- as.data.frame(makeContrasts(contrasts = contrast, 
                                                  levels = des))
     } else {
         stop("Cannot check 'contrast', since the edgeR package is not available; run 'snakemake [--use-conda] setup' before 'snakemake [--use-conda] checkinputs'")
     }
 }, silent = TRUE)
-if(is(msg9, "try-error"))
+if(is(msg9, "try-error") && have_edgeR)
     msg9 <- try({
-        stop("ERROR in specified contrasts: ", paste0(contrast, collapse=","))
+        stop("ERROR in specified 'contrast' (n.b., could be due to 'design'): ", paste0(contrast, collapse=","))
     }, silent=TRUE)
 
 msgL <- list(msg0, msg1, msg2, msg3, msg4, msg5, msg6, msg7, msg8, msg9)
@@ -190,7 +193,7 @@ print(msg)
 
 if (length(msg) > 0) {
     for(i in seq_len(length(msg))) {
-      m <- gsub("Error in try({ :", "", msg[[i]], fixed=TRUE)
+      m <- trimws(gsub("Error in try({ :", "", msg[[i]], fixed=TRUE))
       capture.output(writeLines(m), file = outFile, append = !(i==1))
     }
     stars <- paste(strrep("*", 84), "\n", strrep("*", 84), sep="")
