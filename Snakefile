@@ -7,8 +7,15 @@ if len(config) == 0:
     sys.exit("Make sure there is a config.yaml file in " + os.getcwd() + " or specify one with the --configfile commandline parameter.")
 
 ## Read metadata
+if not os.path.isfile(config["metatxt"]):
+  sys.exit("Metadata file " + config["metatxt"] + " does not exist.")
+
 import pandas as pd
 samples = pd.read_table(config["metatxt"])
+
+if not set(['names','type']).issubset(samples.columns):
+  sys.exit("Make sure there is both a 'names' and 'type' column in " + config["metatxt"])
+
 
 ## Sanitize provided input and output directories
 import re
