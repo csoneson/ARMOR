@@ -18,6 +18,11 @@ if (exists("organism")) {
     organism <- NULL
 }
 
+if (exists("annotation")) {
+    print(annotation)
+} else {
+    annotation <- NULL
+}
 
 if (exists("outFile")) {
     print(outFile) 
@@ -160,6 +165,12 @@ msg7 <- try({
     }
 }, silent = TRUE)
 
+msg12 <- try({
+    if( !(annotation %in% c("Ensembl","Gencode")) )
+        stop(paste0("ERROR: 'annotation' needs to be (exactly) 'Gencode' or 'Ensembl'; currently: ", annotation))
+}, silent = TRUE)
+
+
 ## Define design matrix
 msg8 <- try({
     des <- model.matrix(as.formula(design), data = metadata)
@@ -186,7 +197,7 @@ if(is(msg9, "try-error") && have_edgeR)
         stop("ERROR in specified 'contrast' (n.b., could be due to invalid 'design' specified): ", paste0(contrast, collapse=","))
     }, silent=TRUE)
 
-msgL <- list(msg0, msg1, msg2, msg3, msg4, msg5, msg6, msg7, msg8, msg9)
+msgL <- list(msg0, msg1, msg2, msg3, msg4, msg5, msg6, msg7, msg8, msg9, msg12)
 isError <- sapply(msgL, FUN = function(x) {class(x) == "try-error"})
 msg <- msgL[isError]
 print(msg)
