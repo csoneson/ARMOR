@@ -496,6 +496,7 @@ rule checkinputs:
         metatxt = config["metatxt"],
         design = config["design"].replace(" ", "") if config["design"] is not None else "NOTDEFINED",
         contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else "NOTDEFINED",
+        annotation = config["annotation"].replace(" ", "") if config["annotation"] is not None else "NOTDEFINED",
         fqsuffix = str(config["fqsuffix"]),
         fqext1 = str(config["fqext1"]),
         fqext2 = str(config["fqext2"]),
@@ -505,7 +506,7 @@ rule checkinputs:
     conda:
 	    Renv
     shell:
-        '''{Rbin} CMD BATCH --no-restore --no-save "--args metafile='{params.metatxt}' design='{params.design}' contrast='{params.contrast}' outFile='{output}' gtf='{params.gtf}' genome='{params.genome}' fastqdir='{params.fastqdir}' fqsuffix='{params.fqsuffix}' fqext1='{params.fqext1}' fqext2='{params.fqext2}' txome='{params.txome}' run_camera='{params.run_camera}' organism='{params.organism}'" {input.script} {log};
+        '''{Rbin} CMD BATCH --no-restore --no-save "--args metafile='{params.metatxt}' design='{params.design}' contrast='{params.contrast}' outFile='{output}' gtf='{params.gtf}' genome='{params.genome}' fastqdir='{params.fastqdir}' fqsuffix='{params.fqsuffix}' fqext1='{params.fqext1}' fqext2='{params.fqext2}' txome='{params.txome}' run_camera='{params.run_camera}' organism='{params.organism}' annotation='{params.annotation}'" {input.script} {log};
         cat {output}
         '''
        
