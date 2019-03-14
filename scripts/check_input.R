@@ -24,6 +24,12 @@ if (exists("annotation")) {
     annotation <- NULL
 }
 
+if (exists("genesets")) {
+    print(genesets)
+} else {
+    genesets <- NULL
+}
+
 if (exists("outFile")) {
     print(outFile) 
     } else {
@@ -75,7 +81,7 @@ if (exists("txome")) {
 if (exists("run_camera")) {
     print(run_camera) 
 } else {
-    run_camera <- NULL
+    run_camera <- "DUMMY"
 }
 
 
@@ -189,6 +195,14 @@ msg15 <- try({
         stop(paste0("ERROR: the following terms in the design are not available in the metadata: ", terms[!pres]))
 }, silent = TRUE)
 
+msg16 <- try({
+    if (exists("genesets") && run_camera == "True") {
+        genesets_split <- strsplit(genesets, ",")[[1]]
+        if( !all(genesets_split %in% c("H",paste0("C",1:7))) ) 
+            stop(paste0("ERROR: 'genesets' must be a subset of H,C1,C2,C3,C4,C5,C6,C7; currently ", genesets))
+    }
+}, silent = TRUE)
+
 ## Define design matrix
 msg8 <- try({
     des <- model.matrix(as.formula(design), data = metadata)
@@ -215,7 +229,7 @@ if(is(msg9, "try-error") && have_edgeR)
         stop("ERROR in specified 'contrast' (n.b., could be due to invalid 'design' specified): ", paste0(contrast, collapse=","))
     }, silent=TRUE)
 
-msgL <- list(msg0, msg1, msg2, msg3, msg4, msg5, msg6, msg13, msg14, msg15, msg7, msg8, msg9, msg12)
+msgL <- list(msg0, msg1, msg2, msg3, msg4, msg5, msg6, msg13, msg14, msg15, msg7, msg8, msg9, msg12, msg16)
 isError <- sapply(msgL, FUN = function(x) {class(x) == "try-error"})
 msg <- msgL[isError]
 print(msg)
