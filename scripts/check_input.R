@@ -170,6 +170,24 @@ msg12 <- try({
         stop(paste0("ERROR: 'annotation' needs to be (exactly) 'Gencode' or 'Ensembl'; currently: ", annotation))
 }, silent = TRUE)
 
+msg13 <- try({
+    if (!is.character(design) || length(design) != 1) {
+        stop("ERROR: 'design' must be a character scalar")
+    }
+}, silent = TRUE)
+
+msg14 <- try({
+    if (substr(gsub(" ", "", design), 1, 1) != "~") {
+        stop("ERROR: the first character of 'design' must be ~")
+    }
+}, silent = TRUE)
+
+msg15 <- try({
+    terms <- strsplit(gsub(" ", "", design), "\\~|\\+|\\:|\\*|\\^|\\-")[[1]]
+    pres <- terms %in% c("", "0", "1", colnames(metadata))
+    if (any(!pres))
+        stop(paste0("ERROR: the following terms in the design are not available in the metadata: ", terms[!pres]))
+}, silent = TRUE)
 
 ## Define design matrix
 msg8 <- try({
@@ -197,7 +215,7 @@ if(is(msg9, "try-error") && have_edgeR)
         stop("ERROR in specified 'contrast' (n.b., could be due to invalid 'design' specified): ", paste0(contrast, collapse=","))
     }, silent=TRUE)
 
-msgL <- list(msg0, msg1, msg2, msg3, msg4, msg5, msg6, msg7, msg8, msg9, msg12)
+msgL <- list(msg0, msg1, msg2, msg3, msg4, msg5, msg6, msg13, msg14, msg15, msg7, msg8, msg9, msg12)
 isError <- sapply(msgL, FUN = function(x) {class(x) == "try-error"})
 msg <- msgL[isError]
 print(msg)
