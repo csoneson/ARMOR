@@ -136,7 +136,7 @@ expression in RNA-seq data.
 
 ```{r DRIMSeq-calculate-precision}
 set.seed(123)
-d <- dmPrecision(d, design = des)
+d <- dmPrecision(d, design = des, add_uniform = TRUE)
 plotPrecision(d)
 ```
 
@@ -148,7 +148,7 @@ proportions in each sample. At the transcript level, beta-binomial regression is
 applied to each transcript separately.
 
 ```{r DRIMSeq-fit-model}
-d <- dmFit(d, design = des, verbose = 1)
+d <- dmFit(d, design = des, verbose = 1, add_uniform = TRUE)
 ```
 
 # Define contrasts.
