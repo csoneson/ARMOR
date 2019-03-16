@@ -6,6 +6,25 @@ if len(config) == 0:
   else:
     sys.exit("Make sure there is a config.yaml file in " + os.getcwd() + " or specify one with the --configfile commandline parameter.")
 
+## Make sure that all expected variables from the config file are in the config dictionary
+configvars = ['annotation', 'organism', 'build', 'release', 'txome', 'genome', 'gtf', 'salmonindex', 'salmonk', 'STARindex', 'readlength', 'fldMean', 'fldSD', 'metatxt', 'design', 'contrast', 'genesets', 'ncores', 'FASTQ', 'fqext1', 'fqext2', 'fqsuffix', 'output', 'useCondaR', 'Rbin', 'run_trimming', 'run_STAR', 'run_DRIMSeq', 'run_camera']
+for k in configvars:
+	if k not in config:
+		config[k] = None
+
+## If any of the file paths is missing, replace it with ""
+def sanitizefile(str):
+	if str is None:
+		str = ''
+	return str
+
+config['txome'] = sanitizefile(config['txome'])
+config['gtf'] = sanitizefile(config['gtf'])
+config['genome'] = sanitizefile(config['genome'])
+config['STARindex'] = sanitizefile(config['STARindex'])
+config['salmonindex'] = sanitizefile(config['salmonindex'])
+config['metatxt'] = sanitizefile(config['metatxt'])
+
 ## Read metadata
 if not os.path.isfile(config["metatxt"]):
   sys.exit("Metadata file " + config["metatxt"] + " does not exist.")
