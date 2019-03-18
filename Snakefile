@@ -111,7 +111,9 @@ rule softwareversions:
 	conda:
 		"envs/environment.yaml"
 	shell:
-		"salmon --version; trim_galore --version; cutadapt --version; "
+		"echo -n 'ARMOR version ' && cat version; "
+		"salmon --version; trim_galore --version; "
+		"echo -n 'cutadapt ' && cutadapt --version; "
 		"fastqc --version; STAR --version; samtools --version; multiqc --version; "
 		"bedtools --version"
 
