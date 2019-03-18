@@ -6,9 +6,35 @@ if len(config) == 0:
   else:
     sys.exit("Make sure there is a config.yaml file in " + os.getcwd() + " or specify one with the --configfile commandline parameter.")
 
+## Make sure that all expected variables from the config file are in the config dictionary
+configvars = ['annotation', 'organism', 'build', 'release', 'txome', 'genome', 'gtf', 'salmonindex', 'salmonk', 'STARindex', 'readlength', 'fldMean', 'fldSD', 'metatxt', 'design', 'contrast', 'genesets', 'ncores', 'FASTQ', 'fqext1', 'fqext2', 'fqsuffix', 'output', 'useCondaR', 'Rbin', 'run_trimming', 'run_STAR', 'run_DRIMSeq', 'run_camera']
+for k in configvars:
+	if k not in config:
+		config[k] = None
+
+## If any of the file paths is missing, replace it with ""
+def sanitizefile(str):
+	if str is None:
+		str = ''
+	return str
+
+config['txome'] = sanitizefile(config['txome'])
+config['gtf'] = sanitizefile(config['gtf'])
+config['genome'] = sanitizefile(config['genome'])
+config['STARindex'] = sanitizefile(config['STARindex'])
+config['salmonindex'] = sanitizefile(config['salmonindex'])
+config['metatxt'] = sanitizefile(config['metatxt'])
+
 ## Read metadata
+if not os.path.isfile(config["metatxt"]):
+  sys.exit("Metadata file " + config["metatxt"] + " does not exist.")
+
 import pandas as pd
 samples = pd.read_table(config["metatxt"])
+
+if not set(['names','type']).issubset(samples.columns):
+  sys.exit("Make sure 'names' and 'type' are columns in " + config["metatxt"])
+
 
 ## Sanitize provided input and output directories
 import re
@@ -472,25 +498,45 @@ rule tximeta:
 		'''{Rbin} CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}' annotation='{params.flag}' organism='{params.organism}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
-## Input variable  check
+## Input variable check
 ## ------------------------------------------------------------------------------------ ##
+def geneset_param(wildcards):
+	if config["run_camera"]:
+                gs = config["genesets"].replace(" ", "") if config["genesets"] is not None else "NOTDEFINED"
+		return "genesets='" + gs + "'"
+	else:
+		return ""
+
+
 ## check design matrix and contrasts
 rule checkinputs:
     input:
         "config.yaml",
-        metatxt = config["metatxt"],
         script = "scripts/check_input.R"
     output:
         outputdir + "Rout/check_input.txt"
     log:
         outputdir + "Rout/check_input.Rout"
     params:
-        design = config["design"].replace(" ", ""),
-        contrast = config["contrast"].replace(" ", "")
+        gtf = config["gtf"],
+        genome = config["genome"],
+        txome = config["txome"],
+        fastqdir = config["FASTQ"],
+        metatxt = config["metatxt"],
+        design = config["design"].replace(" ", "") if config["design"] is not None else "NOTDEFINED",
+        contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else "NOTDEFINED",
+        annotation = config["annotation"].replace(" ", "") if config["annotation"] is not None else "NOTDEFINED",
+        genesets = geneset_param,
+        fqsuffix = str(config["fqsuffix"]),
+        fqext1 = str(config["fqext1"]),
+        fqext2 = str(config["fqext2"]),
+        run_camera = str(config["run_camera"]),
+	organism = config["organism"]
+        
     conda:
 	    Renv
     shell:
-        '''{Rbin} CMD BATCH --no-restore --no-save "--args metafile='{input.metatxt}' design='{params.design}' contrast='{params.contrast}' outFile='{output}'" {input.script} {log};
+        '''{Rbin} CMD BATCH --no-restore --no-save "--args metafile='{params.metatxt}' design='{params.design}' contrast='{params.contrast}' outFile='{output}' gtf='{params.gtf}' genome='{params.genome}' fastqdir='{params.fastqdir}' fqsuffix='{params.fqsuffix}' fqext1='{params.fqext1}' fqext2='{params.fqext2}' txome='{params.txome}' run_camera='{params.run_camera}' organism='{params.organism}' {params.genesets} annotation='{params.annotation}'" {input.script} {log};
         cat {output}
         '''
        
@@ -498,13 +544,6 @@ rule checkinputs:
 ## ------------------------------------------------------------------------------------ ##
 ## Differential expression
 ## ------------------------------------------------------------------------------------ ##
-def geneset_param(wildcards):
-	if config["run_camera"]:
-		return "genesets='" + config["genesets"].replace(" ", "") + "'"
-	else:
-		return ""
-
-
 rule edgeR:
 	input:
 		outputdir + "Rout/pkginstall_state.txt",
@@ -516,9 +555,9 @@ rule edgeR:
 		rds = outputdir + "outputR/edgeR_dge.rds"
 	params:
 		directory = outputdir + "outputR",
-		organism = config["organism"],
-		design = config["design"].replace(" ", ""),
-		contrast = config["contrast"].replace(" ", ""),
+		organism = config["organism"],        
+                design = config["design"].replace(" ", "") if config["design"] is not None else "",
+                contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else "",
 		genesets = geneset_param
 	log:
 		outputdir + "Rout/run_dge_edgeR.Rout"
@@ -543,8 +582,8 @@ rule DRIMSeq:
 	params:
 		directory = outputdir + "outputR",
 		organism = config["organism"],
-		design = config["design"].replace(" ", ""),
-		contrast = config["contrast"].replace(" ", "")
+                design = config["design"].replace(" ", "") if config["design"] is not None else "",
+                contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else ""
 	log:
 		outputdir + "Rout/run_dtu_drimseq.Rout"
 	conda:
