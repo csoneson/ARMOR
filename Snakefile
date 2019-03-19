@@ -82,6 +82,7 @@ rule pkginstall:
 	  outputdir + "Rout/pkginstall_state.txt"
 	params:
 		flag = config["annotation"],
+		ncores = config["ncores"],
 		organism = config["organism"]
 	priority:
 		50
@@ -90,7 +91,7 @@ rule pkginstall:
 	log:
 		outputdir + "Rout/install_pkgs.Rout"
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args outtxt='{output}' annotation='{params.flag}' organism='{params.organism}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args outtxt='{output}' ncores='{params.ncores}' annotation='{params.flag}' organism='{params.organism}'" {input.script} {log}'''
 
 ## FastQC on original (untrimmed) files
 rule runfastqc:
