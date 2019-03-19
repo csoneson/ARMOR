@@ -6,9 +6,35 @@ if len(config) == 0:
   else:
     sys.exit("Make sure there is a config.yaml file in " + os.getcwd() + " or specify one with the --configfile commandline parameter.")
 
+## Make sure that all expected variables from the config file are in the config dictionary
+configvars = ['annotation', 'organism', 'build', 'release', 'txome', 'genome', 'gtf', 'salmonindex', 'salmonk', 'STARindex', 'readlength', 'fldMean', 'fldSD', 'metatxt', 'design', 'contrast', 'genesets', 'ncores', 'FASTQ', 'fqext1', 'fqext2', 'fqsuffix', 'output', 'useCondaR', 'Rbin', 'run_trimming', 'run_STAR', 'run_DRIMSeq', 'run_camera']
+for k in configvars:
+	if k not in config:
+		config[k] = None
+
+## If any of the file paths is missing, replace it with ""
+def sanitizefile(str):
+	if str is None:
+		str = ''
+	return str
+
+config['txome'] = sanitizefile(config['txome'])
+config['gtf'] = sanitizefile(config['gtf'])
+config['genome'] = sanitizefile(config['genome'])
+config['STARindex'] = sanitizefile(config['STARindex'])
+config['salmonindex'] = sanitizefile(config['salmonindex'])
+config['metatxt'] = sanitizefile(config['metatxt'])
+
 ## Read metadata
+if not os.path.isfile(config["metatxt"]):
+  sys.exit("Metadata file " + config["metatxt"] + " does not exist.")
+
 import pandas as pd
 samples = pd.read_table(config["metatxt"])
+
+if not set(['names','type']).issubset(samples.columns):
+  sys.exit("Make sure 'names' and 'type' are columns in " + config["metatxt"])
+
 
 ## Sanitize provided input and output directories
 import re
@@ -48,20 +74,24 @@ rule setup:
 		outputdir + "Rout/pkginstall_state.txt",
 		outputdir + "Rout/softwareversions.done"
 
-## Install R packages	
+## Install R packages
 rule pkginstall:
 	input:
 		script = "scripts/install_pkgs.R"
 	output:
-	    outputdir + "Rout/pkginstall_state.txt"
-	priority: 
+	  outputdir + "Rout/pkginstall_state.txt"
+	params:
+		flag = config["annotation"],
+		ncores = config["ncores"],
+		organism = config["organism"]
+	priority:
 		50
 	conda:
 		Renv
 	log:
 		outputdir + "Rout/install_pkgs.Rout"
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args outtxt='{output}' " {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args outtxt='{output}' ncores='{params.ncores}' annotation='{params.flag}' organism='{params.organism}'" {input.script} {log}'''
 
 ## FastQC on original (untrimmed) files
 rule runfastqc:
@@ -103,12 +133,14 @@ rule listpackages:
 
 ## Print the versions of all software packages
 rule softwareversions:
-	output: 
+	output:
 		touch(outputdir + "Rout/softwareversions.done")
 	conda:
 		"envs/environment.yaml"
 	shell:
-		"salmon --version; trim_galore --version; cutadapt --version; "
+		"echo -n 'ARMOR version ' && cat version; "
+		"salmon --version; trim_galore --version; "
+		"echo -n 'cutadapt ' && cutadapt --version; "
 		"fastqc --version; STAR --version; samtools --version; multiqc --version; "
 		"bedtools --version"
 
@@ -141,16 +173,16 @@ rule salmonindex:
     fi
     """
 
-## Generate linkedTxome mapping
-rule linkedTxome:
+## Generate linkedtxome mapping
+rule linkedtxome:
 	input:
 		txome = config["txome"],
 		gtf = config["gtf"],
 		salmonidx = config["salmonindex"] + "/hash.bin",
-		script = "scripts/generate_linkedTxome.R",
+		script = "scripts/generate_linkedtxome.R",
 		install = outputdir + "Rout/pkginstall_state.txt"
 	log:
-		outputdir + "Rout/generate_linkedTxome.Rout"
+		outputdir + "Rout/generate_linkedtxome.Rout"
 	output:
 		config["salmonindex"] + ".json"
 	params:
@@ -178,7 +210,7 @@ rule starindex:
 		readlength = config["readlength"]
 	conda:
 		"envs/environment.yaml"
-	threads: 
+	threads:
 		config["ncores"]
 	shell:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
@@ -200,7 +232,7 @@ rule fastqc:
 		outputdir + "logs/fastqc_{sample}.log"
 	conda:
 		"envs/environment.yaml"
-	threads: 
+	threads:
 		config["ncores"]
 	shell:
 		"echo 'FastQC version:\n' > {log}; fastqc --version >> {log}; "
@@ -218,7 +250,7 @@ rule fastqc2:
 		outputdir + "logs/fastqc_trimmed_{sample}.log"
 	conda:
 		"envs/environment.yaml"
-	threads: 
+	threads:
 		config["ncores"]
 	shell:
 		"echo 'FastQC version:\n' > {log}; fastqc --version >> {log}; "
@@ -246,7 +278,7 @@ def multiqc_input(wildcards):
 
 ## Determine the input directories for MultiQC depending on the config file
 def multiqc_params(wildcards):
-	param = [outputdir + "FastQC", 
+	param = [outputdir + "FastQC",
 	outputdir + "salmon"]
 	if config["run_trimming"]:
 		param.append(outputdir + "FASTQtrimmed")
@@ -321,7 +353,7 @@ rule salmonSE:
 		outputdir + "salmon/{sample}/quant.sf"
 	log:
 		outputdir + "logs/salmon_{sample}.log"
-	threads: 
+	threads:
 		config["ncores"]
 	params:
 		salmonindex = config["salmonindex"],
@@ -345,7 +377,7 @@ rule salmonPE:
 		outputdir + "salmon/{sample}/quant.sf"
 	log:
 		outputdir + "logs/salmon_{sample}.log"
-	threads: 
+	threads:
 		config["ncores"]
 	params:
 		salmonindex = config["salmonindex"],
@@ -370,7 +402,7 @@ rule starSE:
 		fastq = outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}." + str(config["fqsuffix"]) + ".gz"
 	output:
 		outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
-	threads: 
+	threads:
 		config["ncores"]
 	log:
 		outputdir + "logs/STAR_{sample}.log"
@@ -392,7 +424,7 @@ rule starPE:
 		fastq2 = outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext2"]) + "_val_2.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_" + str(config["fqext2"]) + "." + str(config["fqsuffix"]) + ".gz"
 	output:
 		outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
-	threads: 
+	threads:
 		config["ncores"]
 	log:
 		outputdir + "logs/STAR_{sample}.log"
@@ -458,12 +490,57 @@ rule tximeta:
 	log:
 		outputdir + "Rout/tximeta_se.Rout"
 	params:
-		salmondir = outputdir + "salmon"
+		salmondir = outputdir + "salmon",
+		flag = config["annotation"],
+		organism = config["organism"]
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}' annotation='{params.flag}' organism='{params.organism}'" {input.script} {log}'''
 
+## ------------------------------------------------------------------------------------ ##
+## Input variable check
+## ------------------------------------------------------------------------------------ ##
+def geneset_param(wildcards):
+	if config["run_camera"]:
+                gs = config["genesets"].replace(" ", "") if config["genesets"] is not None else "NOTDEFINED"
+		return "genesets='" + gs + "'"
+	else:
+		return ""
+
+
+## check design matrix and contrasts
+rule checkinputs:
+    input:
+        "config.yaml",
+        script = "scripts/check_input.R"
+    output:
+        outputdir + "Rout/check_input.txt"
+    log:
+        outputdir + "Rout/check_input.Rout"
+    params:
+        gtf = config["gtf"],
+        genome = config["genome"],
+        txome = config["txome"],
+        fastqdir = config["FASTQ"],
+        metatxt = config["metatxt"],
+        design = config["design"].replace(" ", "") if config["design"] is not None else "NOTDEFINED",
+        contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else "NOTDEFINED",
+        annotation = config["annotation"].replace(" ", "") if config["annotation"] is not None else "NOTDEFINED",
+        genesets = geneset_param,
+        fqsuffix = str(config["fqsuffix"]),
+        fqext1 = str(config["fqext1"]),
+        fqext2 = str(config["fqext2"]),
+        run_camera = str(config["run_camera"]),
+	organism = config["organism"]
+        
+    conda:
+	    Renv
+    shell:
+        '''{Rbin} CMD BATCH --no-restore --no-save "--args metafile='{params.metatxt}' design='{params.design}' contrast='{params.contrast}' outFile='{output}' gtf='{params.gtf}' genome='{params.genome}' fastqdir='{params.fastqdir}' fqsuffix='{params.fqsuffix}' fqext1='{params.fqext1}' fqext2='{params.fqext2}' txome='{params.txome}' run_camera='{params.run_camera}' organism='{params.organism}' {params.genesets} annotation='{params.annotation}'" {input.script} {log};
+        cat {output}
+        '''
+       
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential expression
@@ -479,16 +556,16 @@ rule edgeR:
 		rds = outputdir + "outputR/edgeR_dge.rds"
 	params:
 		directory = outputdir + "outputR",
-		organism = config["organism"],
-		design = config["design"].replace(" ", ""),
-		contrast = config["contrast"].replace(" ", ""),
-		genesets = config["genesets"].replace(" ", "")
-	log: 
+		organism = config["organism"],        
+                design = config["design"].replace(" ", "") if config["design"] is not None else "",
+                contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else "",
+		genesets = geneset_param
+	log:
 		outputdir + "Rout/run_dge_edgeR.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' organism='{params.organism}' design='{params.design}' contrast='{params.contrast}' genesets='{params.genesets}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='edgeR_dge.html'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' organism='{params.organism}' design='{params.design}' contrast='{params.contrast}' {params.genesets} rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='edgeR_dge.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage
@@ -506,35 +583,36 @@ rule DRIMSeq:
 	params:
 		directory = outputdir + "outputR",
 		organism = config["organism"],
-		design = config["design"].replace(" ", ""),
-		contrast = config["contrast"].replace(" ", "")
+		ncores = config["ncores"],
+                design = config["design"].replace(" ", "") if config["design"] is not None else "",
+                contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else ""
 	log:
 		outputdir + "Rout/run_dtu_drimseq.Rout"
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' design='{params.design}' contrast='{params.contrast}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='DRIMSeq_dtu.html'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' design='{params.design}' contrast='{params.contrast}' ncores='{params.ncores}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='DRIMSeq_dtu.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
-## Shiny app
+## shiny app
 ## ------------------------------------------------------------------------------------ ##
 def shiny_input(wildcards):
-	input = [outputdir + "Rout/pkginstall_state.txt"] 
+	input = [outputdir + "Rout/pkginstall_state.txt"]
 	if config["run_STAR"]:
 		input.extend(expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()))
 	return input
 
 def shiny_params(wildcards):
-	param = ["outputdir='" + outputdir + "outputR'"] 
+	param = ["outputdir='" + outputdir + "outputR'"]
 	if config["run_STAR"]:
 		param.append("bigwigdir='" + outputdir + "STARbigwig'")
 	return param
 
-## Shiny
-rule Shiny:
+## shiny
+rule shiny:
 	input:
 		shiny_input,
-		rds = outputdir + "outputR/DRIMSeq_dtu.rds" if config["run_DRIMSeq"] 
+		rds = outputdir + "outputR/DRIMSeq_dtu.rds" if config["run_DRIMSeq"]
 			else outputdir + "outputR/edgeR_dge.rds",
 		script = "scripts/run_render.R",
 		gtf = config["gtf"],
