@@ -55,6 +55,7 @@ suppressPackageStartupMessages({
 generateReport <- function(se, gtffile = NULL, organism = NULL, 
                            bigwigdir = NULL, design = NULL, genesets = NULL, 
                            contrast = NULL, rmdTemplate, outputFile, 
+                           ncores = NULL,
                            outputDir = "./", outputFormat = NULL, 
                            showCode = FALSE, forceOverwrite = FALSE, 
                            knitrProgress = FALSE, quiet = FALSE, 
@@ -146,6 +147,13 @@ generateReport <- function(se, gtffile = NULL, organism = NULL,
     if (!is.null(contrast)) {
         if (!is(contrast, "character")) {
             stop("contrast must be a character string")
+        }
+    }
+
+    ## ncores
+    if (!is.null(ncores)) {
+        if (!is(ncores, "numeric")) {
+            stop("ncores must be numeric")
         }
     }
     

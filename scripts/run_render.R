@@ -42,6 +42,13 @@ if (exists("gtffile")) {
     gtffile <- NULL
 }
 
+if (exists("ncores")) {
+    ncores <- as.numeric(ncores)
+    print(ncores)
+} else {
+    ncores <- 1
+}
+
 if (exists("bigwigdir")) {
     bigwigdir <- normalizePath(bigwigdir)
     print(bigwigdir)
@@ -54,5 +61,5 @@ source("scripts/generate_report.R")
 generateReport(se = se, organism = organism, gtffile = gtffile,
                contrast = contrast, design = design, genesets = genesets, 
                bigwigdir = bigwigdir, rmdTemplate = rmdtemplate, 
-               outputDir = outputdir, outputFile = outputfile, 
+               outputDir = outputdir, outputFile = outputfile, ncores = ncores,
                forceOverwrite = TRUE, showCode = TRUE)
