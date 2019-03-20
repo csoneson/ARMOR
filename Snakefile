@@ -82,6 +82,7 @@ rule pkginstall:
 	  outputdir + "Rout/pkginstall_state.txt"
 	params:
 		flag = config["annotation"],
+		ncores = config["ncores"],
 		organism = config["organism"]
 	priority:
 		50
@@ -90,7 +91,7 @@ rule pkginstall:
 	log:
 		outputdir + "Rout/install_pkgs.Rout"
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args outtxt='{output}' annotation='{params.flag}' organism='{params.organism}'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args outtxt='{output}' ncores='{params.ncores}' annotation='{params.flag}' organism='{params.organism}'" {input.script} {log}'''
 
 ## FastQC on original (untrimmed) files
 rule runfastqc:
@@ -582,6 +583,7 @@ rule DRIMSeq:
 	params:
 		directory = outputdir + "outputR",
 		organism = config["organism"],
+		ncores = config["ncores"],
                 design = config["design"].replace(" ", "") if config["design"] is not None else "",
                 contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else ""
 	log:
@@ -589,7 +591,7 @@ rule DRIMSeq:
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' design='{params.design}' contrast='{params.contrast}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='DRIMSeq_dtu.html'" {input.script} {log}'''
+		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' design='{params.design}' contrast='{params.contrast}' ncores='{params.ncores}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='DRIMSeq_dtu.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## shiny app

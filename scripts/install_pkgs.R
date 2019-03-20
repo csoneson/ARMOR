@@ -6,6 +6,7 @@ for (i in seq_len(length(args))) {
 print(outtxt)
 print(annotation)
 print(organism)
+print(ncores)
 
 (mirror <- getOption("repos"))
 
@@ -23,7 +24,7 @@ usePackage <- function(pkgs) {
     isInstalled <- pkgs %in% installed.packages()[, 1]
     BiocManager::install(pkgs[!isInstalled],
                          update = FALSE, dependencies = TRUE,
-                         lib = .libPaths()[1])
+                         lib = .libPaths()[1], Ncpus=as.integer(ncores))
     
     pkg.load <- lapply(pkgs, FUN = function(x) {
         x[!(x %in% installed.packages()[, "Package"])]
@@ -51,7 +52,7 @@ paths <- .libPaths()
 print(paths)
 
 ## Install packages
-pkgs.use <- c("dplyr", "ggplot2", "tidyr", "remotes", "limma", "edgeR", 
+pkgs.use <- c("dplyr", "ggplot2", "tidyr", "remotes", "limma", "edgeR",
               "S4Vectors", "DRIMSeq", "SingleCellExperiment", "tximeta", "msigdbr")
 
 

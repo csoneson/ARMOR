@@ -136,7 +136,13 @@ expression in RNA-seq data.
 
 ```{r DRIMSeq-calculate-precision}
 set.seed(123)
-d <- dmPrecision(d, design = des, add_uniform = TRUE)
+if(ncores > 1) {
+  bpps <- BiocParallel::MulticoreParam(min(parallel::detectCores(),ncores))
+} else {
+  bpps <- BiocParallel::SerialParam()
+}
+
+d <- dmPrecision(d, design = des, add_uniform = TRUE, BPPARAM = bpps)
 plotPrecision(d)
 ```
 
