@@ -30,7 +30,7 @@ if not os.path.isfile(config["metatxt"]):
   sys.exit("Metadata file " + config["metatxt"] + " does not exist.")
 
 import pandas as pd
-samples = pd.read_table(config["metatxt"])
+samples = pd.read_csv(config["metatxt"], sep='\t')
 
 if not set(['names','type']).issubset(samples.columns):
   sys.exit("Make sure 'names' and 'type' are columns in " + config["metatxt"])
