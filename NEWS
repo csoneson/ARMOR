@@ -1,0 +1,19 @@
+v1.2.2
+======
+o Add sticker to README
+
+v1.2.1
+======
+o Change deprecated pandas.read_table to pandas.read_csv
+
+v1.2.0
+======
+o Add possibility to use multiple cores for DRIMSeq and R package installation
+
+v1.1.0
+======
+o Extend checks of inputs
+
+v1.0.0
+======
+o Initial version
