@@ -90,6 +90,8 @@ rule pkginstall:
 		Renv
 	log:
 		outputdir + "Rout/install_pkgs.Rout"
+	benchmark:
+	  outputdir + "benchmarks/install_pkgs.txt"
 	shell:
 		'''{Rbin} CMD BATCH --no-restore --no-save "--args outtxt='{output}' ncores='{params.ncores}' annotation='{params.flag}' organism='{params.organism}'" {input.script} {log}'''
 
@@ -155,6 +157,8 @@ rule salmonindex:
 		config["salmonindex"] + "/hash.bin"
 	log:
 		outputdir + "logs/salmon_index.log"
+	benchmark:
+	  outputdir + "benchmarks/salmon_index.txt"
 	params:
 		salmonk = config["salmonk"],
 		salmonoutdir = config["salmonindex"],
@@ -183,6 +187,8 @@ rule linkedtxome:
 		install = outputdir + "Rout/pkginstall_state.txt"
 	log:
 		outputdir + "Rout/generate_linkedtxome.Rout"
+	benchmark:
+	  outputdir + "benchmarks/generate_linkedtxome.txt"
 	output:
 		config["salmonindex"] + ".json"
 	params:
@@ -205,6 +211,8 @@ rule starindex:
 		config["STARindex"] + "/chrNameLength.txt"
 	log:
 		outputdir + "logs/STAR_index.log"
+	benchmark:
+	  outputdir + "benchmarks/STAR_index.txt"
 	params:
 		STARindex = config["STARindex"],
 		readlength = config["readlength"]
@@ -230,6 +238,8 @@ rule fastqc:
 		FastQC = outputdir + "FastQC"
 	log:
 		outputdir + "logs/fastqc_{sample}.log"
+	benchmark:
+	  outputdir + "benchmarks/fastqc_{sample}.txt"
 	conda:
 		"envs/environment.yaml"
 	threads:
@@ -248,6 +258,8 @@ rule fastqc2:
 		FastQC = outputdir + "FastQC"
 	log:
 		outputdir + "logs/fastqc_trimmed_{sample}.log"
+	benchmark:
+	  outputdir + "benchmarks/fastqc_trimmed_{sample}.txt"
 	conda:
 		"envs/environment.yaml"
 	threads:
@@ -297,6 +309,8 @@ rule multiqc:
 		MultiQCdir = outputdir + "MultiQC"
 	log:
 		outputdir + "logs/multiqc.log"
+	benchmark:
+	  outputdir + "benchmarks/multiqc.txt"
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -317,6 +331,8 @@ rule trimgaloreSE:
 		FASTQtrimmeddir = outputdir + "FASTQtrimmed"
 	log:
 		outputdir + "logs/trimgalore_{sample}.log"
+	benchmark:
+	  outputdir + "benchmarks/trimgalore_{sample}.txt"
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -334,6 +350,8 @@ rule trimgalorePE:
 		FASTQtrimmeddir = outputdir + "FASTQtrimmed"
 	log:
 		outputdir + "logs/trimgalore_{sample}.log"
+	benchmark:
+	  outputdir + "benchmarks/trimgalore_{sample}.txt"
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -353,6 +371,8 @@ rule salmonSE:
 		outputdir + "salmon/{sample}/quant.sf"
 	log:
 		outputdir + "logs/salmon_{sample}.log"
+	benchmark:
+	  outputdir + "benchmarks/salmon_{sample}.txt"
 	threads:
 		config["ncores"]
 	params:
@@ -377,6 +397,8 @@ rule salmonPE:
 		outputdir + "salmon/{sample}/quant.sf"
 	log:
 		outputdir + "logs/salmon_{sample}.log"
+	benchmark:
+	  outputdir + "benchmarks/salmon_{sample}.txt"
 	threads:
 		config["ncores"]
 	params:
@@ -406,6 +428,8 @@ rule starSE:
 		config["ncores"]
 	log:
 		outputdir + "logs/STAR_{sample}.log"
+	benchmark:
+	  outputdir + "benchmarks/STAR_{sample}.txt"
 	params:
 		STARindex = config["STARindex"],
 		STARdir = outputdir + "STAR"
@@ -428,6 +452,8 @@ rule starPE:
 		config["ncores"]
 	log:
 		outputdir + "logs/STAR_{sample}.log"
+	benchmark:
+	  outputdir + "benchmarks/STAR_{sample}.txt"
 	params:
 		STARindex = config["STARindex"],
 		STARdir = outputdir + "STAR"
@@ -447,6 +473,8 @@ rule staridx:
 		outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai"
 	log:
 		outputdir + "logs/samtools_index_{sample}.log"
+	benchmark:
+	  outputdir + "benchmarks/salmon_index_{sample}.txt"
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -464,6 +492,8 @@ rule bigwig:
 		STARbigwigdir = outputdir + "STARbigwig"
 	log:
 		outputdir + "logs/bigwig_{sample}.log"
+	benchmark:
+	  outputdir + "benchmarks/bigwig_{sample}.txt"
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -489,6 +519,8 @@ rule tximeta:
 		outputdir + "outputR/tximeta_se.rds"
 	log:
 		outputdir + "Rout/tximeta_se.Rout"
+	benchmark:
+	  outputdir + "benchmarks/tximeta_se.txt"
 	params:
 		salmondir = outputdir + "salmon",
 		flag = config["annotation"],
@@ -518,6 +550,8 @@ rule checkinputs:
         outputdir + "Rout/check_input.txt"
     log:
         outputdir + "Rout/check_input.Rout"
+    benchmark:
+        outputdir + "benchmarks/check_input.txt"
     params:
         gtf = config["gtf"],
         genome = config["genome"],
@@ -562,6 +596,8 @@ rule edgeR:
 		genesets = geneset_param
 	log:
 		outputdir + "Rout/run_dge_edgeR.Rout"
+	benchmark:
+	  outputdir + "benchmarks/run_dge_edgeR.txt"
 	conda:
 		Renv
 	shell:
@@ -588,6 +624,8 @@ rule DRIMSeq:
                 contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else ""
 	log:
 		outputdir + "Rout/run_dtu_drimseq.Rout"
+	benchmark:
+	  outputdir + "benchmarks/run_dtu_drimseq.txt"
 	conda:
 		Renv
 	shell:
@@ -624,6 +662,8 @@ rule shiny:
 		p = shiny_params
 	log:
 		outputdir + "Rout/prepare_shiny.Rout"
+	benchmark:
+	  outputdir + "benchmarks/prepare_shiny.txt"
 	conda:
 		Renv
 	shell:
