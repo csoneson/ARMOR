@@ -249,7 +249,7 @@ rule fastqc:
 		"fastqc -o {params.FastQC} -t {threads} {input.fastq}"
 
 ## FastQC, trimmed reads
-rule fastqc2:
+rule fastqctrimmed:
 	input:
 		fastq = outputdir + "FASTQtrimmed/{sample}.fq.gz"
 	output:
@@ -466,7 +466,7 @@ rule starPE:
 		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c"
 
 ## Index bam files
-rule staridx:
+rule bamindex:
 	input:
 		bam = outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
 	output:
