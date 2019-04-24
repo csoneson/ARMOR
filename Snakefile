@@ -158,7 +158,7 @@ rule salmonindex:
 	log:
 		outputdir + "logs/salmon_index.log"
 	benchmark:
-	  outputdir + "benchmarks/salmon_index.txt"
+		outputdir + "benchmarks/salmon_index.txt"
 	params:
 		salmonk = config["salmonk"],
 		salmonoutdir = config["salmonindex"],
@@ -188,7 +188,7 @@ rule linkedtxome:
 	log:
 		outputdir + "Rout/generate_linkedtxome.Rout"
 	benchmark:
-	  outputdir + "benchmarks/generate_linkedtxome.txt"
+		outputdir + "benchmarks/generate_linkedtxome.txt"
 	output:
 		config["salmonindex"] + ".json"
 	params:
@@ -212,7 +212,7 @@ rule starindex:
 	log:
 		outputdir + "logs/STAR_index.log"
 	benchmark:
-	  outputdir + "benchmarks/STAR_index.txt"
+		outputdir + "benchmarks/STAR_index.txt"
 	params:
 		STARindex = config["STARindex"],
 		readlength = config["readlength"]
@@ -239,7 +239,7 @@ rule fastqc:
 	log:
 		outputdir + "logs/fastqc_{sample}.log"
 	benchmark:
-	  outputdir + "benchmarks/fastqc_{sample}.txt"
+		outputdir + "benchmarks/fastqc_{sample}.txt"
 	conda:
 		"envs/environment.yaml"
 	threads:
@@ -259,7 +259,7 @@ rule fastqctrimmed:
 	log:
 		outputdir + "logs/fastqc_trimmed_{sample}.log"
 	benchmark:
-	  outputdir + "benchmarks/fastqc_trimmed_{sample}.txt"
+		outputdir + "benchmarks/fastqc_trimmed_{sample}.txt"
 	conda:
 		"envs/environment.yaml"
 	threads:
@@ -310,7 +310,7 @@ rule multiqc:
 	log:
 		outputdir + "logs/multiqc.log"
 	benchmark:
-	  outputdir + "benchmarks/multiqc.txt"
+		outputdir + "benchmarks/multiqc.txt"
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -332,7 +332,7 @@ rule trimgaloreSE:
 	log:
 		outputdir + "logs/trimgalore_{sample}.log"
 	benchmark:
-	  outputdir + "benchmarks/trimgalore_{sample}.txt"
+		outputdir + "benchmarks/trimgalore_{sample}.txt"
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -351,7 +351,7 @@ rule trimgalorePE:
 	log:
 		outputdir + "logs/trimgalore_{sample}.log"
 	benchmark:
-	  outputdir + "benchmarks/trimgalore_{sample}.txt"
+		outputdir + "benchmarks/trimgalore_{sample}.txt"
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -372,7 +372,7 @@ rule salmonSE:
 	log:
 		outputdir + "logs/salmon_{sample}.log"
 	benchmark:
-	  outputdir + "benchmarks/salmon_{sample}.txt"
+		outputdir + "benchmarks/salmon_{sample}.txt"
 	threads:
 		config["ncores"]
 	params:
@@ -398,7 +398,7 @@ rule salmonPE:
 	log:
 		outputdir + "logs/salmon_{sample}.log"
 	benchmark:
-	  outputdir + "benchmarks/salmon_{sample}.txt"
+		outputdir + "benchmarks/salmon_{sample}.txt"
 	threads:
 		config["ncores"]
 	params:
@@ -429,7 +429,7 @@ rule starSE:
 	log:
 		outputdir + "logs/STAR_{sample}.log"
 	benchmark:
-	  outputdir + "benchmarks/STAR_{sample}.txt"
+		outputdir + "benchmarks/STAR_{sample}.txt"
 	params:
 		STARindex = config["STARindex"],
 		STARdir = outputdir + "STAR"
@@ -453,7 +453,7 @@ rule starPE:
 	log:
 		outputdir + "logs/STAR_{sample}.log"
 	benchmark:
-	  outputdir + "benchmarks/STAR_{sample}.txt"
+		outputdir + "benchmarks/STAR_{sample}.txt"
 	params:
 		STARindex = config["STARindex"],
 		STARdir = outputdir + "STAR"
@@ -474,7 +474,7 @@ rule bamindex:
 	log:
 		outputdir + "logs/samtools_index_{sample}.log"
 	benchmark:
-	  outputdir + "benchmarks/salmon_index_{sample}.txt"
+		outputdir + "benchmarks/samtools_index_{sample}.txt"
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -493,7 +493,7 @@ rule bigwig:
 	log:
 		outputdir + "logs/bigwig_{sample}.log"
 	benchmark:
-	  outputdir + "benchmarks/bigwig_{sample}.txt"
+		outputdir + "benchmarks/bigwig_{sample}.txt"
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -520,7 +520,7 @@ rule tximeta:
 	log:
 		outputdir + "Rout/tximeta_se.Rout"
 	benchmark:
-	  outputdir + "benchmarks/tximeta_se.txt"
+		outputdir + "benchmarks/tximeta_se.txt"
 	params:
 		salmondir = outputdir + "salmon",
 		flag = config["annotation"],
@@ -551,7 +551,7 @@ rule checkinputs:
     log:
         outputdir + "Rout/check_input.Rout"
     benchmark:
-        outputdir + "benchmarks/check_input.txt"
+    	outputdir + "benchmarks/check_input.txt"
     params:
         gtf = config["gtf"],
         genome = config["genome"],
@@ -566,8 +566,7 @@ rule checkinputs:
         fqext1 = str(config["fqext1"]),
         fqext2 = str(config["fqext2"]),
         run_camera = str(config["run_camera"]),
-	organism = config["organism"]
-        
+        organism = config["organism"]    
     conda:
 	    Renv
     shell:
@@ -597,7 +596,7 @@ rule edgeR:
 	log:
 		outputdir + "Rout/run_dge_edgeR.Rout"
 	benchmark:
-	  outputdir + "benchmarks/run_dge_edgeR.txt"
+		outputdir + "benchmarks/run_dge_edgeR.txt"
 	conda:
 		Renv
 	shell:
@@ -625,7 +624,7 @@ rule DRIMSeq:
 	log:
 		outputdir + "Rout/run_dtu_drimseq.Rout"
 	benchmark:
-	  outputdir + "benchmarks/run_dtu_drimseq.txt"
+		outputdir + "benchmarks/run_dtu_drimseq.txt"
 	conda:
 		Renv
 	shell:
@@ -663,7 +662,7 @@ rule shiny:
 	log:
 		outputdir + "Rout/prepare_shiny.Rout"
 	benchmark:
-	  outputdir + "benchmarks/prepare_shiny.txt"
+		outputdir + "benchmarks/prepare_shiny.txt"
 	conda:
 		Renv
 	shell:
