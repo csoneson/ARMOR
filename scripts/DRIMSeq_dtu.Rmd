@@ -137,7 +137,7 @@ expression in RNA-seq data.
 ```{r DRIMSeq-calculate-precision}
 set.seed(123)
 if(ncores > 1) {
-  bpps <- BiocParallel::MulticoreParam(ncores)
+  bpps <- BiocParallel::MulticoreParam(min(parallel::detectCores(),ncores))
 } else {
   bpps <- BiocParallel::SerialParam()
 }
