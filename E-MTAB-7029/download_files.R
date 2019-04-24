@@ -1,3 +1,9 @@
+# run this script within a reasonably-named current working directory
+# (e.g., "E-MTAB-7029" as is done here)
+
+# create directories
+dir.create("reference")
+dir.create("FASTQ")
 
 # download files and make metadata file
 md <- read.table("https://www.ebi.ac.uk/arrayexpress/files/E-MTAB-7029/E-MTAB-7029.sdrf.txt", 
