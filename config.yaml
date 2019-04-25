@@ -59,9 +59,9 @@ contrast: cellineN61311-cellineN052611,cellineN052611-cellineN61311
 ## Only required if variable "run_camera: is True (see below).
 genesets: H,C5
 
-## The maximal number of cores to use for FastQC, STAR and Salmon.
+## The maximal number of cores to use for FastQC, STAR, Salmon and DRIMSeq.
 ## Note that the actual number of cores available to Snakemake is determined by
-## the arguments given when it is invoked.
+## the --cores argument when it is invoked.
 ncores: 1
 ##---------------------------------------------------------------------------------------------
 
