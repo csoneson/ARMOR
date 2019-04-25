@@ -627,6 +627,8 @@ rule DRIMSeq:
 		outputdir + "benchmarks/run_dtu_drimseq.txt"
 	conda:
 		Renv
+	threads:
+		config["ncores"]
 	shell:
 		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' design='{params.design}' contrast='{params.contrast}' ncores='{params.ncores}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='DRIMSeq_dtu.html'" {input.script} {log}'''
 
