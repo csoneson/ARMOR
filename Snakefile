@@ -498,7 +498,7 @@ rule bigwig:
 		"envs/environment.yaml"
 	shell:
 		"echo 'bedtools version:\n' > {log}; bedtools --version >> {log}; "
-		"bedtools genomecov -split -ibam {input.bam} -bg | sort -k1,1 -k2,2n > "
+		"bedtools genomecov -split -ibam {input.bam} -bg | LC_COLLATE=C sort -k1,1 -k2,2n > "
 		"{params.STARbigwigdir}/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph; "
 		"bedGraphToBigWig {params.STARbigwigdir}/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph "
 		"{input.chrl} {output}; rm -f {params.STARbigwigdir}/{wildcards.sample}_Aligned.sortedByCoord.out.bedGraph"
