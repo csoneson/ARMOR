@@ -147,14 +147,16 @@ Finally we add gene annotation information.
 cts <- assay(sg, "counts")
 normMat <- assay(sg, "length")
 normMat <- normMat/exp(rowMeans(log(normMat)))
+normCts <- cts/normMat
 
 ## Generate offset matrix
-o <- log(edgeR::calcNormFactors(cts/normMat)) + 
-  log(colSums(cts/normMat))
+eff.lib <- edgeR::calcNormFactors(normCts) * colSums(normCts)
+normMat <- sweep(normMat, 2, eff.lib, "*")
+normMat <- log(normMat)
 
 ## Create DGEList object and add offsets
 dge0 <- edgeR::DGEList(cts)
-dge0 <- edgeR::scaleOffset(dge0, offset = t(t(log(normMat)) + o))
+dge0 <- edgeR::scaleOffset(dge0, normMat)
 dge0 <- edgeR::calcNormFactors(dge0)
 
 dge0$genes <- as.data.frame(rowRanges(sg))
@@ -172,7 +174,15 @@ We add the logCPMs to one of the fields (or assay) of the first gene-level
 object again to export the results of all the genes we started with.
 
 ```{r edgeR-add-logcpm}
-logcpms <- edgeR::cpm(dge0, log = TRUE, prior.count = 2)
+# Here we use the approach from csaw::calculateCPM(), in order to account for
+# the average transcript length offsets in the CPM calculations
+off.mat <- dge0$offset
+new.offset <- edgeR::scaleOffset(dge0$samples$lib.size, off.mat)
+
+ap <- edgeR::addPriorCount(dge0$counts, offset = new.offset, prior.count = 2)
+logcpms <- log2(ap$y) - as.matrix(ap$offset)/log(2) + log2(1e6)
+dimnames(logcpms) <- dimnames(dge0$counts)
+
 stopifnot(all(rownames(logcpms) == rownames(sg)),
           all(colnames(logcpms) == colnames(sg)))
 assay(sg, "logcpm") <- logcpms
