@@ -404,10 +404,10 @@ cat("# Perform tests
 Next, we perform the gene set analysis. We consider only gene sets where the 
 number of genes shared with the data set is not too small and not too large. 
 `camera` is a competitive gene set test that accounts for correlations among 
-the genes within a gene set. ")
+the genes within a gene set.")
 ```
 
-```{r camera-perform-tests, eval = !is.null(genesets), include = !is.null(genesets)}
+```{r camera-filter-gene-sets, eval = !is.null(genesets), include = !is.null(genesets)}
 minSize <- 3
 maxSize <- 500
 
@@ -421,14 +421,36 @@ indexList <- limma::ids2indices(
 ## Filter out too small or too large gene sets
 gsSizes <- vapply(indexList, length, 0)
 indexList <- indexList[gsSizes >= minSize & gsSizes <= maxSize]
+```
 
+```{r camera-check-indexList-length, eval = !is.null(genesets), include = FALSE}
+## Check if the index list is empty after filtering
+if (length(indexList) == 0){
+  genesets <- NULL
+  empty <- TRUE
+} else {
+  empty <- FALSE
+}
+```
+
+```{r camera-print-empty-list-message, echo = FALSE, results = 'asis', eval = empty}
+cat("**NOTE:**
+The index list is empty after filtering and `camera` cannot be run. Either try 
+different gene categories, try different filtering parameters or disable the 
+gene set analysis in the `config.yaml` file by setting `run_camera: False`.")
+```
+
+
+
+```{r camera-perform-tests, eval = !is.null(genesets), include = !is.null(genesets)}
 camera_res <- lapply(contrasts, function(cm) {
     camera(dge, index = indexList, design = des, contrast = cm, 
            inter.gene.cor = NA)
 })
 ```
 
-```{r camera-text3, echo= FALSE, results = 'asis', eval = !is.null(genesets)}
+
+```{r camera-text3, echo = FALSE, results = 'asis', eval = !is.null(genesets)}
 cat("# Write gene set analysis results to text files
 
 The results from `camera` are written to a separate text file for each tested 
