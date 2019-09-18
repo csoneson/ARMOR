@@ -1,3 +1,8 @@
+v1.3.1
+======
+o Adjust code for the latest version 7.0.1 of the msigdbr R package
+o Fix bug to make sure that camera is not run with an empty gene set list
+
 v1.3.0
 ======
 o Change CPM calculations in edgeR_dge.Rmd to account for average transcript length offsets, using the approach from csaw::calculateCPM()
