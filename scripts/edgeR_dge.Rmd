@@ -393,8 +393,9 @@ and select which ones to include in the analysis.")
 ```
 
 ```{r camera-load-genesets, eval = !is.null(genesets), include = !is.null(genesets)}
-m_df <- msigdbr(species = organism,
-                category = genesets)
+## Retrieve gene sets and combine in a tibble
+m_df <- bind_rows(lapply(genesets, 
+                         function(x) msigdbr(species = organism, category = x)))
 ```
 
 ```{r camera-text2, echo= FALSE, results = 'asis', eval = !is.null(genesets)}
