@@ -29,13 +29,13 @@ install:
 script:
   - source activate snakemake
   ## run the workflow
+  - travis_wait 50 snakemake --use-conda pkginstall
   - snakemake --use-conda checkinputs
   - snakemake --use-conda runsalmonquant
-  - travis_wait 50 snakemake --use-conda pkginstall
 
 ## Print out the R log files
 after_script:
+  - tail example_data/output/Rout/install_pkgs.Rout
   - cat example_data_output/Rout/check_input.txt"
   - tail example_data/output/salmon/SRR1039513/quant.sf
-  - tail example_data/output/Rout/install_pkgs.Rout
   
