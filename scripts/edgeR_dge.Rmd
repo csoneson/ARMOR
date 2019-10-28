@@ -433,7 +433,7 @@ if (length(indexList) == 0){
 }
 ```
 
-```{r camera-print-empty-list-message, echo = FALSE, results = 'asis', eval = empty}
+```{r camera-print-empty-list-message, echo = FALSE, results = 'asis', eval = !is.null(genesets) && empty}
 cat("**NOTE:**
 The index list is empty after filtering and `camera` cannot be run. Either try 
 different gene categories, try different filtering parameters or disable the 

@@ -1,3 +1,7 @@
+v1.3.2
+======
+o Fix small bug in edgeR script, triggered when no gene sets were provided
+
 v1.3.1
 ======
 o Adjust code for the latest version 7.0.1 of the msigdbr R package
