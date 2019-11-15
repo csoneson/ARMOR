@@ -154,7 +154,7 @@ rule salmonindex:
 	input:
 		txome = config["txome"]
 	output:
-		config["salmonindex"] + "/hash.bin"
+		config["salmonindex"] + "/versionInfo.json"
 	log:
 		outputdir + "logs/salmon_index.log"
 	benchmark:
@@ -182,7 +182,7 @@ rule linkedtxome:
 	input:
 		txome = config["txome"],
 		gtf = config["gtf"],
-		salmonidx = config["salmonindex"] + "/hash.bin",
+		salmonidx = config["salmonindex"] + "/versionInfo.json",
 		script = "scripts/generate_linkedtxome.R",
 		install = outputdir + "Rout/pkginstall_state.txt"
 	log:
@@ -365,7 +365,7 @@ rule trimgalorePE:
 # Estimate abundances with Salmon
 rule salmonSE:
 	input:
-		index = config["salmonindex"] + "/hash.bin",
+		index = config["salmonindex"] + "/versionInfo.json",
 		fastq = outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}." + str(config["fqsuffix"]) + ".gz"
 	output:
 		outputdir + "salmon/{sample}/quant.sf"
@@ -390,7 +390,7 @@ rule salmonSE:
 
 rule salmonPE:
 	input:
-		index = config["salmonindex"] + "/hash.bin",
+		index = config["salmonindex"] + "/versionInfo.json",
 		fastq1 = outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext1"]) + "_val_1.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_" + str(config["fqext1"]) + "." + str(config["fqsuffix"]) + ".gz",
 		fastq2 = outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext2"]) + "_val_2.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_" + str(config["fqext2"]) + "." + str(config["fqsuffix"]) + ".gz"
 	output:
@@ -512,7 +512,7 @@ rule tximeta:
 	    outputdir + "Rout/pkginstall_state.txt",
 		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
 		metatxt = config["metatxt"],
-		salmonidx = config["salmonindex"] + "/hash.bin",
+		salmonidx = config["salmonindex"] + "/versionInfo.json",
 		json = config["salmonindex"] + ".json",
 		script = "scripts/run_tximeta.R"
 	output:
