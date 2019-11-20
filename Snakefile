@@ -160,7 +160,8 @@ rule salmonindex:
 	benchmark:
 		outputdir + "benchmarks/salmon_index.txt"
 	params:
-		salmonk = config["salmonk"],
+		#salmonk = config["salmonk"],
+		salmonextraparams = config["additional_salmon_index"],
 		salmonoutdir = config["salmonindex"],
 		anno = config["annotation"]
 	conda:
@@ -169,11 +170,11 @@ rule salmonindex:
 	  """
 	  if [ {params.anno} == "Gencode" ]; then
       echo 'Salmon version:\n' > {log}; salmon --version >> {log};
-  	  salmon index -t {input.txome} -k {params.salmonk} -i {params.salmonoutdir} --gencode
+  	  salmon index -t {input.txome} -i {params.salmonoutdir} --gencode {params.salmonextraparams}
 
     else
   	  echo 'Salmon version:\n' > {log}; salmon --version >> {log};
-      salmon index -t {input.txome} -k {params.salmonk} -i {params.salmonoutdir}
+      salmon index -t {input.txome} -i {params.salmonoutdir} {params.salmonextraparams}
     fi
     """
 
@@ -377,16 +378,14 @@ rule salmonSE:
 		config["ncores"]
 	params:
 		salmonindex = config["salmonindex"],
-		fldMean = config["fldMean"],
-		fldSD = config["fldSD"],
-		salmondir = outputdir + "salmon"
+		salmondir = outputdir + "salmon",
+		salmonextraparams = config["additional_salmon_quant"],
 	conda:
 		"envs/environment.yaml"
 	shell:
 		"echo 'Salmon version:\n' > {log}; salmon --version >> {log}; "
 		"salmon quant -i {params.salmonindex} -l A -r {input.fastq} "
-		"-o {params.salmondir}/{wildcards.sample} --seqBias --gcBias "
-		"--fldMean {params.fldMean} --fldSD {params.fldSD} -p {threads}"
+		"-o {params.salmondir}/{wildcards.sample} -p {threads} {params.salmonextraparams}"
 
 rule salmonPE:
 	input:
@@ -403,16 +402,14 @@ rule salmonPE:
 		config["ncores"]
 	params:
 		salmonindex = config["salmonindex"],
-		fldMean = config["fldMean"],
-		fldSD = config["fldSD"],
+		salmonextraparams = config["additional_salmon_quant"],
 		salmondir = outputdir + "salmon"
 	conda:
 		"envs/environment.yaml"
 	shell:
 		"echo 'Salmon version:\n' > {log}; salmon --version >> {log}; "
 		"salmon quant -i {params.salmonindex} -l A -1 {input.fastq1} -2 {input.fastq2} "
-		"-o {params.salmondir}/{wildcards.sample} --seqBias --gcBias "
-		"--fldMean {params.fldMean} --fldSD {params.fldSD} -p {threads}"
+		"-o {params.salmondir}/{wildcards.sample} -p {threads} {params.salmonextraparams}"
 
 ## ------------------------------------------------------------------------------------ ##
 ## STAR mapping
