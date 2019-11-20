@@ -29,17 +29,22 @@ STARindex: example_data/reference/STARIndex/Homo_sapiens.GRCh38.93.STAR.idx
 ##--------------------------------------------------------------------------------------------
 
 
-## Additional Salmon parameters (only edit if you know what you're doing!)
+## Additional Salmon parameters
+## Here, you can specify any optional parameters for the index building and/or 
+## abundance quantification with Salmon. The following arguments are automatically populated 
+## based on the arguments specified elsewhere, and should NOT be specified here:
+## Indexing: transcriptome input file, index directory, gencode flag
+## Quantification: library type, fastq files, index directory, output directory, number of cores
 ##--------------------------------------------------------------------------------------------
 ## Add or remove parameters inside the ""
 additional_salmon_index: "-k 31"
 
 ## Add or remove parameters inside the ""
-## We specifcy Mean and standard deviation of the fragment length distribution, for use with Salmon. 
+## We specify the mean and standard deviation of the fragment length distribution, for use with Salmon. 
 ## This is important to specify for single-end reads.
 ## For paired-end reads, these values will define the prior, which is then updated 
 ## based on the observed fragment lengths.
-additional_salmon_quant: "--seqBias --gcBias --fldMean 250 --fldSD 250"
+additional_salmon_quant: "--seqBias --gcBias --fldMean 250 --fldSD 25"
 ##--------------------------------------------------------------------------------------------
 
 
