@@ -8,9 +8,12 @@ name: snakemake-run
 
 jobs:
   snakemake-run:
-    - uses: snakemake/snakemake-github-action@v1.4.2
-      with:
-        directory: '.test'
-        snakefile: 'Snakefile'
-        args: '--use-conda'
-        stagein: '' # additional preliminary commands to run (can be multiline)
+    name: run snakemake
+    runs-on: ubuntu-latest
+    steps:
+      - uses: snakemake/snakemake-github-action@v1.4.2
+        with:
+          directory: '.test'
+          snakefile: 'Snakefile'
+          args: '--use-conda'
+          stagein: '' # additional preliminary commands to run (can be multiline)
