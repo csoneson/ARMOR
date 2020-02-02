@@ -1,0 +1,17 @@
+on:
+  push:
+  pull_request:
+    branches:
+      - master
+
+name: snakemake-run
+
+jobs:
+  snakemake-run:
+    steps:
+      - uses: snakemake/snakemake-github-action@v1.4.0
+        with:
+          directory: '.'
+          snakefile: 'Snakefile'
+          args: '--use-conda'
+          stagein: '' # additional preliminary commands to run (can be multiline)
