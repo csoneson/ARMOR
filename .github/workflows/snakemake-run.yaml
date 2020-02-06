@@ -11,9 +11,10 @@ jobs:
     name: run snakemake
     runs-on: ubuntu-latest
     steps:
-      - uses: snakemake/snakemake-github-action@v1.4.2
-        with:
-          directory: '.test'
-          snakefile: 'workflow/Snakefile'
-          args: '--use-conda'
-          stagein: '' # additional preliminary commands to run (can be multiline)
+      - uses: actions/checkout@v1
+      - name: install snakemake and run workflow
+        run: |
+          source /usr/share/miniconda/etc/profile.d/conda.sh
+          conda activate base
+          conda install --yes -c bioconda -c conda-forge snakemake=5.8.1
+          snakemake --use-conda checkinputs
