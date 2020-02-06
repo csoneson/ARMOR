@@ -16,7 +16,7 @@ jobs:
         os: [ubuntu-latest, macos-latest]
         include:
         - os: macos-latest
-          condafile: /Users/runner/miniconda/etc/profile.d/conda.sh
+          condafile: $HOME/miniconda/etc/profile.d/conda.sh
         - os: ubuntu-latest
           condafile: /usr/share/miniconda/etc/profile.d/conda.sh
     steps:
