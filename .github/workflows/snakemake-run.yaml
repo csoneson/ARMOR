@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: install snakemake and run workflow
         run: |
-          echo which conda
+          ls $HOME
           source ${{ matrix.condafile }}
           conda activate base
           conda update -n base -c defaults conda
