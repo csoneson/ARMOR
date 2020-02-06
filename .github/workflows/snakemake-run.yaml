@@ -16,14 +16,14 @@ jobs:
         os: [macos-latest]
         include:
         - os: macos-latest
-          condafile: $HOME/miniconda/etc/profile.d/conda.sh
+          condafile: $HOME/runners/miniconda/etc/profile.d/conda.sh
         - os: ubuntu-latest
           condafile: /usr/share/miniconda/etc/profile.d/conda.sh
     steps:
       - uses: actions/checkout@v2
       - name: install snakemake and run workflow
         run: |
-          ls $HOME
+          ls $HOME/runners
           source ${{ matrix.condafile }}
           conda activate base
           conda update -n base -c defaults conda
