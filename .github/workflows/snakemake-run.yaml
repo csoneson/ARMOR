@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [macos-latest]
         include:
         - os: macos-latest
           condafile: $HOME/miniconda/etc/profile.d/conda.sh
@@ -23,13 +23,13 @@ jobs:
       - uses: actions/checkout@v2
       - name: install snakemake and run workflow
         run: |
-          which conda
+          echo which conda
           source ${{ matrix.condafile }}
           conda activate base
           conda update -n base -c defaults conda
           conda install --yes -c bioconda -c conda-forge snakemake=5.8.1
-          mkdir -p ~/.R
-          echo -e 'MAKEFLAGS = -j8' > ~/.R/Makevars
-          echo 'options(Ncpus = 8)' > ~/.Rprofile
+          mkdir -p $HOME/.R
+          echo -e 'MAKEFLAGS = -j8' > $HOME/.R/Makevars
+          echo 'options(Ncpus = 8)' > $HOME/.Rprofile
           snakemake --use-conda
 
