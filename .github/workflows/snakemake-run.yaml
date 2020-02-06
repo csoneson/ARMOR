@@ -16,7 +16,7 @@ jobs:
         os: [macos-latest]
         include:
         - os: macos-latest
-          condafile: $HOME/miniconda/etc/profile.d/conda.sh
+          condafile: /usr/local/miniconda/etc/profile.d/conda.sh
         - os: ubuntu-latest
           condafile: /usr/share/miniconda/etc/profile.d/conda.sh
     steps:
@@ -24,7 +24,7 @@ jobs:
       - name: install snakemake and run workflow
         run: |
           echo $CONDA
-          source ${{ matrix.condafile }}
+          source $CONDA/etc/profile.d/conda.sh
           conda activate base
           conda update -n base -c defaults conda
           conda install --yes -c bioconda -c conda-forge snakemake=5.8.1
