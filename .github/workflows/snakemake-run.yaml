@@ -25,8 +25,9 @@ jobs:
         run: |
           echo $CONDA
           source $CONDA/etc/profile.d/conda.sh
-          conda activate base
-          conda update -n base -c defaults conda
+          conda create -n snakemake
+          conda activate snakemake
+          conda update -n snakemake -c defaults conda
           conda install --yes -c bioconda -c conda-forge snakemake=5.8.1
           mkdir -p $HOME/.R
           echo -e 'MAKEFLAGS = -j8' > $HOME/.R/Makevars
