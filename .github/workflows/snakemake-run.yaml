@@ -9,12 +9,20 @@ name: snakemake-run
 jobs:
   snakemake-run:
     name: run snakemake
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v1
       - name: install snakemake and run workflow
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate base
+          conda update -n base -c defaults conda
           conda install --yes -c bioconda -c conda-forge snakemake=5.8.1
+          mkdir -p ~/.R
+          echo -e 'MAKEFLAGS = -j8' > ~/.R/Makevars
+          echo 'options(Ncpus = 8)' > ~/.Rprofile
           snakemake --use-conda
