@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest]
+        os: [macos-latest, ubuntu-latest]
         include:
         - os: macos-latest
           condafile: /usr/local/miniconda/etc/profile.d/conda.sh
