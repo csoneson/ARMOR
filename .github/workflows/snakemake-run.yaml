@@ -31,4 +31,8 @@ jobs:
           echo -e 'MAKEFLAGS = -j8' > $HOME/.R/Makevars
           echo 'options(Ncpus = 8)' > $HOME/.Rprofile
           snakemake --use-conda
-
+      - uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: install_pkgs_rout
+          path: example_data/output/Rout/install_pkgs.Rout
