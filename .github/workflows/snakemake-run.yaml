@@ -16,7 +16,9 @@ jobs:
         os: [macos-latest, ubuntu-latest]
         include:
         - os: macos-latest
+          condadir: $CONDA
         - os: ubuntu-latest
+          condadir: $CONDA
     steps:
       - uses: actions/checkout@v2
       - name: install snakemake and run workflow
