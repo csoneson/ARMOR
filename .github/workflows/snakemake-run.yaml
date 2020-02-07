@@ -25,6 +25,7 @@ jobs:
         run: |
           source $CONDA/etc/profile.d/conda.sh
           sudo conda update -n base -c defaults conda
+          conda activate base
           sudo conda install --yes -c bioconda -c conda-forge snakemake=5.8.1
           mkdir -p $HOME/.R
           echo -e 'MAKEFLAGS = -j8' > $HOME/.R/Makevars
