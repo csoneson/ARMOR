@@ -25,8 +25,7 @@ jobs:
         run: |
           source $CONDA/etc/profile.d/conda.sh
           sudo conda update -n base -c defaults conda
-          conda create -n snakemake -c bioconda -c conda-forge snakemake=5.8.1
-          conda activate snakemake
+          sudo conda install --yes -c bioconda -c conda-forge snakemake=5.8.1
           mkdir -p $HOME/.R
           echo -e 'MAKEFLAGS = -j8' > $HOME/.R/Makevars
           echo 'options(Ncpus = 8)' > $HOME/.Rprofile

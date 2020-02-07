@@ -1,5 +1,6 @@
 # ARMOR workflow <img src="img/ARMOR.png" width="200" align="right" />
 [![Build Status](https://travis-ci.com/csoneson/ARMOR.svg?branch=master)](https://travis-ci.com/csoneson/ARMOR)
+![snakemake-run](https://github.com/csoneson/ARMOR/workflows/snakemake-run/badge.svg)
 
 **ARMOR** (**A**utomated **R**eproducible **MO**dular **R**NA-seq) is a [Snakemake workflow](https://snakemake.readthedocs.io/en/stable/index.html), aimed at performing a typical RNA-seq workflow in a reproducible, automated, and partially contained manner. It is implemented such that alternative or similar analysis can be added or removed. 
 
