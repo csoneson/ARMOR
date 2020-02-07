@@ -16,15 +16,13 @@ jobs:
         os: [macos-latest, ubuntu-latest]
         include:
         - os: macos-latest
-          condafile: /usr/local/miniconda/etc/profile.d/conda.sh
         - os: ubuntu-latest
-          condafile: /usr/share/miniconda/etc/profile.d/conda.sh
     steps:
       - uses: actions/checkout@v2
       - name: install snakemake and run workflow
         run: |
-          echo $CONDA
           source $CONDA/etc/profile.d/conda.sh
+          conda update -n base -c defaults conda
           conda create -n snakemake -c bioconda -c conda-forge snakemake=5.8.1
           conda activate snakemake
           conda install --yes -c bioconda -c conda-forge snakemake=5.8.1
