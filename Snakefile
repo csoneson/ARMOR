@@ -161,9 +161,9 @@ rule salmonindex:
 		outputdir + "benchmarks/salmon_index.txt"
 	params:
 		#salmonk = config["salmonk"],
-		salmonextraparams = config["additional_salmon_index"],
 		salmonoutdir = config["salmonindex"],
-		anno = config["annotation"]
+		anno = config["annotation"],
+		salmonextraparams = config["additional_salmon_index"]
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -216,7 +216,8 @@ rule starindex:
 		outputdir + "benchmarks/STAR_index.txt"
 	params:
 		STARindex = config["STARindex"],
-		readlength = config["readlength"]
+		readlength = config["readlength"],
+		starextraparams = config["additional_star_index"]
 	conda:
 		"envs/environment.yaml"
 	threads:
@@ -224,7 +225,8 @@ rule starindex:
 	shell:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
 		"STAR --runMode genomeGenerate --runThreadN {threads} --genomeDir {params.STARindex} "
-		"--genomeFastaFiles {input.genome} --sjdbGTFfile {input.gtf} --sjdbOverhang {params.readlength}"
+		"--genomeFastaFiles {input.genome} --sjdbGTFfile {input.gtf} --sjdbOverhang {params.readlength} "
+		"{params.starextraparams}"
 
 ## ------------------------------------------------------------------------------------ ##
 ## Quality control
@@ -379,7 +381,7 @@ rule salmonSE:
 	params:
 		salmonindex = config["salmonindex"],
 		salmondir = outputdir + "salmon",
-		salmonextraparams = config["additional_salmon_quant"],
+		salmonextraparams = config["additional_salmon_quant"]
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -402,8 +404,8 @@ rule salmonPE:
 		config["ncores"]
 	params:
 		salmonindex = config["salmonindex"],
-		salmonextraparams = config["additional_salmon_quant"],
-		salmondir = outputdir + "salmon"
+		salmondir = outputdir + "salmon",
+		salmonextraparams = config["additional_salmon_quant"]
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -429,14 +431,16 @@ rule starSE:
 		outputdir + "benchmarks/STAR_{sample}.txt"
 	params:
 		STARindex = config["STARindex"],
-		STARdir = outputdir + "STAR"
+		STARdir = outputdir + "STAR",
+		starextraparams = config["additional_star_align"]
 	conda:
 		"envs/environment.yaml"
 	shell:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
 		"STAR --genomeDir {params.STARindex} --readFilesIn {input.fastq} "
 		"--runThreadN {threads} --outFileNamePrefix {params.STARdir}/{wildcards.sample}/{wildcards.sample}_ "
-		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c"
+		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c "
+		"{params.starextraparams}"
 
 rule starPE:
 	input:
@@ -453,14 +457,16 @@ rule starPE:
 		outputdir + "benchmarks/STAR_{sample}.txt"
 	params:
 		STARindex = config["STARindex"],
-		STARdir = outputdir + "STAR"
+		STARdir = outputdir + "STAR",
+		starextraparams = config["additional_star_align"]
 	conda:
 		"envs/environment.yaml"
 	shell:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
 		"STAR --genomeDir {params.STARindex} --readFilesIn {input.fastq1} {input.fastq2} "
 		"--runThreadN {threads} --outFileNamePrefix {params.STARdir}/{wildcards.sample}/{wildcards.sample}_ "
-		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c"
+		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c "
+		"{params.starextraparams}"
 
 ## Index bam files
 rule bamindex:

@@ -28,6 +28,16 @@ salmonindex: example_data/reference/SalmonIndex/Homo_sapiens.GRCh38.93.sidx
 STARindex: example_data/reference/STARIndex/Homo_sapiens.GRCh38.93.STAR.idx
 ##--------------------------------------------------------------------------------------------
 
+## Additional STAR parameters
+## Here, you can specify any optional parameters for the index building and/or alignment 
+## with STAR. The following arguments are automatically populated and should NOT be 
+## specified here:
+## Indexing: runMode, runThreadN, genomeDir, genomeFastaFiles, sjdbGTFfile, sjdbOverhang
+## Alignment: runMode, genomeDir, readFilesIn, runThreadN, outFileNamePrefix, outSAMtype, readFilesCommand
+##--------------------------------------------------------------------------------------------
+## Add or remove parameters inside the ""
+additional_star_index: ""
+additional_star_align: ""
 
 ## Additional Salmon parameters
 ## Here, you can specify any optional parameters for the index building and/or 
