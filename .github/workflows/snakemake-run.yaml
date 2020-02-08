@@ -29,10 +29,11 @@ jobs:
           sudo conda install --yes -c bioconda -c conda-forge snakemake=5.8.1
           export CONDA_BUILD_SYSROOT=/
       - name: install xcode
-        if: runner.os == 'macos-latest'
+        if: runner.os == 'macOS'
         run: sudo xcode-select --install
       - name: run workflow
         run: |
+          conda activate base
           mkdir -p $HOME/.R
           echo -e 'MAKEFLAGS = -j8' > $HOME/.R/Makevars
           echo 'options(Ncpus = 8)' > $HOME/.Rprofile
