@@ -1,3 +1,7 @@
+v1.4.0
+======
+o Add possibility to provide additional arguments to STAR and Salmon
+
 v1.3.2
 ======
 o Fix small bug in edgeR script, triggered when no gene sets were provided
