@@ -154,26 +154,27 @@ rule salmonindex:
 	input:
 		txome = config["txome"]
 	output:
-		config["salmonindex"] + "/hash.bin"
+		config["salmonindex"] + "/versionInfo.json"
 	log:
 		outputdir + "logs/salmon_index.log"
 	benchmark:
 		outputdir + "benchmarks/salmon_index.txt"
 	params:
-		salmonk = config["salmonk"],
+		#salmonk = config["salmonk"],
 		salmonoutdir = config["salmonindex"],
-		anno = config["annotation"]
+		anno = config["annotation"],
+		salmonextraparams = config["additional_salmon_index"]
 	conda:
 		"envs/environment.yaml"
 	shell:
 	  """
 	  if [ {params.anno} == "Gencode" ]; then
       echo 'Salmon version:\n' > {log}; salmon --version >> {log};
-  	  salmon index -t {input.txome} -k {params.salmonk} -i {params.salmonoutdir} --gencode --type quasi
+  	  salmon index -t {input.txome} -i {params.salmonoutdir} --gencode {params.salmonextraparams}
 
     else
   	  echo 'Salmon version:\n' > {log}; salmon --version >> {log};
-      salmon index -t {input.txome} -k {params.salmonk} -i {params.salmonoutdir} --type quasi
+      salmon index -t {input.txome} -i {params.salmonoutdir} {params.salmonextraparams}
     fi
     """
 
@@ -182,7 +183,7 @@ rule linkedtxome:
 	input:
 		txome = config["txome"],
 		gtf = config["gtf"],
-		salmonidx = config["salmonindex"] + "/hash.bin",
+		salmonidx = config["salmonindex"] + "/versionInfo.json",
 		script = "scripts/generate_linkedtxome.R",
 		install = outputdir + "Rout/pkginstall_state.txt"
 	log:
@@ -215,7 +216,8 @@ rule starindex:
 		outputdir + "benchmarks/STAR_index.txt"
 	params:
 		STARindex = config["STARindex"],
-		readlength = config["readlength"]
+		readlength = config["readlength"],
+		starextraparams = config["additional_star_index"]
 	conda:
 		"envs/environment.yaml"
 	threads:
@@ -223,7 +225,8 @@ rule starindex:
 	shell:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
 		"STAR --runMode genomeGenerate --runThreadN {threads} --genomeDir {params.STARindex} "
-		"--genomeFastaFiles {input.genome} --sjdbGTFfile {input.gtf} --sjdbOverhang {params.readlength}"
+		"--genomeFastaFiles {input.genome} --sjdbGTFfile {input.gtf} --sjdbOverhang {params.readlength} "
+		"{params.starextraparams}"
 
 ## ------------------------------------------------------------------------------------ ##
 ## Quality control
@@ -365,7 +368,7 @@ rule trimgalorePE:
 # Estimate abundances with Salmon
 rule salmonSE:
 	input:
-		index = config["salmonindex"] + "/hash.bin",
+		index = config["salmonindex"] + "/versionInfo.json",
 		fastq = outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}." + str(config["fqsuffix"]) + ".gz"
 	output:
 		outputdir + "salmon/{sample}/quant.sf"
@@ -377,20 +380,18 @@ rule salmonSE:
 		config["ncores"]
 	params:
 		salmonindex = config["salmonindex"],
-		fldMean = config["fldMean"],
-		fldSD = config["fldSD"],
-		salmondir = outputdir + "salmon"
+		salmondir = outputdir + "salmon",
+		salmonextraparams = config["additional_salmon_quant"]
 	conda:
 		"envs/environment.yaml"
 	shell:
 		"echo 'Salmon version:\n' > {log}; salmon --version >> {log}; "
 		"salmon quant -i {params.salmonindex} -l A -r {input.fastq} "
-		"-o {params.salmondir}/{wildcards.sample} --seqBias --gcBias "
-		"--fldMean {params.fldMean} --fldSD {params.fldSD} -p {threads}"
+		"-o {params.salmondir}/{wildcards.sample} -p {threads} {params.salmonextraparams}"
 
 rule salmonPE:
 	input:
-		index = config["salmonindex"] + "/hash.bin",
+		index = config["salmonindex"] + "/versionInfo.json",
 		fastq1 = outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext1"]) + "_val_1.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_" + str(config["fqext1"]) + "." + str(config["fqsuffix"]) + ".gz",
 		fastq2 = outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext2"]) + "_val_2.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_" + str(config["fqext2"]) + "." + str(config["fqsuffix"]) + ".gz"
 	output:
@@ -403,16 +404,14 @@ rule salmonPE:
 		config["ncores"]
 	params:
 		salmonindex = config["salmonindex"],
-		fldMean = config["fldMean"],
-		fldSD = config["fldSD"],
-		salmondir = outputdir + "salmon"
+		salmondir = outputdir + "salmon",
+		salmonextraparams = config["additional_salmon_quant"]
 	conda:
 		"envs/environment.yaml"
 	shell:
 		"echo 'Salmon version:\n' > {log}; salmon --version >> {log}; "
 		"salmon quant -i {params.salmonindex} -l A -1 {input.fastq1} -2 {input.fastq2} "
-		"-o {params.salmondir}/{wildcards.sample} --seqBias --gcBias "
-		"--fldMean {params.fldMean} --fldSD {params.fldSD} -p {threads}"
+		"-o {params.salmondir}/{wildcards.sample} -p {threads} {params.salmonextraparams}"
 
 ## ------------------------------------------------------------------------------------ ##
 ## STAR mapping
@@ -432,14 +431,16 @@ rule starSE:
 		outputdir + "benchmarks/STAR_{sample}.txt"
 	params:
 		STARindex = config["STARindex"],
-		STARdir = outputdir + "STAR"
+		STARdir = outputdir + "STAR",
+		starextraparams = config["additional_star_align"]
 	conda:
 		"envs/environment.yaml"
 	shell:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
 		"STAR --genomeDir {params.STARindex} --readFilesIn {input.fastq} "
 		"--runThreadN {threads} --outFileNamePrefix {params.STARdir}/{wildcards.sample}/{wildcards.sample}_ "
-		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c"
+		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c "
+		"{params.starextraparams}"
 
 rule starPE:
 	input:
@@ -456,14 +457,16 @@ rule starPE:
 		outputdir + "benchmarks/STAR_{sample}.txt"
 	params:
 		STARindex = config["STARindex"],
-		STARdir = outputdir + "STAR"
+		STARdir = outputdir + "STAR",
+		starextraparams = config["additional_star_align"]
 	conda:
 		"envs/environment.yaml"
 	shell:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
 		"STAR --genomeDir {params.STARindex} --readFilesIn {input.fastq1} {input.fastq2} "
 		"--runThreadN {threads} --outFileNamePrefix {params.STARdir}/{wildcards.sample}/{wildcards.sample}_ "
-		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c"
+		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c "
+		"{params.starextraparams}"
 
 ## Index bam files
 rule bamindex:
@@ -512,7 +515,7 @@ rule tximeta:
 	    outputdir + "Rout/pkginstall_state.txt",
 		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
 		metatxt = config["metatxt"],
-		salmonidx = config["salmonindex"] + "/hash.bin",
+		salmonidx = config["salmonindex"] + "/versionInfo.json",
 		json = config["salmonindex"] + ".json",
 		script = "scripts/run_tximeta.R"
 	output:

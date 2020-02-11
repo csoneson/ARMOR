@@ -1,0 +1,56 @@
+on:
+  push:
+  pull_request:
+    branches:
+      - master
+
+name: snakemake-run
+
+jobs:
+  snakemake-run:
+    name: run snakemake
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+        include:
+        - os: macos-latest
+          rversion: 3.6
+        - os: ubuntu-latest
+          rversion: 3.6
+    steps:
+      - uses: actions/checkout@v2
+      
+      - uses: r-lib/actions/setup-r@master
+        if: runner.os == 'macOS'
+        with:
+          r-version: ${{ matrix.r }}
+      
+      - name: check where R is installed
+        if: runner.os == 'macOS'
+        run: |
+          which R
+          Rscript -e 'print(.libPaths())'
+      
+      - name: set up workflow R for macOS
+        if: runner.os == 'macOS'
+        run: |
+          sed -i .bak 's/useCondaR: True/useCondaR: False/' config.yaml
+          
+      - name: install snakemake and run workflow
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          sudo conda update -n base -c defaults conda
+          conda activate base
+          sudo conda install --yes -c bioconda -c conda-forge snakemake=5.8.1
+          export CONDA_BUILD_SYSROOT=/
+          mkdir -p $HOME/.R
+          echo -e 'MAKEFLAGS = -j8' > $HOME/.R/Makevars
+          echo 'options(Ncpus = 8)' > $HOME/.Rprofile
+          snakemake --use-conda
+      - uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: install_pkgs_rout
+          path: example_data/output/Rout/install_pkgs.Rout

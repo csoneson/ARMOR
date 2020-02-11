@@ -21,13 +21,13 @@ usePackage <- function(pkgs) {
     }
     
     # install the other packages
-    isInstalled <- pkgs %in% installed.packages()[, 1]
+    isInstalled <- pkgs %in% installed.packages(lib.loc = .libPaths()[1])[, 1]
     BiocManager::install(pkgs[!isInstalled],
                          update = FALSE, dependencies = TRUE,
-                         lib = .libPaths()[1], Ncpus=as.integer(ncores))
+                         lib = .libPaths()[1], Ncpus = as.integer(ncores))
     
     pkg.load <- lapply(pkgs, FUN = function(x) {
-        x[!(x %in% installed.packages()[, "Package"])]
+        x[!(x %in% installed.packages(.libPaths()[1])[, "Package"])]
     })
     
     if (length(unlist(pkg.load)) == 0) {
