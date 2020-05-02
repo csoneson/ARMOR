@@ -43,6 +43,7 @@ jobs:
           source $CONDA/etc/profile.d/conda.sh
           sudo conda update -n base -c defaults conda
           conda activate base
+          conda clean --all
           sudo conda install --yes -c bioconda -c conda-forge snakemake=5.16.0
           export CONDA_BUILD_SYSROOT=/
           mkdir -p $HOME/.R
