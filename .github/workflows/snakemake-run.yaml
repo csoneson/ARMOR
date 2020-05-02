@@ -48,7 +48,7 @@ jobs:
           mkdir -p $HOME/.R
           echo -e 'MAKEFLAGS = -j8' > $HOME/.R/Makevars
           echo 'options(Ncpus = 8)' > $HOME/.Rprofile
-          snakemake --use-conda
+          snakemake --use-conda --cores 4
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
