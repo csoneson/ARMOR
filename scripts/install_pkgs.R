@@ -10,17 +10,23 @@ print(ncores)
 
 (mirror <- getOption("repos"))
 
-## The function to install packages that are not installed
+## Function to install packages that are not installed
 usePackage <- function(pkgs) {
     
-    # install BiocManager package
+    ## Install BiocManager package
     isBiocM <- "BiocManager" %in% installed.packages()[, 1]
     if (!isBiocM) {
         install.packages("BiocManager", repos = "http://cran.rstudio.com/",
                          lib = .libPaths()[1])
     }
     
-    # install the other packages
+    ## Check that Bioc is new enough
+    if (BiocManager::version() < '3.11') {
+      stop("Bioconductor release 3.11 or newer is required ", 
+           "for this version of ARMOR.")
+    }
+    
+    ## Install the other packages
     isInstalled <- pkgs %in% installed.packages(lib.loc = .libPaths()[1])[, 1]
     BiocManager::install(pkgs[!isInstalled],
                          update = FALSE, dependencies = TRUE,
@@ -56,8 +62,8 @@ pkgs.use <- c("dplyr", "ggplot2", "tidyr", "remotes", "limma", "edgeR",
               "S4Vectors", "DRIMSeq", "SingleCellExperiment", "tximeta", "msigdbr")
 
 
-if(annotation == "Gencode") {
-  if(organism == "Homo_sapiens") {
+if (annotation == "Gencode") {
+  if (organism == "Homo_sapiens") {
     pkgs.extra = "org.Hs.eg.db"
   } else {
     pkgs.extra = "org.Mm.eg.db"
