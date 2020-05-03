@@ -38,18 +38,21 @@ jobs:
         run: |
           sed -i .bak 's/useCondaR: True/useCondaR: False/' config.yaml
           
-      - name: install snakemake and run workflow
+      - name: setup conda
+        uses: s-weigand/setup-conda@v1.0.2
+        with:
+          activate-conda: true
+          update-conda: true
+          conda-channels: 'bioconda,conda-forge'
         run: |
-          source $CONDA/etc/profile.d/conda.sh
-          sudo conda update -n base -c defaults conda
-          conda activate base
-          sudo conda install --yes -c bioconda -c conda-forge snakemake=5.8.1
-          export CONDA_BUILD_SYSROOT=/
+          conda install snakemake=5.16.0
           mkdir -p $HOME/.R
           echo -e 'MAKEFLAGS = -j8' > $HOME/.R/Makevars
           echo 'options(Ncpus = 8)' > $HOME/.Rprofile
           snakemake --use-conda --cores 4
-      - uses: actions/upload-artifact@v1
+      
+      - name: upload artifact
+        uses: actions/upload-artifact@v1
         if: failure()
         with:
           name: install_pkgs_rout
