@@ -43,7 +43,7 @@ jobs:
         with:
           activate-conda: true
           update-conda: true
-          conda-channels: 'bioconda,conda-forge'
+          conda-channels: 'bioconda,conda-forge,defaults'
       
       - name: install snakemake and run workflow
         run: |
