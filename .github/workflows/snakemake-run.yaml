@@ -44,6 +44,8 @@ jobs:
           activate-conda: true
           update-conda: true
           conda-channels: 'bioconda,conda-forge'
+      
+      - name: install snakemake and run workflow
         run: |
           conda install snakemake=5.16.0
           mkdir -p $HOME/.R
