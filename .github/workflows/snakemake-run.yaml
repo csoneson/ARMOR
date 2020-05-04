@@ -40,6 +40,7 @@ jobs:
           mkdir -p $HOME/Rlib
           echo "R_LIBS_USER=${HOME}/Rlib" > .Renviron
           cat .Renviron
+          Rscript -e "install.packages('BiocManager'); BiocManager::install('GenomeInfoDbData')"
           
       - name: setup conda
         uses: s-weigand/setup-conda@v1.0.2
