@@ -25,7 +25,7 @@ jobs:
       - uses: r-lib/actions/setup-r@master
         if: runner.os == 'macOS'
         with:
-          r-version: ${{ matrix.r }}
+          r-version: ${{ matrix.rversion }}
       
       - name: check where R is installed
         if: runner.os == 'macOS'
@@ -37,6 +37,9 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           sed -i .bak 's/useCondaR: True/useCondaR: False/' config.yaml
+          mkdir -p $HOME/Rlib
+          echo "R_LIBS_USER=${HOME}/Rlib" > .Renviron
+          cat .Renviron
           
       - name: setup conda
         uses: s-weigand/setup-conda@v1.0.2
