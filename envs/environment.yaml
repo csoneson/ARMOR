@@ -3,7 +3,7 @@ channels:
 - conda-forge
 dependencies:
 - samtools=1.9
-- salmon=1.0.0
+- salmon=1.2.0
 - star=2.7.3a
 - fastqc=0.11.8
 - multiqc=1.7

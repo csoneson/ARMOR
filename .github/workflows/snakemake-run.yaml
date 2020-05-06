@@ -16,16 +16,16 @@ jobs:
         os: [macos-latest, ubuntu-latest]
         include:
         - os: macos-latest
-          rversion: 3.6
+          rversion: 4.0
         - os: ubuntu-latest
-          rversion: 3.6
+          rversion: 4.0
     steps:
       - uses: actions/checkout@v2
       
       - uses: r-lib/actions/setup-r@master
         if: runner.os == 'macOS'
         with:
-          r-version: ${{ matrix.r }}
+          r-version: ${{ matrix.rversion }}
       
       - name: check where R is installed
         if: runner.os == 'macOS'
@@ -37,19 +37,28 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           sed -i .bak 's/useCondaR: True/useCondaR: False/' config.yaml
+          mkdir -p $HOME/Rlib
+          echo "R_LIBS_USER=${HOME}/Rlib" > .Renviron
+          cat .Renviron
+          Rscript -e "install.packages('BiocManager'); BiocManager::install('GenomeInfoDbData')"
           
+      - name: setup conda
+        uses: s-weigand/setup-conda@v1.0.2
+        with:
+          activate-conda: true
+          update-conda: true
+          conda-channels: 'bioconda,conda-forge,defaults'
+      
       - name: install snakemake and run workflow
         run: |
-          source $CONDA/etc/profile.d/conda.sh
-          sudo conda update -n base -c defaults conda
-          conda activate base
-          sudo conda install --yes -c bioconda -c conda-forge snakemake=5.8.1
-          export CONDA_BUILD_SYSROOT=/
+          conda install snakemake=5.16.0
           mkdir -p $HOME/.R
           echo -e 'MAKEFLAGS = -j8' > $HOME/.R/Makevars
           echo 'options(Ncpus = 8)' > $HOME/.Rprofile
-          snakemake --use-conda
-      - uses: actions/upload-artifact@v1
+          snakemake --use-conda --cores 4
+      
+      - name: upload artifact
+        uses: actions/upload-artifact@v1
         if: failure()
         with:
           name: install_pkgs_rout

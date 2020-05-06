@@ -143,20 +143,7 @@ trimmed mean of M-values between each pair of samples (TMM) is used by default
 Finally we add gene annotation information.
 
 ```{r edgeR-dge-generate}
-## Extract count matrix and average transcript lengths
-cts <- assay(sg, "counts")
-normMat <- assay(sg, "length")
-normMat <- normMat/exp(rowMeans(log(normMat)))
-normCts <- cts/normMat
-
-## Generate offset matrix
-eff.lib <- edgeR::calcNormFactors(normCts) * colSums(normCts)
-normMat <- sweep(normMat, 2, eff.lib, "*")
-normMat <- log(normMat)
-
-## Create DGEList object and add offsets
-dge0 <- edgeR::DGEList(cts)
-dge0 <- edgeR::scaleOffset(dge0, normMat)
+dge0 <- tximeta::makeDGEList(sg)
 dge0 <- edgeR::calcNormFactors(dge0)
 
 dge0$genes <- as.data.frame(rowRanges(sg))

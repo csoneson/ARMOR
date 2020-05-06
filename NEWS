@@ -1,3 +1,8 @@
+v1.5.0
+======
+o Transition to R 4.0
+o Use convenience function from tximeta to create DGEList for DE
+
 v1.4.0
 ======
 o Add possibility to provide additional arguments to STAR and Salmon
