@@ -1,3 +1,7 @@
+v1.5.1
+======
+o Specify channel in environment_R.yaml
+
 v1.5.0
 ======
 o Transition to R 4.0
