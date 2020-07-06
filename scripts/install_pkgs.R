@@ -59,7 +59,8 @@ print(paths)
 
 ## Install packages
 pkgs.use <- c("dplyr", "ggplot2", "tidyr", "remotes", "limma", "edgeR",
-              "S4Vectors", "DRIMSeq", "SingleCellExperiment", "tximeta", "msigdbr")
+              "S4Vectors", "DRIMSeq", "SingleCellExperiment", "tximeta", 
+              "msigdbr", "rmarkdown")
 
 
 if (annotation == "Gencode") {
