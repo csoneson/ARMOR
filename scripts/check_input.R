@@ -230,7 +230,7 @@ if(is(msg9, "try-error") && have_edgeR)
     }, silent=TRUE)
 
 msgL <- list(msg0, msg1, msg2, msg3, msg4, msg5, msg6, msg13, msg14, msg15, msg7, msg8, msg9, msg12, msg16)
-isError <- sapply(msgL, FUN = function(x) {class(x) == "try-error"})
+isError <- sapply(msgL, FUN = function(x) {is(x, "try-error")})
 msg <- msgL[isError]
 print(msg)
 
