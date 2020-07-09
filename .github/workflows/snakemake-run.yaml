@@ -33,13 +33,6 @@ jobs:
           which R
           Rscript -e 'print(.libPaths())'
       
-      - name: get xml2
-        if: runner.os == 'macOS'
-        run: |
-          brew install libxml2
-          touch ~/.zshrc
-          echo 'export PATH="/usr/local/opt/libxml2/bin:$PATH"' >> ~/.zshrc
-      
       - name: set up workflow R for macOS
         if: runner.os == 'macOS'
         run: |
