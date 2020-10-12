@@ -1,3 +1,7 @@
+v1.5.2
+======
+o Fix pandoc version to 2.10 (thanks @carissableker, https://github.com/csoneson/ARMOR/pull/101)
+
 v1.5.1
 ======
 o Specify channel in environment_R.yaml
