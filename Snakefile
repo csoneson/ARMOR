@@ -1,6 +1,4 @@
 ## Configuration file
-#from pathlib import Path
-#from os import path
 import os
 if len(config) == 0:
 	if os.path.isfile("./config.yaml"):
@@ -74,15 +72,15 @@ rule all:
 
 rule setup:
 	input:
-		os.path.join(outputdir, "Rout/pkginstall_state.txt"),
-		os.path.join(outputdir, "Rout/softwareversions.done")
+		os.path.join(outputdir, "Rout", "pkginstall_state.txt"),
+		os.path.join(outputdir, "Rout", "softwareversions.done")
 
 ## Install R packages
 rule pkginstall:
 	input:
 		script = "scripts/install_pkgs.R"
 	output:
-	  	os.path.join(outputdir, "Rout/pkginstall_state.txt")
+	  	os.path.join(outputdir, "Rout", "pkginstall_state.txt")
 	params:
 		flag = config["annotation"],
 		ncores = config["ncores"],
@@ -93,41 +91,41 @@ rule pkginstall:
 	conda:
 		Renv
 	log:
-		os.path.join(outputdir, "Rout/install_pkgs.Rout")
+		os.path.join(outputdir, "Rout", "install_pkgs.Rout")
 	benchmark:
-	  	os.path.join(outputdir, "benchmarks/install_pkgs.txt")
+	  	os.path.join(outputdir, "benchmarks", "install_pkgs.txt")
 	shell:
 		'''{params.Rbin} CMD BATCH --no-restore --no-save "--args outtxt='{output}' ncores='{params.ncores}' annotation='{params.flag}' organism='{params.organism}'" {input.script} {log}'''
 
 ## FastQC on original (untrimmed) files
 rule runfastqc:
 	input:
-		expand(os.path.join(outputdir, "".join(["FastQC/{sample}_", str(config["fqext1"]), "_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(os.path.join(outputdir, "".join(["FastQC/{sample}_", str(config["fqext2"]), "_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(os.path.join(outputdir, "FastQC/{sample}_fastqc.zip"), sample = samples.names[samples.type == 'SE'].values.tolist())
+		expand(os.path.join(outputdir, "FastQC", "".join(["{sample}_", str(config["fqext1"]), "_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(os.path.join(outputdir, "FastQC", "".join(["{sample}_", str(config["fqext2"]), "_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(os.path.join(outputdir, "FastQC", "{sample}_fastqc.zip"), sample = samples.names[samples.type == 'SE'].values.tolist())
 
 ## Trimming and FastQC on trimmed files
 rule runtrimming:
 	input:
-		expand(os.path.join(outputdir, "".join(["FastQC/{sample}_", str(config["fqext1"]), "_val_1_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(os.path.join(outputdir, "".join(["FastQC/{sample}_", str(config["fqext2"]), "_val_2_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(os.path.join(outputdir, "FastQC","{sample}_trimmed_fastqc.zip"), sample = samples.names[samples.type == 'SE'].values.tolist())
+		expand(os.path.join(outputdir, "FastQC", "".join(["{sample}_", str(config["fqext1"]), "_val_1_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(os.path.join(outputdir, "FastQC", "".join(["{sample}_", str(config["fqext2"]), "_val_2_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(os.path.join(outputdir, "FastQC", "{sample}_trimmed_fastqc.zip"), sample = samples.names[samples.type == 'SE'].values.tolist())
 
 ## Salmon quantification
 rule runsalmonquant:
 	input:
-		expand(os.path.join(outputdir, "salmon/{sample}/quant.sf"), sample = samples.names.values.tolist())
+		expand(os.path.join(outputdir, "salmon", "{sample}", "quant.sf"), sample = samples.names.values.tolist())
 
 ## STAR alignment
 rule runstar:
 	input:
-		expand(os.path.join(outputdir, "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai"), sample = samples.names.values.tolist()),
-		expand(os.path.join(outputdir, "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw"), sample = samples.names.values.tolist())
+		expand(os.path.join(outputdir, "STAR", "{sample}", "{sample}_Aligned.sortedByCoord.out.bam.bai"), sample = samples.names.values.tolist()),
+		expand(os.path.join(outputdir, "STARbigwig", "{sample}_Aligned.sortedByCoord.out.bw"), sample = samples.names.values.tolist())
 
 ## List all the packages that were used by the R analyses
 rule listpackages:
 	log:
-		os.path.join(outputdir, "Rout/list_packages.Rout")
+		os.path.join(outputdir, "Rout", "list_packages.Rout")
 	params:
 		Routdir = os.path.join(outputdir, "Rout"),
 		outtxt = os.path.join(outputdir, "R_package_versions.txt"),
@@ -141,9 +139,9 @@ rule listpackages:
 ## Print the versions of all software packages
 rule softwareversions:
 	output:
-		touch(os.path.join(outputdir, "Rout/softwareversions.done"))
+		touch(os.path.join(outputdir, "Rout", "softwareversions.done"))
 	log:
-		os.path.join(outputdir, "logs/softversions.log")
+		os.path.join(outputdir, "logs", "softversions.log")
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -163,9 +161,9 @@ rule salmonindex:
 	output:
 		os.path.join(config["salmonindex"], "versionInfo.json")
 	log:
-		os.path.join(outputdir, "logs/salmon_index.log")
+		os.path.join(outputdir, "logs", "salmon_index.log")
 	benchmark:
-		os.path.join(outputdir, "benchmarks/salmon_index.txt")
+		os.path.join(outputdir, "benchmarks", "salmon_index.txt")
 	params:
 		salmonoutdir = lambda wildcards, output: os.path.dirname(output[0]),   ## dirname of first output
 		anno = config["annotation"],
@@ -191,13 +189,13 @@ rule linkedtxome:
 		gtf = config["gtf"],
 		salmonidx = os.path.join(config["salmonindex"], "versionInfo.json"),
 		script = "scripts/generate_linkedtxome.R",
-		install = os.path.join(outputdir, "Rout/pkginstall_state.txt")
+		install = os.path.join(outputdir, "Rout", "pkginstall_state.txt")
 	log:
-		os.path.join(outputdir, "Rout/generate_linkedtxome.Rout")
+		os.path.join(outputdir, "Rout", "generate_linkedtxome.Rout")
 	benchmark:
-		os.path.join(outputdir, "benchmarks/generate_linkedtxome.txt")
+		os.path.join(outputdir, "benchmarks", "generate_linkedtxome.txt")
 	output:
-		config["salmonindex"] + ".json"
+		"".join([config["salmonindex"], ".json"])
 	params:
 		flag = config["annotation"],
 		organism = config["organism"],
@@ -218,9 +216,9 @@ rule starindex:
 		os.path.join(config["STARindex"], "SA"),
 		os.path.join(config["STARindex"], "chrNameLength.txt")
 	log:
-		os.path.join(outputdir, "logs/STAR_index.log")
+		os.path.join(outputdir, "logs", "STAR_index.log")
 	benchmark:
-		os.path.join(outputdir, "benchmarks/STAR_index.txt")
+		os.path.join(outputdir, "benchmarks", "STAR_index.txt")
 	params:
 		STARindex = lambda wildcards, output: os.path.dirname(output[0]),   ## dirname of first output
 		readlength = config["readlength"],
@@ -243,13 +241,13 @@ rule fastqc:
 	input:
 		fastq = os.path.join(FASTQdir, "".join(["{sample}.", str(config["fqsuffix"]), ".gz"]))
 	output:
-		os.path.join(outputdir, "FastQC/{sample}_fastqc.zip")
+		os.path.join(outputdir, "FastQC", "{sample}_fastqc.zip")
 	params:
 		FastQC = lambda wildcards, output: os.path.dirname(output[0])   ## dirname of first output
 	log:
-		os.path.join(outputdir, "logs/fastqc_{sample}.log")
+		os.path.join(outputdir, "logs", "fastqc_{sample}.log")
 	benchmark:
-		os.path.join(outputdir, "benchmarks/fastqc_{sample}.txt")
+		os.path.join(outputdir, "benchmarks", "fastqc_{sample}.txt")
 	conda:
 		"envs/environment.yaml"
 	threads:
@@ -261,15 +259,15 @@ rule fastqc:
 ## FastQC, trimmed reads
 rule fastqctrimmed:
 	input:
-		fastq = os.path.join(outputdir, "FASTQtrimmed/{sample}.fq.gz")
+		fastq = os.path.join(outputdir, "FASTQtrimmed", "{sample}.fq.gz")
 	output:
-		os.path.join(outputdir, "FastQC/{sample}_fastqc.zip")
+		os.path.join(outputdir, "FastQC", "{sample}_fastqc.zip")
 	params:
 		FastQC = lambda wildcards, output: os.path.dirname(output[0])   ## dirname of first output
 	log:
-		os.path.join(outputdir, "logs/fastqc_trimmed_{sample}.log")
+		os.path.join(outputdir, "logs", "fastqc_trimmed_{sample}.log")
 	benchmark:
-		os.path.join(outputdir, "benchmarks/fastqc_trimmed_{sample}.txt")
+		os.path.join(outputdir, "benchmarks", "fastqc_trimmed_{sample}.txt")
 	conda:
 		"envs/environment.yaml"
 	threads:
@@ -283,19 +281,19 @@ rule fastqctrimmed:
 # The config.yaml files determines which steps should be performed
 def multiqc_input(wildcards):
 	input = []
-	input.extend(expand(os.path.join(outputdir, "FastQC/{sample}_fastqc.zip"), sample = samples.names[samples.type == 'SE'].values.tolist()))
-	input.extend(expand(os.path.join(outputdir, "".join(["FastQC/{sample}_", str(config["fqext1"]), "_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()))
-	input.extend(expand(os.path.join(outputdir, "".join(["FastQC/{sample}_", str(config["fqext2"]), "_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()))
-	input.extend(expand(os.path.join(outputdir, "salmon/{sample}/quant.sf"), sample = samples.names.values.tolist()))
+	input.extend(expand(os.path.join(outputdir, "FastQC", "{sample}_fastqc.zip"), sample = samples.names[samples.type == 'SE'].values.tolist()))
+	input.extend(expand(os.path.join(outputdir, "FastQC", "".join(["{sample}_", str(config["fqext1"]), "_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()))
+	input.extend(expand(os.path.join(outputdir, "FastQC", "".join(["{sample}_", str(config["fqext2"]), "_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()))
+	input.extend(expand(os.path.join(outputdir, "salmon", "{sample}", "quant.sf"), sample = samples.names.values.tolist()))
 	if config["run_trimming"]:
-		input.extend(expand(os.path.join(outputdir, "FASTQtrimmed/{sample}_trimmed.fq.gz"), sample = samples.names[samples.type == 'SE'].values.tolist()))
-		input.extend(expand(os.path.join(outputdir, "".join(["FASTQtrimmed/{sample}_", str(config["fqext1"]), "_val_1.fq.gz"])), sample = samples.names[samples.type == 'PE'].values.tolist()))
-		input.extend(expand(os.path.join(outputdir, "".join(["FASTQtrimmed/{sample}_", str(config["fqext2"]), "_val_2.fq.gz"])), sample = samples.names[samples.type == 'PE'].values.tolist()))
-		input.extend(expand(os.path.join(outputdir, "FastQC/{sample}_trimmed_fastqc.zip"), sample = samples.names[samples.type == 'SE'].values.tolist()))
-		input.extend(expand(os.path.join(outputdir, "".join(["FastQC/{sample}_", str(config["fqext1"]), "_val_1_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()))
-		input.extend(expand(os.path.join(outputdir, "".join(["FastQC/{sample}_", str(config["fqext2"]), "_val_2_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()))
+		input.extend(expand(os.path.join(outputdir, "FASTQtrimmed", "{sample}_trimmed.fq.gz"), sample = samples.names[samples.type == 'SE'].values.tolist()))
+		input.extend(expand(os.path.join(outputdir, "FASTQtrimmed", "".join(["{sample}_", str(config["fqext1"]), "_val_1.fq.gz"])), sample = samples.names[samples.type == 'PE'].values.tolist()))
+		input.extend(expand(os.path.join(outputdir, "FASTQtrimmed", "".join(["{sample}_", str(config["fqext2"]), "_val_2.fq.gz"])), sample = samples.names[samples.type == 'PE'].values.tolist()))
+		input.extend(expand(os.path.join(outputdir, "FastQC", "{sample}_trimmed_fastqc.zip"), sample = samples.names[samples.type == 'SE'].values.tolist()))
+		input.extend(expand(os.path.join(outputdir, "FastQC", "".join(["{sample}_", str(config["fqext1"]), "_val_1_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()))
+		input.extend(expand(os.path.join(outputdir, "FastQC", "".join(["{sample}_", str(config["fqext2"]), "_val_2_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()))
 	if config["run_STAR"]:
-		input.extend(expand(os.path.join(outputdir, "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai"), sample = samples.names.values.tolist()))
+		input.extend(expand(os.path.join(outputdir, "STAR", "{sample}", "{sample}_Aligned.sortedByCoord.out.bam.bai"), sample = samples.names.values.tolist()))
 	return input
 
 ## Determine the input directories for MultiQC depending on the config file
@@ -313,14 +311,14 @@ rule multiqc:
 	input:
 		multiqc_input
 	output:
-		os.path.join(outputdir, "MultiQC/multiqc_report.html")
+		os.path.join(outputdir, "MultiQC", "multiqc_report.html")
 	params:
 		inputdirs = multiqc_params,
 		MultiQCdir = lambda wildcards, output: os.path.dirname(output[0])   ## dirname of first output
 	log:
-		os.path.join(outputdir, "logs/multiqc.log")
+		os.path.join(outputdir, "logs", "multiqc.log")
 	benchmark:
-		os.path.join(outputdir, "benchmarks/multiqc.txt")
+		os.path.join(outputdir, "benchmarks", "multiqc.txt")
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -336,13 +334,13 @@ rule trimgaloreSE:
 	input:
 		fastq = os.path.join(FASTQdir, "".join(["{sample}.", str(config["fqsuffix"]), ".gz"]))
 	output:
-		os.path.join(outputdir, "FASTQtrimmed/{sample}_trimmed.fq.gz")
+		os.path.join(outputdir, "FASTQtrimmed", "{sample}_trimmed.fq.gz")
 	params:
 		FASTQtrimmeddir = lambda wildcards, output: os.path.dirname(output[0])   ## dirname of first output
 	log:
-		os.path.join(outputdir, "logs/trimgalore_{sample}.log")
+		os.path.join(outputdir, "logs", "trimgalore_{sample}.log")
 	benchmark:
-		os.path.join(outputdir, "benchmarks/trimgalore_{sample}.txt")
+		os.path.join(outputdir, "benchmarks", "trimgalore_{sample}.txt")
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -354,14 +352,14 @@ rule trimgalorePE:
 		fastq1 = os.path.join(FASTQdir, "".join(["{sample}_", str(config["fqext1"]), ".", str(config["fqsuffix"]), ".gz"])),
 		fastq2 = os.path.join(FASTQdir, "".join(["{sample}_", str(config["fqext2"]), ".", str(config["fqsuffix"]), ".gz"]))
 	output:
-		os.path.join(outputdir, "".join(["FASTQtrimmed/{sample}_", str(config["fqext1"]), "_val_1.fq.gz"])),
-		os.path.join(outputdir, "".join(["FASTQtrimmed/{sample}_", str(config["fqext2"]), "_val_2.fq.gz"]))
+		os.path.join(outputdir, "FASTQtrimmed", "".join(["{sample}_", str(config["fqext1"]), "_val_1.fq.gz"])),
+		os.path.join(outputdir, "FASTQtrimmed", "".join(["{sample}_", str(config["fqext2"]), "_val_2.fq.gz"]))
 	params:
 		FASTQtrimmeddir = lambda wildcards, output: os.path.dirname(output[0])   ## dirname of first output
 	log:
-		os.path.join(outputdir, "logs/trimgalore_{sample}.log")
+		os.path.join(outputdir, "logs", "trimgalore_{sample}.log")
 	benchmark:
-		os.path.join(outputdir, "benchmarks/trimgalore_{sample}.txt")
+		os.path.join(outputdir, "benchmarks", "trimgalore_{sample}.txt")
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -376,13 +374,13 @@ rule trimgalorePE:
 rule salmonSE:
 	input:
 		index = os.path.join(config["salmonindex"], "versionInfo.json"),
-		fastq = os.path.join(outputdir, "FASTQtrimmed/{sample}_trimmed.fq.gz") if config["run_trimming"] else os.path.join(FASTQdir, "".join(["{sample}.", str(config["fqsuffix"]), ".gz"]))
+		fastq = os.path.join(outputdir, "FASTQtrimmed", "{sample}_trimmed.fq.gz") if config["run_trimming"] else os.path.join(FASTQdir, "".join(["{sample}.", str(config["fqsuffix"]), ".gz"]))
 	output:
-		os.path.join(outputdir, "salmon/{sample}/quant.sf")
+		os.path.join(outputdir, "salmon", "{sample}", "quant.sf")
 	log:
-		os.path.join(outputdir, "logs/salmon_{sample}.log")
+		os.path.join(outputdir, "logs", "salmon_{sample}.log")
 	benchmark:
-		os.path.join(outputdir, "benchmarks/salmon_{sample}.txt")
+		os.path.join(outputdir, "benchmarks", "salmon_{sample}.txt")
 	threads:
 		config["ncores"]
 	params:
@@ -399,14 +397,14 @@ rule salmonSE:
 rule salmonPE:
 	input:
 		index = os.path.join(config["salmonindex"], "versionInfo.json"),
-		fastq1 = os.path.join(outputdir, "".join(["FASTQtrimmed/{sample}_", str(config["fqext1"]), "_val_1.fq.gz"])) if config["run_trimming"] else os.path.join(FASTQdir, "".join(["{sample}_", str(config["fqext1"]), ".", str(config["fqsuffix"]), ".gz"])),
-		fastq2 = os.path.join(outputdir, "".join(["FASTQtrimmed/{sample}_", str(config["fqext2"]), "_val_2.fq.gz"])) if config["run_trimming"] else os.path.join(FASTQdir, "".join(["{sample}_", str(config["fqext2"]), ".", str(config["fqsuffix"]), ".gz"]))
+		fastq1 = os.path.join(outputdir, "FASTQtrimmed", "".join(["{sample}_", str(config["fqext1"]), "_val_1.fq.gz"])) if config["run_trimming"] else os.path.join(FASTQdir, "".join(["{sample}_", str(config["fqext1"]), ".", str(config["fqsuffix"]), ".gz"])),
+		fastq2 = os.path.join(outputdir, "FASTQtrimmed", "".join(["{sample}_", str(config["fqext2"]), "_val_2.fq.gz"])) if config["run_trimming"] else os.path.join(FASTQdir, "".join(["{sample}_", str(config["fqext2"]), ".", str(config["fqsuffix"]), ".gz"]))
 	output:
-		os.path.join(outputdir, "salmon/{sample}/quant.sf")
+		os.path.join(outputdir, "salmon", "{sample}", "quant.sf")
 	log:
-		os.path.join(outputdir, "logs/salmon_{sample}.log")
+		os.path.join(outputdir, "logs", "salmon_{sample}.log")
 	benchmark:
-		os.path.join(outputdir, "benchmarks/salmon_{sample}.txt")
+		os.path.join(outputdir, "benchmarks", "salmon_{sample}.txt")
 	threads:
 		config["ncores"]
 	params:
@@ -427,15 +425,15 @@ rule salmonPE:
 rule starSE:
 	input:
 		index = os.path.join(config["STARindex"], "SA"),
-		fastq = os.path.join(outputdir, "FASTQtrimmed/{sample}_trimmed.fq.gz") if config["run_trimming"] else os.path.join(FASTQdir, "".join(["{sample}.", str(config["fqsuffix"]), ".gz"]))
+		fastq = os.path.join(outputdir, "FASTQtrimmed", "{sample}_trimmed.fq.gz") if config["run_trimming"] else os.path.join(FASTQdir, "".join(["{sample}.", str(config["fqsuffix"]), ".gz"]))
 	output:
-		os.path.join(outputdir, "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam")
+		os.path.join(outputdir, "STAR", "{sample}", "{sample}_Aligned.sortedByCoord.out.bam")
 	threads:
 		config["ncores"]
 	log:
-		os.path.join(outputdir, "logs/STAR_{sample}.log")
+		os.path.join(outputdir, "logs", "STAR_{sample}.log")
 	benchmark:
-		os.path.join(outputdir, "benchmarks/STAR_{sample}.txt")
+		os.path.join(outputdir, "benchmarks", "STAR_{sample}.txt")
 	params:
 		STARindex = lambda wildcards, input: os.path.dirname(input['index']),   ## dirname of index input
 		STARdir = lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),   ## dirname of first output
@@ -452,16 +450,16 @@ rule starSE:
 rule starPE:
 	input:
 		index = os.path.join(config["STARindex"], "SA"),
-		fastq1 = os.path.join(outputdir, "".join(["FASTQtrimmed/{sample}_", str(config["fqext1"]), "_val_1.fq.gz"])) if config["run_trimming"] else os.path.join(FASTQdir, "".join(["{sample}_", str(config["fqext1"]), ".", str(config["fqsuffix"]), ".gz"])),
-		fastq2 = os.path.join(outputdir, "".join(["FASTQtrimmed/{sample}_", str(config["fqext2"]), "_val_2.fq.gz"])) if config["run_trimming"] else os.path.join(FASTQdir, "".join(["{sample}_", str(config["fqext2"]), ".", str(config["fqsuffix"]), ".gz"]))
+		fastq1 = os.path.join(outputdir, "FASTQtrimmed", "".join(["{sample}_", str(config["fqext1"]), "_val_1.fq.gz"])) if config["run_trimming"] else os.path.join(FASTQdir, "".join(["{sample}_", str(config["fqext1"]), ".", str(config["fqsuffix"]), ".gz"])),
+		fastq2 = os.path.join(outputdir, "FASTQtrimmed", "".join(["{sample}_", str(config["fqext2"]), "_val_2.fq.gz"])) if config["run_trimming"] else os.path.join(FASTQdir, "".join(["{sample}_", str(config["fqext2"]), ".", str(config["fqsuffix"]), ".gz"]))
 	output:
-		os.path.join(outputdir, "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam")
+		os.path.join(outputdir, "STAR", "{sample}", "{sample}_Aligned.sortedByCoord.out.bam")
 	threads:
 		config["ncores"]
 	log:
-		os.path.join(outputdir, "logs/STAR_{sample}.log")
+		os.path.join(outputdir, "logs", "STAR_{sample}.log")
 	benchmark:
-		os.path.join(outputdir, "benchmarks/STAR_{sample}.txt")
+		os.path.join(outputdir, "benchmarks", "STAR_{sample}.txt")
 	params:
 		STARindex = lambda wildcards, input: os.path.dirname(input['index']),   ## dirname of index input
 		STARdir = lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),   ## dirname of first output
@@ -478,13 +476,13 @@ rule starPE:
 ## Index bam files
 rule bamindex:
 	input:
-		bam = os.path.join(outputdir, "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam")
+		bam = os.path.join(outputdir, "STAR", "{sample}", "{sample}_Aligned.sortedByCoord.out.bam")
 	output:
-		os.path.join(outputdir, "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai")
+		os.path.join(outputdir, "STAR", "{sample}", "{sample}_Aligned.sortedByCoord.out.bam.bai")
 	log:
-		os.path.join(outputdir, "logs/samtools_index_{sample}.log")
+		os.path.join(outputdir, "logs", "samtools_index_{sample}.log")
 	benchmark:
-		os.path.join(outputdir, "benchmarks/samtools_index_{sample}.txt")
+		os.path.join(outputdir, "benchmarks", "samtools_index_{sample}.txt")
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -494,16 +492,16 @@ rule bamindex:
 ## Convert BAM files to bigWig
 rule bigwig:
 	input:
-		bam = os.path.join(outputdir, "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"),
+		bam = os.path.join(outputdir, "STAR", "{sample}", "{sample}_Aligned.sortedByCoord.out.bam"),
 		chrl = os.path.join(config["STARindex"], "chrNameLength.txt")
 	output:
-		os.path.join(outputdir, "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw")
+		os.path.join(outputdir, "STARbigwig", "{sample}_Aligned.sortedByCoord.out.bw")
 	params:
 		STARbigwigdir = lambda wildcards, output: os.path.dirname(output[0])   ## dirname of first output
 	log:
-		os.path.join(outputdir, "logs/bigwig_{sample}.log")
+		os.path.join(outputdir, "logs", "bigwig_{sample}.log")
 	benchmark:
-		os.path.join(outputdir, "benchmarks/bigwig_{sample}.txt")
+		os.path.join(outputdir, "benchmarks", "bigwig_{sample}.txt")
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -519,18 +517,18 @@ rule bigwig:
 ## tximeta
 rule tximeta:
 	input:
-	    os.path.join(outputdir, "Rout/pkginstall_state.txt"),
-		expand(os.path.join(outputdir, "salmon/{sample}/quant.sf"), sample = samples.names.values.tolist()),
+	    os.path.join(outputdir, "Rout", "pkginstall_state.txt"),
+		expand(os.path.join(outputdir, "salmon", "{sample}", "quant.sf"), sample = samples.names.values.tolist()),
 		metatxt = config["metatxt"],
 		salmonidx = os.path.join(config["salmonindex"], "versionInfo.json"),
-		json = config["salmonindex"] + ".json",
+		json = "".join([config["salmonindex"], ".json"]),
 		script = "scripts/run_tximeta.R"
 	output:
-		os.path.join(outputdir, "outputR/tximeta_se.rds")
+		os.path.join(outputdir, "outputR", "tximeta_se.rds")
 	log:
-		os.path.join(outputdir, "Rout/tximeta_se.Rout")
+		os.path.join(outputdir, "Rout", "tximeta_se.Rout")
 	benchmark:
-		os.path.join(outputdir, "benchmarks/tximeta_se.txt")
+		os.path.join(outputdir, "benchmarks", "tximeta_se.txt")
 	params:
 		salmondir = lambda wildcards, input: os.path.dirname(os.path.dirname(input[1])),   ## dirname of second output
 		flag = config["annotation"],
@@ -558,11 +556,11 @@ rule checkinputs:
         "config.yaml",
         script = "scripts/check_input.R"
     output:
-        os.path.join(outputdir, "Rout/check_input.txt")
+        os.path.join(outputdir, "Rout", "check_input.txt")
     log:
-        os.path.join(outputdir, "Rout/check_input.Rout")
+        os.path.join(outputdir, "Rout", "check_input.Rout")
     benchmark:
-    	os.path.join(outputdir, "benchmarks/check_input.txt")
+    	os.path.join(outputdir, "benchmarks", "check_input.txt")
     params:
         gtf = config["gtf"],
         genome = config["genome"],
@@ -578,7 +576,7 @@ rule checkinputs:
         fqext2 = str(config["fqext2"]),
         run_camera = str(config["run_camera"]),
         organism = config["organism"],
-	Rbin = Rbin
+        Rbin = Rbin
     conda:
 	    Renv
     shell:
@@ -592,24 +590,24 @@ rule checkinputs:
 ## ------------------------------------------------------------------------------------ ##
 rule edgeR:
 	input:
-		os.path.join(outputdir, "Rout/pkginstall_state.txt"),
-		rds = os.path.join(outputdir, "outputR/tximeta_se.rds"),
+		os.path.join(outputdir, "Rout", "pkginstall_state.txt"),
+		rds = os.path.join(outputdir, "outputR", "tximeta_se.rds"),
 		script = "scripts/run_render.R",
 		template = "scripts/edgeR_dge.Rmd"
 	output:
-		html = os.path.join(outputdir, "outputR/edgeR_dge.html"),
-		rds = os.path.join(outputdir, "outputR/edgeR_dge.rds")
+		html = os.path.join(outputdir, "outputR", "edgeR_dge.html"),
+		rds = os.path.join(outputdir, "outputR", "edgeR_dge.rds")
 	params:
 		directory = lambda wildcards, input: os.path.dirname(input['rds']),   ## dirname of rds input
-		organism = config["organism"],        
-                design = config["design"].replace(" ", "") if config["design"] is not None else "",
-                contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else "",
+		organism = config["organism"],
+		design = config["design"].replace(" ", "") if config["design"] is not None else "",
+		contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else "",
 		genesets = geneset_param,
 		Rbin = Rbin
 	log:
-		os.path.join(outputdir, "Rout/run_dge_edgeR.Rout")
+		os.path.join(outputdir, "Rout", "run_dge_edgeR.Rout")
 	benchmark:
-		os.path.join(outputdir, "benchmarks/run_dge_edgeR.txt")
+		os.path.join(outputdir, "benchmarks", "run_dge_edgeR.txt")
 	conda:
 		Renv
 	shell:
@@ -621,24 +619,24 @@ rule edgeR:
 ## DRIMSeq
 rule DRIMSeq:
 	input:
-	    os.path.join(outputdir, "Rout/pkginstall_state.txt"),
-		rds = os.path.join(outputdir, "outputR/edgeR_dge.rds"),
+	    os.path.join(outputdir, "Rout", "pkginstall_state.txt"),
+		rds = os.path.join(outputdir, "outputR", "edgeR_dge.rds"),
 		script = "scripts/run_render.R",
 		template = "scripts/DRIMSeq_dtu.Rmd"
 	output:
-		html = os.path.join(outputdir, "outputR/DRIMSeq_dtu.html"),
-		rds = os.path.join(outputdir, "outputR/DRIMSeq_dtu.rds")
+		html = os.path.join(outputdir, "outputR", "DRIMSeq_dtu.html"),
+		rds = os.path.join(outputdir, "outputR", "DRIMSeq_dtu.rds")
 	params:
 		directory = lambda wildcards, input: os.path.dirname(input['rds']),   ## dirname of rds input
 		organism = config["organism"],
 		ncores = config["ncores"],
-                design = config["design"].replace(" ", "") if config["design"] is not None else "",
-                contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else "",
+		design = config["design"].replace(" ", "") if config["design"] is not None else "",
+		contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else "",
 		Rbin = Rbin
 	log:
-		os.path.join(outputdir, "Rout/run_dtu_drimseq.Rout")
+		os.path.join(outputdir, "Rout", "run_dtu_drimseq.Rout")
 	benchmark:
-		os.path.join(outputdir, "benchmarks/run_dtu_drimseq.txt")
+		os.path.join(outputdir, "benchmarks", "run_dtu_drimseq.txt")
 	conda:
 		Renv
 	threads:
@@ -650,9 +648,9 @@ rule DRIMSeq:
 ## shiny app
 ## ------------------------------------------------------------------------------------ ##
 def shiny_input(wildcards):
-	input = [os.path.join(outputdir, "Rout/pkginstall_state.txt")]
+	input = [os.path.join(outputdir, "Rout", "pkginstall_state.txt")]
 	if config["run_STAR"]:
-		input.extend(expand(os.path.join(outputdir, "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw"), sample = samples.names.values.tolist()))
+		input.extend(expand(os.path.join(outputdir, "STARbigwig", "{sample}_Aligned.sortedByCoord.out.bw"), sample = samples.names.values.tolist()))
 	return input
 
 def shiny_params(wildcards):
@@ -665,20 +663,20 @@ def shiny_params(wildcards):
 rule shiny:
 	input:
 		shiny_input,
-		rds = os.path.join(outputdir, "outputR/DRIMSeq_dtu.rds") if config["run_DRIMSeq"] else os.path.join(outputdir, "outputR/edgeR_dge.rds"),
+		rds = os.path.join(outputdir, "outputR", "DRIMSeq_dtu.rds") if config["run_DRIMSeq"] else os.path.join(outputdir, "outputR", "edgeR_dge.rds"),
 		script = "scripts/run_render.R",
 		gtf = config["gtf"],
 		template = "scripts/prepare_shiny.Rmd"
 	output:
-		html = os.path.join(outputdir, "outputR/prepare_shiny.html"),
-		rds = os.path.join(outputdir, "outputR/shiny_sce.rds")
+		html = os.path.join(outputdir, "outputR", "prepare_shiny.html"),
+		rds = os.path.join(outputdir, "outputR", "shiny_sce.rds")
 	params:
 		p = shiny_params,
 		Rbin = Rbin
 	log:
-		os.path.join(outputdir, "Rout/prepare_shiny.Rout")
+		os.path.join(outputdir, "Rout", "prepare_shiny.Rout")
 	benchmark:
-		os.path.join(outputdir, "benchmarks/prepare_shiny.txt")
+		os.path.join(outputdir, "benchmarks", "prepare_shiny.txt")
 	conda:
 		Renv
 	shell:
