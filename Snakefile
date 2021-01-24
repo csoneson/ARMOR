@@ -102,15 +102,15 @@ rule pkginstall:
 ## FastQC on original (untrimmed) files
 rule runfastqc:
 	input:
-		expand(os.path.join(outputdir,"FastQC/{sample}_", str(config["fqext1"]), "_fastqc.zip"), sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(os.path.join(outputdir,"FastQC/{sample}_", str(config["fqext2"]), "_fastqc.zip"), sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(os.path.join(outputdir,"FastQC/{sample}_fastqc.zip"), sample = samples.names[samples.type == 'SE'].values.tolist())
+		expand(os.path.join(outputdir, "".join(["FastQC/{sample}_", str(config["fqext1"]), "_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(os.path.join(outputdir, "".join(["FastQC/{sample}_", str(config["fqext2"]), "_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(os.path.join(outputdir, "FastQC/{sample}_fastqc.zip"), sample = samples.names[samples.type == 'SE'].values.tolist())
 
 ## Trimming and FastQC on trimmed files
 rule runtrimming:
 	input:
-		expand(os.path.join(outputdir, "FastQC/{sample}_", str(config["fqext1"]), "_val_1_fastqc.zip"), sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(os.path.join(outputdir, "FastQC/{sample}_", str(config["fqext2"]), "_val_2_fastqc.zip"), sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(os.path.join(outputdir, "".join(["FastQC/{sample}_", str(config["fqext1"]), "_val_1_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(os.path.join(outputdir, "".join(["FastQC/{sample}_", str(config["fqext2"]), "_val_2_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()),
 		expand(os.path.join(outputdir, "FastQC","{sample}_trimmed_fastqc.zip"), sample = samples.names[samples.type == 'SE'].values.tolist())
 
 ## Salmon quantification
@@ -167,7 +167,7 @@ rule salmonindex:
 	benchmark:
 		os.path.join(outputdir, "benchmarks/salmon_index.txt")
 	params:
-		salmonoutdir = lambda wildcards, output: os.path.splitext(output[0])[0],   ## dirname of first output
+		salmonoutdir = lambda wildcards, output: os.path.dirname(output[0]),   ## dirname of first output
 		anno = config["annotation"],
 		salmonextraparams = config["additional_salmon_index"]
 	conda:
@@ -222,7 +222,7 @@ rule starindex:
 	benchmark:
 		os.path.join(outputdir, "benchmarks/STAR_index.txt")
 	params:
-		STARindex = lambda wildcards, output: os.path.splitext(output[0])[0],   ## dirname of first output
+		STARindex = lambda wildcards, output: os.path.dirname(output[0]),   ## dirname of first output
 		readlength = config["readlength"],
 		starextraparams = config["additional_star_index"]
 	conda:
@@ -245,7 +245,7 @@ rule fastqc:
 	output:
 		os.path.join(outputdir, "FastQC/{sample}_fastqc.zip")
 	params:
-		FastQC = lambda wildcards, output: os.path.splitext(output[0])[0]   ## dirname of first output
+		FastQC = lambda wildcards, output: os.path.dirname(output[0])   ## dirname of first output
 	log:
 		os.path.join(outputdir, "logs/fastqc_{sample}.log")
 	benchmark:
@@ -265,7 +265,7 @@ rule fastqctrimmed:
 	output:
 		os.path.join(outputdir, "FastQC/{sample}_fastqc.zip")
 	params:
-		FastQC = lambda wildcards, output: os.path.splitext(output[0])[0]   ## dirname of first output
+		FastQC = lambda wildcards, output: os.path.dirname(output[0])   ## dirname of first output
 	log:
 		os.path.join(outputdir, "logs/fastqc_trimmed_{sample}.log")
 	benchmark:
@@ -316,7 +316,7 @@ rule multiqc:
 		os.path.join(outputdir, "MultiQC/multiqc_report.html")
 	params:
 		inputdirs = multiqc_params,
-		MultiQCdir = lambda wildcards, output: os.path.splitext(output[0])[0]   ## dirname of first output
+		MultiQCdir = lambda wildcards, output: os.path.dirname(output[0])   ## dirname of first output
 	log:
 		os.path.join(outputdir, "logs/multiqc.log")
 	benchmark:
@@ -338,7 +338,7 @@ rule trimgaloreSE:
 	output:
 		os.path.join(outputdir, "FASTQtrimmed/{sample}_trimmed.fq.gz")
 	params:
-		FASTQtrimmeddir = lambda wildcards, output: os.path.splitext(output[0])[0]   ## dirname of first output
+		FASTQtrimmeddir = lambda wildcards, output: os.path.dirname(output[0])   ## dirname of first output
 	log:
 		os.path.join(outputdir, "logs/trimgalore_{sample}.log")
 	benchmark:
@@ -357,7 +357,7 @@ rule trimgalorePE:
 		os.path.join(outputdir, "".join(["FASTQtrimmed/{sample}_", str(config["fqext1"]), "_val_1.fq.gz"])),
 		os.path.join(outputdir, "".join(["FASTQtrimmed/{sample}_", str(config["fqext2"]), "_val_2.fq.gz"]))
 	params:
-		FASTQtrimmeddir = lambda wildcards, output: os.path.splitext(output[0])[0]   ## dirname of first output
+		FASTQtrimmeddir = lambda wildcards, output: os.path.dirname(output[0])   ## dirname of first output
 	log:
 		os.path.join(outputdir, "logs/trimgalore_{sample}.log")
 	benchmark:
@@ -386,8 +386,8 @@ rule salmonSE:
 	threads:
 		config["ncores"]
 	params:
-		salmonindex = lambda wildcards, input: os.path.splitext(input['index'])[0],   ## dirname of index input
-		salmondir = lambda wildcards, output: os.path.splitext(os.path.splitext(output[0])[0])[0],   ## dirname of first output
+		salmonindex = lambda wildcards, input: os.path.dirname(input['index']),   ## dirname of index input
+		salmondir = lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),   ## dirname of first output
 		salmonextraparams = config["additional_salmon_quant"]
 	conda:
 		"envs/environment.yaml"
@@ -410,8 +410,8 @@ rule salmonPE:
 	threads:
 		config["ncores"]
 	params:
-		salmonindex = lambda wildcards, input: os.path.splitext(input['index'])[0],   ## dirname of index input
-		salmondir = lambda wildcards, output: os.path.splitext(os.path.splitext(output[0])[0])[0],   ## dirname of first output
+		salmonindex = lambda wildcards, input: os.path.dirname(input['index']),   ## dirname of index input
+		salmondir = lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),   ## dirname of first output
 		salmonextraparams = config["additional_salmon_quant"]
 	conda:
 		"envs/environment.yaml"
@@ -437,8 +437,8 @@ rule starSE:
 	benchmark:
 		os.path.join(outputdir, "benchmarks/STAR_{sample}.txt")
 	params:
-		STARindex = lambda wildcards, input: os.path.splitext(input['index'])[0],   ## dirname of index input
-		STARdir = lambda wildcards, output: os.path.splitext(os.path.splitext(output[0])[0])[0],   ## dirname of first output
+		STARindex = lambda wildcards, input: os.path.dirname(input['index']),   ## dirname of index input
+		STARdir = lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),   ## dirname of first output
 		starextraparams = config["additional_star_align"]
 	conda:
 		"envs/environment.yaml"
@@ -463,8 +463,8 @@ rule starPE:
 	benchmark:
 		os.path.join(outputdir, "benchmarks/STAR_{sample}.txt")
 	params:
-		STARindex = lambda wildcards, input: os.path.splitext(input['index'])[0],   ## dirname of index input
-		STARdir = lambda wildcards, output: os.path.splitext(os.path.splitext(output[0])[0])[0],   ## dirname of first output
+		STARindex = lambda wildcards, input: os.path.dirname(input['index']),   ## dirname of index input
+		STARdir = lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),   ## dirname of first output
 		starextraparams = config["additional_star_align"]
 	conda:
 		"envs/environment.yaml"
@@ -499,7 +499,7 @@ rule bigwig:
 	output:
 		os.path.join(outputdir, "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw")
 	params:
-		STARbigwigdir = lambda wildcards, output: os.path.splitext(output[0])[0]   ## dirname of first output
+		STARbigwigdir = lambda wildcards, output: os.path.dirname(output[0])   ## dirname of first output
 	log:
 		os.path.join(outputdir, "logs/bigwig_{sample}.log")
 	benchmark:
@@ -532,7 +532,7 @@ rule tximeta:
 	benchmark:
 		os.path.join(outputdir, "benchmarks/tximeta_se.txt")
 	params:
-		salmondir = lambda wildcards, input: os.path.splitext(os.path.splitext(input[1])[0])[0],   ## dirname of second output
+		salmondir = lambda wildcards, input: os.path.dirname(os.path.dirname(input[1])),   ## dirname of second output
 		flag = config["annotation"],
 		organism = config["organism"],
 		Rbin = Rbin
@@ -600,7 +600,7 @@ rule edgeR:
 		html = os.path.join(outputdir, "outputR/edgeR_dge.html"),
 		rds = os.path.join(outputdir, "outputR/edgeR_dge.rds")
 	params:
-		directory = lambda wildcards, input: os.path.splitext(input['rds'])[0],   ## dirname of rds input
+		directory = lambda wildcards, input: os.path.dirname(input['rds']),   ## dirname of rds input
 		organism = config["organism"],        
                 design = config["design"].replace(" ", "") if config["design"] is not None else "",
                 contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else "",
@@ -629,7 +629,7 @@ rule DRIMSeq:
 		html = os.path.join(outputdir, "outputR/DRIMSeq_dtu.html"),
 		rds = os.path.join(outputdir, "outputR/DRIMSeq_dtu.rds")
 	params:
-		directory = lambda wildcards, input: os.path.splitext(input['rds'])[0],   ## dirname of rds input
+		directory = lambda wildcards, input: os.path.dirname(input['rds']),   ## dirname of rds input
 		organism = config["organism"],
 		ncores = config["ncores"],
                 design = config["design"].replace(" ", "") if config["design"] is not None else "",
