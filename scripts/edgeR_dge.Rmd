@@ -238,7 +238,9 @@ edgeR_res <- lapply(contrasts, function(cm) {
     tt <- topTags(qlf, n = Inf, sort.by = "none")$table
     tt %>%
         dplyr::mutate(mlog10PValue = -log10(PValue)) %>% 
-        dplyr::mutate_if(is.numeric, signif3)
+        dplyr::mutate_at(vars(one_of(c("logFC", "logCPM", "F", 
+                                       "PValue", "FDR", "mlog10PValue"))), 
+                         list(signif3))
 })
 ```
 
