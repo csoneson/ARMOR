@@ -1,5 +1,5 @@
 channels:
 - conda-forge
 dependencies:
-- r-base=4.0.2
+- r-base=4.0.3
 - pandoc=2.10
