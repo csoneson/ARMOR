@@ -185,7 +185,9 @@ DRIMSeq_fits <- lapply(contrasts, function(cm) {
 DRIMSeq_res <- lapply(DRIMSeq_fits, function(dr) {
     results(dr, level = level) %>%
         dplyr::mutate(mlog10PValue = -log10(pvalue)) %>% 
-        dplyr::mutate_if(is.numeric, signif3)
+        dplyr::mutate_at(vars(one_of(c("lr", "df", "pvalue", 
+                                       "adj_pvalue", "mlog10PValue"))), 
+                         list(signif3))
 })
 ```
 
@@ -200,7 +202,9 @@ DRIMSeq_feature_fits <- lapply(contrasts, function(cm) {
 DRIMSeq_feature_res <- lapply(DRIMSeq_feature_fits, function(dr) {
     results(dr, level = level) %>%
         dplyr::mutate(mlog10PValue = -log10(pvalue)) %>% 
-        dplyr::mutate_if(is.numeric, signif3)
+        dplyr::mutate_at(vars(one_of(c("lr", "df", "pvalue", 
+                                       "adj_pvalue", "mlog10PValue"))), 
+                         list(signif3))
 })
 ```
 
