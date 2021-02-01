@@ -144,7 +144,6 @@ Finally we add gene annotation information.
 
 ```{r edgeR-dge-generate}
 dge0 <- tximeta::makeDGEList(sg)
-dge0 <- edgeR::calcNormFactors(dge0)
 
 dge0$genes <- as.data.frame(rowRanges(sg))
 ```
@@ -194,7 +193,6 @@ recalculate the normalization factors.
 dim(dge0)
 keep <- edgeR::filterByExpr(dge0, design = des)
 dge <- dge0[keep, ]
-dge <- calcNormFactors(dge)
 dim(dge)
 ```
 
