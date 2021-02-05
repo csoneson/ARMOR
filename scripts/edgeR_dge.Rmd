@@ -144,7 +144,6 @@ Finally we add gene annotation information.
 
 ```{r edgeR-dge-generate}
 dge0 <- tximeta::makeDGEList(sg)
-dge0 <- edgeR::calcNormFactors(dge0)
 
 dge0$genes <- as.data.frame(rowRanges(sg))
 ```
@@ -161,13 +160,8 @@ We add the logCPMs to one of the fields (or assay) of the first gene-level
 object again to export the results of all the genes we started with.
 
 ```{r edgeR-add-logcpm}
-# Here we use the approach from csaw::calculateCPM(), in order to account for
-# the average transcript length offsets in the CPM calculations
-off.mat <- dge0$offset
-new.offset <- edgeR::scaleOffset(dge0$samples$lib.size, off.mat)
-
-ap <- edgeR::addPriorCount(dge0$counts, offset = new.offset, prior.count = 2)
-logcpms <- log2(ap$y) - as.matrix(ap$offset)/log(2) + log2(1e6)
+logcpms <- edgeR::cpm(dge0, offset = dge0$offset, log = TRUE, 
+                      prior.count = 2)
 dimnames(logcpms) <- dimnames(dge0$counts)
 
 stopifnot(all(rownames(logcpms) == rownames(sg)),
@@ -199,7 +193,6 @@ recalculate the normalization factors.
 dim(dge0)
 keep <- edgeR::filterByExpr(dge0, design = des)
 dge <- dge0[keep, ]
-dge <- calcNormFactors(dge)
 dim(dge)
 ```
 
@@ -245,7 +238,9 @@ edgeR_res <- lapply(contrasts, function(cm) {
     tt <- topTags(qlf, n = Inf, sort.by = "none")$table
     tt %>%
         dplyr::mutate(mlog10PValue = -log10(PValue)) %>% 
-        dplyr::mutate_if(is.numeric, signif3)
+        dplyr::mutate_at(vars(one_of(c("logFC", "logCPM", "F", 
+                                       "PValue", "FDR", "mlog10PValue"))), 
+                         list(signif3))
 })
 ```
 

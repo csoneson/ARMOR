@@ -1,10 +1,11 @@
 ## Configuration file
 import os
 if len(config) == 0:
-  if os.path.isfile("./config.yaml"):
-    configfile: "./config.yaml"
-  else:
-    sys.exit("Make sure there is a config.yaml file in " + os.getcwd() + " or specify one with the --configfile commandline parameter.")
+	if os.path.isfile("./config.yaml"):
+		configfile: "./config.yaml"
+	else:
+		sys.exit("".join(["Make sure there is a config.yaml file in ", os.getcwd(), 
+			" or specify one with the --configfile commandline parameter."]))
 
 ## Make sure that all expected variables from the config file are in the config dictionary
 configvars = ['annotation', 'organism', 'build', 'release', 'txome', 'genome', 'gtf', 'salmonindex', 'salmonk', 'STARindex', 'readlength', 'fldMean', 'fldSD', 'metatxt', 'design', 'contrast', 'genesets', 'ncores', 'FASTQ', 'fqext1', 'fqext2', 'fqsuffix', 'output', 'useCondaR', 'Rbin', 'run_trimming', 'run_STAR', 'run_DRIMSeq', 'run_camera']
@@ -27,13 +28,13 @@ config['metatxt'] = sanitizefile(config['metatxt'])
 
 ## Read metadata
 if not os.path.isfile(config["metatxt"]):
-  sys.exit("Metadata file " + config["metatxt"] + " does not exist.")
+	sys.exit("".join(["Metadata file ", config["metatxt"], " does not exist."]))
 
 import pandas as pd
 samples = pd.read_csv(config["metatxt"], sep='\t')
 
 if not set(['names','type']).issubset(samples.columns):
-  sys.exit("Make sure 'names' and 'type' are columns in " + config["metatxt"])
+	sys.exit("".join(["Make sure 'names' and 'type' are columns in ", config["metatxt"]]))
 
 
 ## Sanitize provided input and output directories
@@ -66,77 +67,81 @@ Rbin = config["Rbin"]
 ## Run all analyses
 rule all:
 	input:
-		outputdir + "MultiQC/multiqc_report.html",
-		outputdir + "outputR/shiny_sce.rds"
+		os.path.join(outputdir, "MultiQC", "multiqc_report.html"),
+		os.path.join(outputdir, "outputR", "shiny_sce.rds")
 
 rule setup:
 	input:
-		outputdir + "Rout/pkginstall_state.txt",
-		outputdir + "Rout/softwareversions.done"
+		os.path.join(outputdir, "Rout", "pkginstall_state.txt"),
+		os.path.join(outputdir, "Rout", "softwareversions.done")
 
 ## Install R packages
 rule pkginstall:
 	input:
 		script = "scripts/install_pkgs.R"
 	output:
-	  outputdir + "Rout/pkginstall_state.txt"
+	  	os.path.join(outputdir, "Rout", "pkginstall_state.txt")
 	params:
 		flag = config["annotation"],
 		ncores = config["ncores"],
-		organism = config["organism"]
+		organism = config["organism"],
+		Rbin = Rbin
 	priority:
 		50
 	conda:
 		Renv
 	log:
-		outputdir + "Rout/install_pkgs.Rout"
+		os.path.join(outputdir, "Rout", "install_pkgs.Rout")
 	benchmark:
-	  outputdir + "benchmarks/install_pkgs.txt"
+	  	os.path.join(outputdir, "benchmarks", "install_pkgs.txt")
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args outtxt='{output}' ncores='{params.ncores}' annotation='{params.flag}' organism='{params.organism}'" {input.script} {log}'''
+		'''{params.Rbin} CMD BATCH --no-restore --no-save "--args outtxt='{output}' ncores='{params.ncores}' annotation='{params.flag}' organism='{params.organism}'" {input.script} {log}'''
 
 ## FastQC on original (untrimmed) files
 rule runfastqc:
 	input:
-		expand(outputdir + "FastQC/{sample}_" + str(config["fqext1"]) + "_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_" + str(config["fqext2"]) + "_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist())
+		expand(os.path.join(outputdir, "FastQC", "".join(["{sample}_", str(config["fqext1"]), "_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(os.path.join(outputdir, "FastQC", "".join(["{sample}_", str(config["fqext2"]), "_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(os.path.join(outputdir, "FastQC", "{sample}_fastqc.zip"), sample = samples.names[samples.type == 'SE'].values.tolist())
 
 ## Trimming and FastQC on trimmed files
 rule runtrimming:
 	input:
-		expand(outputdir + "FastQC/{sample}_" + str(config["fqext1"]) + "_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_" + str(config["fqext2"]) + "_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()),
-		expand(outputdir + "FastQC/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist())
+		expand(os.path.join(outputdir, "FastQC", "".join(["{sample}_", str(config["fqext1"]), "_val_1_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(os.path.join(outputdir, "FastQC", "".join(["{sample}_", str(config["fqext2"]), "_val_2_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()),
+		expand(os.path.join(outputdir, "FastQC", "{sample}_trimmed_fastqc.zip"), sample = samples.names[samples.type == 'SE'].values.tolist())
 
 ## Salmon quantification
 rule runsalmonquant:
 	input:
-		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist())
+		expand(os.path.join(outputdir, "salmon", "{sample}", "quant.sf"), sample = samples.names.values.tolist())
 
 ## STAR alignment
 rule runstar:
 	input:
-		expand(outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist()),
-		expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist())
+		expand(os.path.join(outputdir, "STAR", "{sample}", "{sample}_Aligned.sortedByCoord.out.bam.bai"), sample = samples.names.values.tolist()),
+		expand(os.path.join(outputdir, "STARbigwig", "{sample}_Aligned.sortedByCoord.out.bw"), sample = samples.names.values.tolist())
 
 ## List all the packages that were used by the R analyses
 rule listpackages:
 	log:
-		outputdir + "Rout/list_packages.Rout"
+		os.path.join(outputdir, "Rout", "list_packages.Rout")
 	params:
-		Routdir = outputdir + "Rout",
-		outtxt = outputdir + "R_package_versions.txt",
-		script = "scripts/list_packages.R"
+		Routdir = os.path.join(outputdir, "Rout"),
+		outtxt = os.path.join(outputdir, "R_package_versions.txt"),
+		script = "scripts/list_packages.R",
+		Rbin = Rbin
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args Routdir='{params.Routdir}' outtxt='{params.outtxt}'" {params.script} {log}'''
+		'''{params.Rbin} CMD BATCH --no-restore --no-save "--args Routdir='{params.Routdir}' outtxt='{params.outtxt}'" {params.script} {log}'''
 
 ## Print the versions of all software packages
 rule softwareversions:
 	output:
-		touch(outputdir + "Rout/softwareversions.done")
+		touch(os.path.join(outputdir, "Rout", "softwareversions.done"))
+	log:
+		os.path.join(outputdir, "logs", "softversions.log")
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -154,14 +159,13 @@ rule salmonindex:
 	input:
 		txome = config["txome"]
 	output:
-		config["salmonindex"] + "/versionInfo.json"
+		os.path.join(config["salmonindex"], "versionInfo.json")
 	log:
-		outputdir + "logs/salmon_index.log"
+		os.path.join(outputdir, "logs", "salmon_index.log")
 	benchmark:
-		outputdir + "benchmarks/salmon_index.txt"
+		os.path.join(outputdir, "benchmarks", "salmon_index.txt")
 	params:
-		#salmonk = config["salmonk"],
-		salmonoutdir = config["salmonindex"],
+		salmonoutdir = lambda wildcards, output: os.path.dirname(output[0]),   ## dirname of first output
 		anno = config["annotation"],
 		salmonextraparams = config["additional_salmon_index"]
 	conda:
@@ -183,24 +187,25 @@ rule linkedtxome:
 	input:
 		txome = config["txome"],
 		gtf = config["gtf"],
-		salmonidx = config["salmonindex"] + "/versionInfo.json",
+		salmonidx = os.path.join(config["salmonindex"], "versionInfo.json"),
 		script = "scripts/generate_linkedtxome.R",
-		install = outputdir + "Rout/pkginstall_state.txt"
+		install = os.path.join(outputdir, "Rout", "pkginstall_state.txt")
 	log:
-		outputdir + "Rout/generate_linkedtxome.Rout"
+		os.path.join(outputdir, "Rout", "generate_linkedtxome.Rout")
 	benchmark:
-		outputdir + "benchmarks/generate_linkedtxome.txt"
+		os.path.join(outputdir, "benchmarks", "generate_linkedtxome.txt")
 	output:
-		config["salmonindex"] + ".json"
+		"".join([config["salmonindex"], ".json"])
 	params:
 		flag = config["annotation"],
 		organism = config["organism"],
 		release = str(config["release"]),
-		build = config["build"]
+		build = config["build"],
+		Rbin = Rbin
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args transcriptfasta='{input.txome}' salmonidx='{input.salmonidx}' gtf='{input.gtf}' annotation='{params.flag}' organism='{params.organism}' release='{params.release}' build='{params.build}' output='{output}'" {input.script} {log}'''
+		'''{params.Rbin} CMD BATCH --no-restore --no-save "--args transcriptfasta='{input.txome}' salmonidx='{input.salmonidx}' gtf='{input.gtf}' annotation='{params.flag}' organism='{params.organism}' release='{params.release}' build='{params.build}' output='{output}'" {input.script} {log}'''
 
 ## Generate STAR index
 rule starindex:
@@ -208,14 +213,14 @@ rule starindex:
 		genome = config["genome"],
 		gtf = config["gtf"]
 	output:
-		config["STARindex"] + "/SA",
-		config["STARindex"] + "/chrNameLength.txt"
+		os.path.join(config["STARindex"], "SA"),
+		os.path.join(config["STARindex"], "chrNameLength.txt")
 	log:
-		outputdir + "logs/STAR_index.log"
+		os.path.join(outputdir, "logs", "STAR_index.log")
 	benchmark:
-		outputdir + "benchmarks/STAR_index.txt"
+		os.path.join(outputdir, "benchmarks", "STAR_index.txt")
 	params:
-		STARindex = config["STARindex"],
+		STARindex = lambda wildcards, output: os.path.dirname(output[0]),   ## dirname of first output
 		readlength = config["readlength"],
 		starextraparams = config["additional_star_index"]
 	conda:
@@ -234,15 +239,15 @@ rule starindex:
 ## FastQC, original reads
 rule fastqc:
 	input:
-		fastq = FASTQdir + "{sample}." + str(config["fqsuffix"]) + ".gz"
+		fastq = os.path.join(FASTQdir, "".join(["{sample}.", str(config["fqsuffix"]), ".gz"]))
 	output:
-		outputdir + "FastQC/{sample}_fastqc.zip"
+		os.path.join(outputdir, "FastQC", "{sample}_fastqc.zip")
 	params:
-		FastQC = outputdir + "FastQC"
+		FastQC = lambda wildcards, output: os.path.dirname(output[0])   ## dirname of first output
 	log:
-		outputdir + "logs/fastqc_{sample}.log"
+		os.path.join(outputdir, "logs", "fastqc_{sample}.log")
 	benchmark:
-		outputdir + "benchmarks/fastqc_{sample}.txt"
+		os.path.join(outputdir, "benchmarks", "fastqc_{sample}.txt")
 	conda:
 		"envs/environment.yaml"
 	threads:
@@ -254,15 +259,15 @@ rule fastqc:
 ## FastQC, trimmed reads
 rule fastqctrimmed:
 	input:
-		fastq = outputdir + "FASTQtrimmed/{sample}.fq.gz"
+		fastq = os.path.join(outputdir, "FASTQtrimmed", "{sample}.fq.gz")
 	output:
-		outputdir + "FastQC/{sample}_fastqc.zip"
+		os.path.join(outputdir, "FastQC", "{sample}_fastqc.zip")
 	params:
-		FastQC = outputdir + "FastQC"
+		FastQC = lambda wildcards, output: os.path.dirname(output[0])   ## dirname of first output
 	log:
-		outputdir + "logs/fastqc_trimmed_{sample}.log"
+		os.path.join(outputdir, "logs", "fastqc_trimmed_{sample}.log")
 	benchmark:
-		outputdir + "benchmarks/fastqc_trimmed_{sample}.txt"
+		os.path.join(outputdir, "benchmarks", "fastqc_trimmed_{sample}.txt")
 	conda:
 		"envs/environment.yaml"
 	threads:
@@ -276,29 +281,29 @@ rule fastqctrimmed:
 # The config.yaml files determines which steps should be performed
 def multiqc_input(wildcards):
 	input = []
-	input.extend(expand(outputdir + "FastQC/{sample}_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()))
-	input.extend(expand(outputdir + "FastQC/{sample}_" + str(config["fqext1"]) + "_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
-	input.extend(expand(outputdir + "FastQC/{sample}_" + str(config["fqext2"]) + "_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
-	input.extend(expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()))
+	input.extend(expand(os.path.join(outputdir, "FastQC", "{sample}_fastqc.zip"), sample = samples.names[samples.type == 'SE'].values.tolist()))
+	input.extend(expand(os.path.join(outputdir, "FastQC", "".join(["{sample}_", str(config["fqext1"]), "_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()))
+	input.extend(expand(os.path.join(outputdir, "FastQC", "".join(["{sample}_", str(config["fqext2"]), "_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()))
+	input.extend(expand(os.path.join(outputdir, "salmon", "{sample}", "quant.sf"), sample = samples.names.values.tolist()))
 	if config["run_trimming"]:
-		input.extend(expand(outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz", sample = samples.names[samples.type == 'SE'].values.tolist()))
-		input.extend(expand(outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext1"]) + "_val_1.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()))
-		input.extend(expand(outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext2"]) + "_val_2.fq.gz", sample = samples.names[samples.type == 'PE'].values.tolist()))
-		input.extend(expand(outputdir + "FastQC/{sample}_trimmed_fastqc.zip", sample = samples.names[samples.type == 'SE'].values.tolist()))
-		input.extend(expand(outputdir + "FastQC/{sample}_" + str(config["fqext1"]) + "_val_1_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
-		input.extend(expand(outputdir + "FastQC/{sample}_" + str(config["fqext2"]) + "_val_2_fastqc.zip", sample = samples.names[samples.type == 'PE'].values.tolist()))
+		input.extend(expand(os.path.join(outputdir, "FASTQtrimmed", "{sample}_trimmed.fq.gz"), sample = samples.names[samples.type == 'SE'].values.tolist()))
+		input.extend(expand(os.path.join(outputdir, "FASTQtrimmed", "".join(["{sample}_", str(config["fqext1"]), "_val_1.fq.gz"])), sample = samples.names[samples.type == 'PE'].values.tolist()))
+		input.extend(expand(os.path.join(outputdir, "FASTQtrimmed", "".join(["{sample}_", str(config["fqext2"]), "_val_2.fq.gz"])), sample = samples.names[samples.type == 'PE'].values.tolist()))
+		input.extend(expand(os.path.join(outputdir, "FastQC", "{sample}_trimmed_fastqc.zip"), sample = samples.names[samples.type == 'SE'].values.tolist()))
+		input.extend(expand(os.path.join(outputdir, "FastQC", "".join(["{sample}_", str(config["fqext1"]), "_val_1_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()))
+		input.extend(expand(os.path.join(outputdir, "FastQC", "".join(["{sample}_", str(config["fqext2"]), "_val_2_fastqc.zip"])), sample = samples.names[samples.type == 'PE'].values.tolist()))
 	if config["run_STAR"]:
-		input.extend(expand(outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample = samples.names.values.tolist()))
+		input.extend(expand(os.path.join(outputdir, "STAR", "{sample}", "{sample}_Aligned.sortedByCoord.out.bam.bai"), sample = samples.names.values.tolist()))
 	return input
 
 ## Determine the input directories for MultiQC depending on the config file
 def multiqc_params(wildcards):
-	param = [outputdir + "FastQC",
-	outputdir + "salmon"]
+	param = [os.path.join(outputdir, "FastQC"),
+	os.path.join(outputdir, "salmon")]
 	if config["run_trimming"]:
-		param.append(outputdir + "FASTQtrimmed")
+		param.append(os.path.join(outputdir, "FASTQtrimmed"))
 	if config["run_STAR"]:
-		param.append(outputdir + "STAR")
+		param.append(os.path.join(outputdir, "STAR"))
 	return param
 
 ## MultiQC
@@ -306,14 +311,14 @@ rule multiqc:
 	input:
 		multiqc_input
 	output:
-		outputdir + "MultiQC/multiqc_report.html"
+		os.path.join(outputdir, "MultiQC", "multiqc_report.html")
 	params:
 		inputdirs = multiqc_params,
-		MultiQCdir = outputdir + "MultiQC"
+		MultiQCdir = lambda wildcards, output: os.path.dirname(output[0])   ## dirname of first output
 	log:
-		outputdir + "logs/multiqc.log"
+		os.path.join(outputdir, "logs", "multiqc.log")
 	benchmark:
-		outputdir + "benchmarks/multiqc.txt"
+		os.path.join(outputdir, "benchmarks", "multiqc.txt")
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -327,15 +332,15 @@ rule multiqc:
 # TrimGalore!
 rule trimgaloreSE:
 	input:
-		fastq = FASTQdir + "{sample}." + str(config["fqsuffix"]) + ".gz"
+		fastq = os.path.join(FASTQdir, "".join(["{sample}.", str(config["fqsuffix"]), ".gz"]))
 	output:
-		outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz"
+		os.path.join(outputdir, "FASTQtrimmed", "{sample}_trimmed.fq.gz")
 	params:
-		FASTQtrimmeddir = outputdir + "FASTQtrimmed"
+		FASTQtrimmeddir = lambda wildcards, output: os.path.dirname(output[0])   ## dirname of first output
 	log:
-		outputdir + "logs/trimgalore_{sample}.log"
+		os.path.join(outputdir, "logs", "trimgalore_{sample}.log")
 	benchmark:
-		outputdir + "benchmarks/trimgalore_{sample}.txt"
+		os.path.join(outputdir, "benchmarks", "trimgalore_{sample}.txt")
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -344,17 +349,17 @@ rule trimgaloreSE:
 
 rule trimgalorePE:
 	input:
-		fastq1 = FASTQdir + "{sample}_" + str(config["fqext1"]) + "." + str(config["fqsuffix"]) + ".gz",
-		fastq2 = FASTQdir + "{sample}_" + str(config["fqext2"]) + "." + str(config["fqsuffix"]) + ".gz"
+		fastq1 = os.path.join(FASTQdir, "".join(["{sample}_", str(config["fqext1"]), ".", str(config["fqsuffix"]), ".gz"])),
+		fastq2 = os.path.join(FASTQdir, "".join(["{sample}_", str(config["fqext2"]), ".", str(config["fqsuffix"]), ".gz"]))
 	output:
-		outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext1"]) + "_val_1.fq.gz",
-		outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext2"]) + "_val_2.fq.gz"
+		os.path.join(outputdir, "FASTQtrimmed", "".join(["{sample}_", str(config["fqext1"]), "_val_1.fq.gz"])),
+		os.path.join(outputdir, "FASTQtrimmed", "".join(["{sample}_", str(config["fqext2"]), "_val_2.fq.gz"]))
 	params:
-		FASTQtrimmeddir = outputdir + "FASTQtrimmed"
+		FASTQtrimmeddir = lambda wildcards, output: os.path.dirname(output[0])   ## dirname of first output
 	log:
-		outputdir + "logs/trimgalore_{sample}.log"
+		os.path.join(outputdir, "logs", "trimgalore_{sample}.log")
 	benchmark:
-		outputdir + "benchmarks/trimgalore_{sample}.txt"
+		os.path.join(outputdir, "benchmarks", "trimgalore_{sample}.txt")
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -368,19 +373,19 @@ rule trimgalorePE:
 # Estimate abundances with Salmon
 rule salmonSE:
 	input:
-		index = config["salmonindex"] + "/versionInfo.json",
-		fastq = outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}." + str(config["fqsuffix"]) + ".gz"
+		index = os.path.join(config["salmonindex"], "versionInfo.json"),
+		fastq = os.path.join(outputdir, "FASTQtrimmed", "{sample}_trimmed.fq.gz") if config["run_trimming"] else os.path.join(FASTQdir, "".join(["{sample}.", str(config["fqsuffix"]), ".gz"]))
 	output:
-		outputdir + "salmon/{sample}/quant.sf"
+		os.path.join(outputdir, "salmon", "{sample}", "quant.sf")
 	log:
-		outputdir + "logs/salmon_{sample}.log"
+		os.path.join(outputdir, "logs", "salmon_{sample}.log")
 	benchmark:
-		outputdir + "benchmarks/salmon_{sample}.txt"
+		os.path.join(outputdir, "benchmarks", "salmon_{sample}.txt")
 	threads:
 		config["ncores"]
 	params:
-		salmonindex = config["salmonindex"],
-		salmondir = outputdir + "salmon",
+		salmonindex = lambda wildcards, input: os.path.dirname(input['index']),   ## dirname of index input
+		salmondir = lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),   ## dirname of first output
 		salmonextraparams = config["additional_salmon_quant"]
 	conda:
 		"envs/environment.yaml"
@@ -391,20 +396,20 @@ rule salmonSE:
 
 rule salmonPE:
 	input:
-		index = config["salmonindex"] + "/versionInfo.json",
-		fastq1 = outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext1"]) + "_val_1.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_" + str(config["fqext1"]) + "." + str(config["fqsuffix"]) + ".gz",
-		fastq2 = outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext2"]) + "_val_2.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_" + str(config["fqext2"]) + "." + str(config["fqsuffix"]) + ".gz"
+		index = os.path.join(config["salmonindex"], "versionInfo.json"),
+		fastq1 = os.path.join(outputdir, "FASTQtrimmed", "".join(["{sample}_", str(config["fqext1"]), "_val_1.fq.gz"])) if config["run_trimming"] else os.path.join(FASTQdir, "".join(["{sample}_", str(config["fqext1"]), ".", str(config["fqsuffix"]), ".gz"])),
+		fastq2 = os.path.join(outputdir, "FASTQtrimmed", "".join(["{sample}_", str(config["fqext2"]), "_val_2.fq.gz"])) if config["run_trimming"] else os.path.join(FASTQdir, "".join(["{sample}_", str(config["fqext2"]), ".", str(config["fqsuffix"]), ".gz"]))
 	output:
-		outputdir + "salmon/{sample}/quant.sf"
+		os.path.join(outputdir, "salmon", "{sample}", "quant.sf")
 	log:
-		outputdir + "logs/salmon_{sample}.log"
+		os.path.join(outputdir, "logs", "salmon_{sample}.log")
 	benchmark:
-		outputdir + "benchmarks/salmon_{sample}.txt"
+		os.path.join(outputdir, "benchmarks", "salmon_{sample}.txt")
 	threads:
 		config["ncores"]
 	params:
-		salmonindex = config["salmonindex"],
-		salmondir = outputdir + "salmon",
+		salmonindex = lambda wildcards, input: os.path.dirname(input['index']),   ## dirname of index input
+		salmondir = lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),   ## dirname of first output
 		salmonextraparams = config["additional_salmon_quant"]
 	conda:
 		"envs/environment.yaml"
@@ -419,19 +424,19 @@ rule salmonPE:
 ## Genome mapping with STAR
 rule starSE:
 	input:
-		index = config["STARindex"] + "/SA",
-		fastq = outputdir + "FASTQtrimmed/{sample}_trimmed.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}." + str(config["fqsuffix"]) + ".gz"
+		index = os.path.join(config["STARindex"], "SA"),
+		fastq = os.path.join(outputdir, "FASTQtrimmed", "{sample}_trimmed.fq.gz") if config["run_trimming"] else os.path.join(FASTQdir, "".join(["{sample}.", str(config["fqsuffix"]), ".gz"]))
 	output:
-		outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
+		os.path.join(outputdir, "STAR", "{sample}", "{sample}_Aligned.sortedByCoord.out.bam")
 	threads:
 		config["ncores"]
 	log:
-		outputdir + "logs/STAR_{sample}.log"
+		os.path.join(outputdir, "logs", "STAR_{sample}.log")
 	benchmark:
-		outputdir + "benchmarks/STAR_{sample}.txt"
+		os.path.join(outputdir, "benchmarks", "STAR_{sample}.txt")
 	params:
-		STARindex = config["STARindex"],
-		STARdir = outputdir + "STAR",
+		STARindex = lambda wildcards, input: os.path.dirname(input['index']),   ## dirname of index input
+		STARdir = lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),   ## dirname of first output
 		starextraparams = config["additional_star_align"]
 	conda:
 		"envs/environment.yaml"
@@ -444,20 +449,20 @@ rule starSE:
 
 rule starPE:
 	input:
-		index = config["STARindex"] + "/SA",
-		fastq1 = outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext1"]) + "_val_1.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_" + str(config["fqext1"]) + "." + str(config["fqsuffix"]) + ".gz",
-		fastq2 = outputdir + "FASTQtrimmed/{sample}_" + str(config["fqext2"]) + "_val_2.fq.gz" if config["run_trimming"] else FASTQdir + "{sample}_" + str(config["fqext2"]) + "." + str(config["fqsuffix"]) + ".gz"
+		index = os.path.join(config["STARindex"], "SA"),
+		fastq1 = os.path.join(outputdir, "FASTQtrimmed", "".join(["{sample}_", str(config["fqext1"]), "_val_1.fq.gz"])) if config["run_trimming"] else os.path.join(FASTQdir, "".join(["{sample}_", str(config["fqext1"]), ".", str(config["fqsuffix"]), ".gz"])),
+		fastq2 = os.path.join(outputdir, "FASTQtrimmed", "".join(["{sample}_", str(config["fqext2"]), "_val_2.fq.gz"])) if config["run_trimming"] else os.path.join(FASTQdir, "".join(["{sample}_", str(config["fqext2"]), ".", str(config["fqsuffix"]), ".gz"]))
 	output:
-		outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
+		os.path.join(outputdir, "STAR", "{sample}", "{sample}_Aligned.sortedByCoord.out.bam")
 	threads:
 		config["ncores"]
 	log:
-		outputdir + "logs/STAR_{sample}.log"
+		os.path.join(outputdir, "logs", "STAR_{sample}.log")
 	benchmark:
-		outputdir + "benchmarks/STAR_{sample}.txt"
+		os.path.join(outputdir, "benchmarks", "STAR_{sample}.txt")
 	params:
-		STARindex = config["STARindex"],
-		STARdir = outputdir + "STAR",
+		STARindex = lambda wildcards, input: os.path.dirname(input['index']),   ## dirname of index input
+		STARdir = lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),   ## dirname of first output
 		starextraparams = config["additional_star_align"]
 	conda:
 		"envs/environment.yaml"
@@ -471,13 +476,13 @@ rule starPE:
 ## Index bam files
 rule bamindex:
 	input:
-		bam = outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam"
+		bam = os.path.join(outputdir, "STAR", "{sample}", "{sample}_Aligned.sortedByCoord.out.bam")
 	output:
-		outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam.bai"
+		os.path.join(outputdir, "STAR", "{sample}", "{sample}_Aligned.sortedByCoord.out.bam.bai")
 	log:
-		outputdir + "logs/samtools_index_{sample}.log"
+		os.path.join(outputdir, "logs", "samtools_index_{sample}.log")
 	benchmark:
-		outputdir + "benchmarks/samtools_index_{sample}.txt"
+		os.path.join(outputdir, "benchmarks", "samtools_index_{sample}.txt")
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -487,16 +492,16 @@ rule bamindex:
 ## Convert BAM files to bigWig
 rule bigwig:
 	input:
-		bam = outputdir + "STAR/{sample}/{sample}_Aligned.sortedByCoord.out.bam",
-		chrl = config["STARindex"] + "/chrNameLength.txt"
+		bam = os.path.join(outputdir, "STAR", "{sample}", "{sample}_Aligned.sortedByCoord.out.bam"),
+		chrl = os.path.join(config["STARindex"], "chrNameLength.txt")
 	output:
-		outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw"
+		os.path.join(outputdir, "STARbigwig", "{sample}_Aligned.sortedByCoord.out.bw")
 	params:
-		STARbigwigdir = outputdir + "STARbigwig"
+		STARbigwigdir = lambda wildcards, output: os.path.dirname(output[0])   ## dirname of first output
 	log:
-		outputdir + "logs/bigwig_{sample}.log"
+		os.path.join(outputdir, "logs", "bigwig_{sample}.log")
 	benchmark:
-		outputdir + "benchmarks/bigwig_{sample}.txt"
+		os.path.join(outputdir, "benchmarks", "bigwig_{sample}.txt")
 	conda:
 		"envs/environment.yaml"
 	shell:
@@ -512,34 +517,35 @@ rule bigwig:
 ## tximeta
 rule tximeta:
 	input:
-	    outputdir + "Rout/pkginstall_state.txt",
-		expand(outputdir + "salmon/{sample}/quant.sf", sample = samples.names.values.tolist()),
+	    os.path.join(outputdir, "Rout", "pkginstall_state.txt"),
+		expand(os.path.join(outputdir, "salmon", "{sample}", "quant.sf"), sample = samples.names.values.tolist()),
 		metatxt = config["metatxt"],
-		salmonidx = config["salmonindex"] + "/versionInfo.json",
-		json = config["salmonindex"] + ".json",
+		salmonidx = os.path.join(config["salmonindex"], "versionInfo.json"),
+		json = "".join([config["salmonindex"], ".json"]),
 		script = "scripts/run_tximeta.R"
 	output:
-		outputdir + "outputR/tximeta_se.rds"
+		os.path.join(outputdir, "outputR", "tximeta_se.rds")
 	log:
-		outputdir + "Rout/tximeta_se.Rout"
+		os.path.join(outputdir, "Rout", "tximeta_se.Rout")
 	benchmark:
-		outputdir + "benchmarks/tximeta_se.txt"
+		os.path.join(outputdir, "benchmarks", "tximeta_se.txt")
 	params:
-		salmondir = outputdir + "salmon",
+		salmondir = lambda wildcards, input: os.path.dirname(os.path.dirname(input[1])),   ## dirname of second output
 		flag = config["annotation"],
-		organism = config["organism"]
+		organism = config["organism"],
+		Rbin = Rbin
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}' annotation='{params.flag}' organism='{params.organism}'" {input.script} {log}'''
+		'''{params.Rbin} CMD BATCH --no-restore --no-save "--args salmondir='{params.salmondir}' json='{input.json}' metafile='{input.metatxt}' outrds='{output}' annotation='{params.flag}' organism='{params.organism}'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Input variable check
 ## ------------------------------------------------------------------------------------ ##
 def geneset_param(wildcards):
 	if config["run_camera"]:
-                gs = config["genesets"].replace(" ", "") if config["genesets"] is not None else "NOTDEFINED"
-		return "genesets='" + gs + "'"
+		gs = config["genesets"].replace(" ", "") if config["genesets"] is not None else "NOTDEFINED"
+		return "".join(["genesets='", gs, "'"])
 	else:
 		return ""
 
@@ -550,11 +556,11 @@ rule checkinputs:
         "config.yaml",
         script = "scripts/check_input.R"
     output:
-        outputdir + "Rout/check_input.txt"
+        os.path.join(outputdir, "Rout", "check_input.txt")
     log:
-        outputdir + "Rout/check_input.Rout"
+        os.path.join(outputdir, "Rout", "check_input.Rout")
     benchmark:
-    	outputdir + "benchmarks/check_input.txt"
+    	os.path.join(outputdir, "benchmarks", "check_input.txt")
     params:
         gtf = config["gtf"],
         genome = config["genome"],
@@ -569,11 +575,12 @@ rule checkinputs:
         fqext1 = str(config["fqext1"]),
         fqext2 = str(config["fqext2"]),
         run_camera = str(config["run_camera"]),
-        organism = config["organism"]    
+        organism = config["organism"],
+        Rbin = Rbin
     conda:
 	    Renv
     shell:
-        '''{Rbin} CMD BATCH --no-restore --no-save "--args metafile='{params.metatxt}' design='{params.design}' contrast='{params.contrast}' outFile='{output}' gtf='{params.gtf}' genome='{params.genome}' fastqdir='{params.fastqdir}' fqsuffix='{params.fqsuffix}' fqext1='{params.fqext1}' fqext2='{params.fqext2}' txome='{params.txome}' run_camera='{params.run_camera}' organism='{params.organism}' {params.genesets} annotation='{params.annotation}'" {input.script} {log};
+        '''{params.Rbin} CMD BATCH --no-restore --no-save "--args metafile='{params.metatxt}' design='{params.design}' contrast='{params.contrast}' outFile='{output}' gtf='{params.gtf}' genome='{params.genome}' fastqdir='{params.fastqdir}' fqsuffix='{params.fqsuffix}' fqext1='{params.fqext1}' fqext2='{params.fqext2}' txome='{params.txome}' run_camera='{params.run_camera}' organism='{params.organism}' {params.genesets} annotation='{params.annotation}'" {input.script} {log};
         cat {output}
         '''
        
@@ -583,27 +590,28 @@ rule checkinputs:
 ## ------------------------------------------------------------------------------------ ##
 rule edgeR:
 	input:
-		outputdir + "Rout/pkginstall_state.txt",
-		rds = outputdir + "outputR/tximeta_se.rds",
+		os.path.join(outputdir, "Rout", "pkginstall_state.txt"),
+		rds = os.path.join(outputdir, "outputR", "tximeta_se.rds"),
 		script = "scripts/run_render.R",
 		template = "scripts/edgeR_dge.Rmd"
 	output:
-		html = outputdir + "outputR/edgeR_dge.html",
-		rds = outputdir + "outputR/edgeR_dge.rds"
+		html = os.path.join(outputdir, "outputR", "edgeR_dge.html"),
+		rds = os.path.join(outputdir, "outputR", "edgeR_dge.rds")
 	params:
-		directory = outputdir + "outputR",
-		organism = config["organism"],        
-                design = config["design"].replace(" ", "") if config["design"] is not None else "",
-                contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else "",
-		genesets = geneset_param
+		directory = lambda wildcards, input: os.path.dirname(input['rds']),   ## dirname of rds input
+		organism = config["organism"],
+		design = config["design"].replace(" ", "") if config["design"] is not None else "",
+		contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else "",
+		genesets = geneset_param,
+		Rbin = Rbin
 	log:
-		outputdir + "Rout/run_dge_edgeR.Rout"
+		os.path.join(outputdir, "Rout", "run_dge_edgeR.Rout")
 	benchmark:
-		outputdir + "benchmarks/run_dge_edgeR.txt"
+		os.path.join(outputdir, "benchmarks", "run_dge_edgeR.txt")
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' organism='{params.organism}' design='{params.design}' contrast='{params.contrast}' {params.genesets} rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='edgeR_dge.html'" {input.script} {log}'''
+		'''{params.Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' organism='{params.organism}' design='{params.design}' contrast='{params.contrast}' {params.genesets} rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='edgeR_dge.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Differential transcript usage
@@ -611,67 +619,68 @@ rule edgeR:
 ## DRIMSeq
 rule DRIMSeq:
 	input:
-	    outputdir + "Rout/pkginstall_state.txt",
-		rds = outputdir + "outputR/edgeR_dge.rds",
+	    os.path.join(outputdir, "Rout", "pkginstall_state.txt"),
+		rds = os.path.join(outputdir, "outputR", "edgeR_dge.rds"),
 		script = "scripts/run_render.R",
 		template = "scripts/DRIMSeq_dtu.Rmd"
 	output:
-		html = outputdir + "outputR/DRIMSeq_dtu.html",
-		rds = outputdir + "outputR/DRIMSeq_dtu.rds"
+		html = os.path.join(outputdir, "outputR", "DRIMSeq_dtu.html"),
+		rds = os.path.join(outputdir, "outputR", "DRIMSeq_dtu.rds")
 	params:
-		directory = outputdir + "outputR",
+		directory = lambda wildcards, input: os.path.dirname(input['rds']),   ## dirname of rds input
 		organism = config["organism"],
 		ncores = config["ncores"],
-                design = config["design"].replace(" ", "") if config["design"] is not None else "",
-                contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else ""
+		design = config["design"].replace(" ", "") if config["design"] is not None else "",
+		contrast = config["contrast"].replace(" ", "") if config["contrast"] is not None else "",
+		Rbin = Rbin
 	log:
-		outputdir + "Rout/run_dtu_drimseq.Rout"
+		os.path.join(outputdir, "Rout", "run_dtu_drimseq.Rout")
 	benchmark:
-		outputdir + "benchmarks/run_dtu_drimseq.txt"
+		os.path.join(outputdir, "benchmarks", "run_dtu_drimseq.txt")
 	conda:
 		Renv
 	threads:
 		config["ncores"]
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' design='{params.design}' contrast='{params.contrast}' ncores='{params.ncores}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='DRIMSeq_dtu.html'" {input.script} {log}'''
+		'''{params.Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' design='{params.design}' contrast='{params.contrast}' ncores='{params.ncores}' rmdtemplate='{input.template}' outputdir='{params.directory}' outputfile='DRIMSeq_dtu.html'" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## shiny app
 ## ------------------------------------------------------------------------------------ ##
 def shiny_input(wildcards):
-	input = [outputdir + "Rout/pkginstall_state.txt"]
+	input = [os.path.join(outputdir, "Rout", "pkginstall_state.txt")]
 	if config["run_STAR"]:
-		input.extend(expand(outputdir + "STARbigwig/{sample}_Aligned.sortedByCoord.out.bw", sample = samples.names.values.tolist()))
+		input.extend(expand(os.path.join(outputdir, "STARbigwig", "{sample}_Aligned.sortedByCoord.out.bw"), sample = samples.names.values.tolist()))
 	return input
 
 def shiny_params(wildcards):
-	param = ["outputdir='" + outputdir + "outputR'"]
+	param = ["".join(["outputdir='", outputdir, "outputR'"])]
 	if config["run_STAR"]:
-		param.append("bigwigdir='" + outputdir + "STARbigwig'")
+		param.append("".join(["bigwigdir='", outputdir, "STARbigwig'"]))
 	return param
 
 ## shiny
 rule shiny:
 	input:
 		shiny_input,
-		rds = outputdir + "outputR/DRIMSeq_dtu.rds" if config["run_DRIMSeq"]
-			else outputdir + "outputR/edgeR_dge.rds",
+		rds = os.path.join(outputdir, "outputR", "DRIMSeq_dtu.rds") if config["run_DRIMSeq"] else os.path.join(outputdir, "outputR", "edgeR_dge.rds"),
 		script = "scripts/run_render.R",
 		gtf = config["gtf"],
 		template = "scripts/prepare_shiny.Rmd"
 	output:
-		html = outputdir + "outputR/prepare_shiny.html",
-		rds = outputdir + "outputR/shiny_sce.rds"
+		html = os.path.join(outputdir, "outputR", "prepare_shiny.html"),
+		rds = os.path.join(outputdir, "outputR", "shiny_sce.rds")
 	params:
-		p = shiny_params
+		p = shiny_params,
+		Rbin = Rbin
 	log:
-		outputdir + "Rout/prepare_shiny.Rout"
+		os.path.join(outputdir, "Rout", "prepare_shiny.Rout")
 	benchmark:
-		outputdir + "benchmarks/prepare_shiny.txt"
+		os.path.join(outputdir, "benchmarks", "prepare_shiny.txt")
 	conda:
 		Renv
 	shell:
-		'''{Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' gtffile='{input.gtf}' rmdtemplate='{input.template}' outputfile='prepare_shiny.html' {params.p}" {input.script} {log}'''
+		'''{params.Rbin} CMD BATCH --no-restore --no-save "--args se='{input.rds}' gtffile='{input.gtf}' rmdtemplate='{input.template}' outputfile='prepare_shiny.html' {params.p}" {input.script} {log}'''
 
 ## ------------------------------------------------------------------------------------ ##
 ## Success and failure messages

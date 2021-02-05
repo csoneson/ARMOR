@@ -1,3 +1,9 @@
+v1.5.3
+======
+o Update syntax based on suggestions from snakemake --lint
+o Update software versions
+o Use built-in cpm() function from edgeR
+
 v1.5.2
 ======
 o Fix pandoc version to 2.10 (thanks @carissableker, https://github.com/csoneson/ARMOR/pull/101)
