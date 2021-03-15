@@ -1,3 +1,7 @@
+v1.5.4
+======
+o Specify tbb version 2020.2 based on issue with salmon in conda (https://twitter.com/dpryan79/status/1368116490801717251)
+
 v1.5.3
 ======
 o Update syntax based on suggestions from snakemake --lint
