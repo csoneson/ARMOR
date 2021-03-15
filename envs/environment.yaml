@@ -12,3 +12,4 @@ dependencies:
 - bedtools=2.30.0
 - ucsc-bedgraphtobigwig=377
 - pandoc=2.10
+- tbb=2020.2
