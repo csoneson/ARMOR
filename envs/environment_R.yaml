@@ -3,3 +3,4 @@ channels:
 dependencies:
 - r-base=4.0.3
 - pandoc=2.10
+- udunits2=2.2.27.27
