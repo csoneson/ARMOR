@@ -15,11 +15,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-latest, ubuntu-18.04]
         include:
         - os: macos-latest
           rversion: 4.0
-        - os: ubuntu-latest
+        - os: ubuntu-18.04
           rversion: 4.0
     steps:
       - uses: actions/checkout@v2
