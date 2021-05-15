@@ -28,8 +28,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update && \
-          sudo apt-get -y install libudunits2-dev libmariadbclient-dev \
-          libmariadb-client-lgpl-dev libcairo2-dev
+          sudo apt-get -y install libudunits2-dev libmariadbclient-dev libcairo2-dev
         
       - uses: r-lib/actions/setup-r@master
         if: runner.os == 'macOS'
