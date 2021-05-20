@@ -3,3 +3,5 @@ channels:
 dependencies:
 - r-base=4.0.5
 - pandoc=2.10
+- r-curl=4.3.1
+- r-rsqlite=2.2.5
