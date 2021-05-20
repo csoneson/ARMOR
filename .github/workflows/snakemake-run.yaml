@@ -18,9 +18,9 @@ jobs:
         os: [macos-latest, ubuntu-18.04]
         include:
         - os: macos-latest
-          rversion: 4.0
+          rversion: '4.0'
         - os: ubuntu-18.04
-          rversion: 4.0
+          rversion: '4.0'
     steps:
       - uses: actions/checkout@v2
       
