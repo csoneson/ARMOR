@@ -15,12 +15,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-18.04]
+        os: [macos-latest, ubuntu-latest]
         include:
         - os: macos-latest
-          rversion: '4.0'
-        - os: ubuntu-18.04
-          rversion: '4.0'
+          rversion: '4.1'
+        - os: ubuntu-latest
+          rversion: '4.1'
     steps:
       - uses: actions/checkout@v2
       
@@ -53,7 +53,7 @@ jobs:
       
       - name: install snakemake and run workflow
         run: |
-          conda install snakemake=5.16.0
+          conda install snakemake=6.10.0
           mkdir -p $HOME/.R
           echo -e 'MAKEFLAGS = -j8' > $HOME/.R/Makevars
           echo 'options(Ncpus = 8)' > $HOME/.Rprofile
