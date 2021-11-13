@@ -11,5 +11,5 @@ dependencies:
 - cutadapt=3.2
 - bedtools=2.30.0
 - ucsc-bedgraphtobigwig=377
-- pandoc=2.10
+- pandoc=2.11
 - tbb=2020.2

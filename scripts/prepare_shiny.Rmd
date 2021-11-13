@@ -82,9 +82,18 @@ logcpms <- assay(sg, "logcpm")
 mds <- limma::plotMDS(logcpms, top = 500, labels = NULL, pch = NULL,
                       cex = 1, dim.plot = c(1, 2), ndim = min(7, ncol(logcpms) - 1),
                       gene.selection = "common",
-                      xlab = NULL, ylab = NULL, plot = FALSE)$cmdscale.out
-colnames(mds) <- paste0("MDS", seq_len(ncol(mds)))
-mds <- as.data.frame(mds) %>% tibble::rownames_to_column(var = "names") %>%
+                      xlab = NULL, ylab = NULL, plot = FALSE)
+if (!is.null(mds$cmdscale.out)) {
+    ## Bioc 3.12 and earlier
+    mds <- mds$cmdscale.out
+    colnames(mds) <- paste0("MDS", seq_len(ncol(mds)))
+    mds <- as.data.frame(mds) %>% tibble::rownames_to_column(var = "names")
+} else {
+    mds <- data.frame(names = colnames(logcpms),
+                      MDS1 = mds$x,
+                      MDS2 = mds$y)
+}
+mds <- mds %>% 
     dplyr::full_join(data.frame(colData(sg)), by = "names")
 ```
 
