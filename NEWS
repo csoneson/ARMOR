@@ -1,6 +1,6 @@
 v1.5.6
 ======
-o Remove tx_ids column from text file exported by edgeR
+o Remove tx_ids column from text file exported by edgeR (addressing https://github.com/csoneson/ARMOR/issues/109)
 
 v1.5.5
 ======
