@@ -272,12 +272,14 @@ We export the results into text files that can be opened using any text editor.
 ```{r edgeR-save-results}
 ## Write results to text files and make MA plots
 if (is(edgeR_res, "data.frame")) {
-    write.table(edgeR_res %>% dplyr::arrange(PValue), 
+    write.table(edgeR_res %>% dplyr::arrange(PValue) %>%
+                    dplyr::select(-dplyr::any_of("tx_ids")), 
                 file = "edgeR_dge_results.txt", 
                 sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
 } else {
     for (nm in names(edgeR_res)) {
-        write.table(edgeR_res[[nm]] %>% dplyr::arrange(PValue), 
+        write.table(edgeR_res[[nm]] %>% dplyr::arrange(PValue) %>%
+                        dplyr::select(-dplyr::any_of("tx_ids")), 
                     file = paste0("edgeR_dge_results_", nm, ".txt"), 
                     sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE)
     }
