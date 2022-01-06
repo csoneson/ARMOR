@@ -1,3 +1,7 @@
+v1.5.6
+======
+o Remove tx_ids column from text file exported by edgeR
+
 v1.5.5
 ======
 o Adapt to the new output format of limma::plotMDS
