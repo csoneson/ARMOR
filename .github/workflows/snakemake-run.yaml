@@ -54,12 +54,12 @@ jobs:
       - name: Install system dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update && sudo apt-get -y install libudunits2-dev
+          sudo apt-get update && sudo apt-get -y install libudunits2-dev libmariadbclient-dev libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev
           
       - name: install snakemake and run workflow
         run: |
           conda install -c conda-forge mamba
-          conda install snakemake=7.6.2
+          conda install snakemake=6.10.0
           mkdir -p $HOME/.R
           echo -e 'MAKEFLAGS = -j8' > $HOME/.R/Makevars
           echo 'options(Ncpus = 8)' > $HOME/.Rprofile
