@@ -18,9 +18,9 @@ jobs:
         os: [macos-latest, ubuntu-latest]
         include:
         - os: macos-latest
-          rversion: '4.1'
+          rversion: '4.2'
         - os: ubuntu-latest
-          rversion: '4.1'
+          rversion: '4.2'
     steps:
       - uses: actions/checkout@v2
       
@@ -50,11 +50,16 @@ jobs:
           activate-conda: true
           update-conda: true
           conda-channels: 'bioconda,conda-forge,defaults'
-      
+
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update && sudo apt-get -y install libudunits2-dev
+          
       - name: install snakemake and run workflow
         run: |
           conda install -c conda-forge mamba
-          conda install snakemake=6.10.0
+          conda install snakemake=7.6.2
           mkdir -p $HOME/.R
           echo -e 'MAKEFLAGS = -j8' > $HOME/.R/Makevars
           echo 'options(Ncpus = 8)' > $HOME/.Rprofile
