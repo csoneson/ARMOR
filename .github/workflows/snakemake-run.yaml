@@ -54,12 +54,17 @@ jobs:
       - name: Install system dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update && sudo apt-get -y install libudunits2-dev libmariadbclient-dev libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev
-          
+          sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable --yes 
+          sudo apt-get --yes --force-yes update -qq && \
+          sudo apt-get -y install libmariadbclient-dev libcairo2-dev libv8-dev \
+          libgdal-dev libgeos-dev libgeos++-dev libproj-dev libudunits2-dev \
+          libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev libglpk-dev \
+          libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev libgit2-dev
+
       - name: install snakemake and run workflow
         run: |
           conda install -c conda-forge mamba
-          mamba install -c bioconda snakemake=7.6.2
+          mamba install -c bioconda snakemake=6.10.0
           mkdir -p $HOME/.R
           echo -e 'MAKEFLAGS = -j8' > $HOME/.R/Makevars
           echo 'options(Ncpus = 8)' > $HOME/.Rprofile
