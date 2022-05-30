@@ -157,7 +157,7 @@ generateReport <- function(se, gtffile = NULL, organism = NULL,
         }
         organism <- gsub("_", " ", organism)
         if (!is.null(genesets) && 
-            !organism %in% msigdbr::msigdbr_show_species()) {
+            !organism %in% msigdbr::msigdbr_species()$species_name) {
             stop("organism must be one of the organisms listed in ",
                  "msigdbr::msigdbr_show_species()")
         }
