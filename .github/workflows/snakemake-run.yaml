@@ -77,6 +77,8 @@ jobs:
           mamba install -c bioconda snakemake=6.10.0
       
       - name: Run workflow
+        env:
+          BIOCONDUCTOR_USE_CONTAINER_REPOSITORY: true
         run: |
           mkdir -p $HOME/.R
           echo -e 'MAKEFLAGS = -j8' > $HOME/.R/Makevars
