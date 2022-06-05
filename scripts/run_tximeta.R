@@ -35,6 +35,20 @@ st <- tximeta::tximeta(coldata)
 ## Summarize to gene level
 sg <- summarizeToGene(st)
 
+## If the 'entrezid' column exists and is a list, convert to a vector
+if ("entrezid" %in% colnames(rowData(sg)) && 
+    is(rowData(sg)$entrezid, "list")) {
+    if (any(vapply(rowData(sg)$entrezid, length, 1) > 1)) {
+        warning("Some elements of rowData(sg)$entrezid consisted of ",
+                "more than one object. Only the first one is retained.")
+    }
+    rowData(sg)$entrezid <- vapply(
+        rowData(sg)$entrezid, 
+        function(w) w[[1]], 
+        as(NA, class(rowData(sg)$entrezid[[1]]))
+    )
+}
+
 ## Add gene_names for Gencode reference
 if(annotation == "Gencode") {
     if(organism == "Homo_sapiens") {
