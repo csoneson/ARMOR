@@ -2,7 +2,7 @@ v1.5.7
 ======
 o Swap deprecated msigdbr function to get supported species
 o Convert entrezid column to a vector if required (to allow saving to csv)
-o Update to R 4.2.0
+o Update to R 4.1.0
 
 v1.5.6
 ======
