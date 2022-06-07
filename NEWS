@@ -1,3 +1,9 @@
+v1.5.7
+======
+o Swap deprecated msigdbr function to get supported species
+o Convert entrezid column to a vector if required (to allow saving to csv)
+o Update to R 4.1.0
+
 v1.5.6
 ======
 o Remove tx_ids column from text file exported by edgeR (addressing https://github.com/csoneson/ARMOR/issues/109)

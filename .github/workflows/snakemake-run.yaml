@@ -22,20 +22,22 @@ jobs:
         - os: ubuntu-latest
           rversion: '4.2'
     steps:
-      - uses: actions/checkout@v2
+      - name: Check out repository
+        uses: actions/checkout@v2
       
-      - uses: r-lib/actions/setup-r@master
+      - name: Install R (macOS)
+        uses: r-lib/actions/setup-r@master
         if: runner.os == 'macOS'
         with:
           r-version: ${{ matrix.rversion }}
       
-      - name: check where R is installed
+      - name: Check where R is installed
         if: runner.os == 'macOS'
         run: |
           which R
           Rscript -e 'print(.libPaths())'
       
-      - name: set up workflow R for macOS
+      - name: Set up workflow R for macOS
         if: runner.os == 'macOS'
         run: |
           sed -i .bak 's/useCondaR: True/useCondaR: False/' config.yaml
@@ -44,7 +46,7 @@ jobs:
           cat .Renviron
           Rscript -e "install.packages('BiocManager'); BiocManager::install('GenomeInfoDbData')"
           
-      - name: setup conda
+      - name: Set up conda
         uses: s-weigand/setup-conda@v1.1.0
         with:
           activate-conda: true
@@ -61,16 +63,30 @@ jobs:
           libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev libglpk-dev \
           libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev libgit2-dev
 
-      - name: install snakemake and run workflow
+      - name: Install snakemake (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          conda install -c conda-forge mamba=0.23.3
+          rm -f /usr/share/miniconda/pkgs/cache/*.json # workaround from mamba-org/mamba#488
+          mamba install -c bioconda snakemake=6.10.0
+
+      - name: Install snakemake (macOS)
+        if: runner.os == 'macOS'
         run: |
           conda install -c conda-forge mamba=0.23.3
           mamba install -c bioconda snakemake=6.10.0
+      
+      - name: Run workflow
+        env:
+          BIOCONDUCTOR_USE_CONTAINER_REPOSITORY: true
+        run: |
           mkdir -p $HOME/.R
           echo -e 'MAKEFLAGS = -j8' > $HOME/.R/Makevars
           echo 'options(Ncpus = 8)' > $HOME/.Rprofile
+          echo 'Sys.setenv(BIOCONDUCTOR_USE_CONTAINER_REPOSITORY=TRUE)' >> $HOME/.Rprofile
           snakemake --use-conda --cores 4 --conda-frontend mamba
       
-      - name: upload artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v2
         if: failure()
         with:
