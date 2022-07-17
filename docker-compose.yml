@@ -1,0 +1,7 @@
+version: "3.9"
+services:
+  armor:
+    build: .
+    volumes:
+      - ./:/app
+    command: snakemake --use-conda --cores all
