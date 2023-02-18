@@ -47,7 +47,7 @@ jobs:
           Rscript -e "install.packages('BiocManager'); BiocManager::install('GenomeInfoDbData')"
           
       - name: Set up conda
-        uses: s-weigand/setup-conda@v1.1.0
+        uses: s-weigand/setup-conda@v1.1.1
         with:
           activate-conda: true
           update-conda: false
