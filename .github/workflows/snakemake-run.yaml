@@ -77,7 +77,7 @@ jobs:
       
       - name: Install Snakemake
         run: |
-          conda create -c conda-forge -c bioconda -n snakemake snakemake
+          conda create -c conda-forge -c bioconda -n snakemake snakemake mamba
 
       - name: Run Snakemake
         env:
