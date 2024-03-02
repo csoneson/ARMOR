@@ -47,11 +47,10 @@ jobs:
           Rscript -e "install.packages('BiocManager'); BiocManager::install('GenomeInfoDbData')"
           
       - name: Set up Miniconda
-        uses: conda-incubator/setup-miniconda@v2.2.0
+        uses: conda-incubator/setup-miniconda@v3
         with:
           auto-update-conda: true
           channels: bioconda,conda-forge,defaults
-          channel-priority: strict
 
       - name: Install system dependencies (Linux)
         if: runner.os == 'Linux'
@@ -75,7 +74,7 @@ jobs:
       - name: Install Snakemake (macOS)
         if: runner.os == 'macOS'
         run: |
-          conda install snakemake
+          conda install bioconda::snakemake
       
       - name: Run Snakemake (macOS)
         if: runner.os == 'macOS'
