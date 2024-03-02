@@ -517,7 +517,7 @@ rule bigwig:
 ## tximeta
 rule tximeta:
 	input:
-	    os.path.join(outputdir, "Rout", "pkginstall_state.txt"),
+		os.path.join(outputdir, "Rout", "pkginstall_state.txt"),
 		expand(os.path.join(outputdir, "salmon", "{sample}", "quant.sf"), sample = samples.names.values.tolist()),
 		metatxt = config["metatxt"],
 		salmonidx = os.path.join(config["salmonindex"], "versionInfo.json"),
