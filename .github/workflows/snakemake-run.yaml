@@ -48,7 +48,11 @@ jobs:
           
       - name: Set up Miniconda
         uses: conda-incubator/setup-miniconda@v2.2.0
-        
+        with:
+          auto-update-conda: true
+          channels: bioconda,conda-forge,defaults
+          channel-priority: strict
+
       - name: Install system dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -71,7 +75,7 @@ jobs:
       - name: Install Snakemake (macOS)
         if: runner.os == 'macOS'
         run: |
-          conda install -c bioconda snakemake
+          conda install snakemake
       
       - name: Run Snakemake (macOS)
         if: runner.os == 'macOS'
