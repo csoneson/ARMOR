@@ -18,9 +18,9 @@ jobs:
         os: [macos-latest, ubuntu-latest]
         include:
         - os: macos-latest
-          rversion: '4.2'
+          rversion: '4.3'
         - os: ubuntu-latest
-          rversion: '4.2'
+          rversion: '4.3'
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
@@ -68,7 +68,18 @@ jobs:
           echo 'options(Ncpus = 8)' > $HOME/.Rprofile
           echo 'Sys.setenv(BIOCONDUCTOR_USE_CONTAINER_REPOSITORY=TRUE)' >> $HOME/.Rprofile
       
-      - name: Run Snakemake
+      - name: Install Snakemake (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          conda install -c bioconda snakemake
+      
+      - name: Run Snakemake (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          snakemake --use-conda --cores 4
+        
+      - name: Run Snakemake (Linux)
+        if: runner.os == 'Linux'
         env:
           BIOCONDUCTOR_USE_CONTAINER_REPOSITORY: true
         uses: snakemake/snakemake-github-action@v1
