@@ -65,7 +65,7 @@ jobs:
           libgdal-dev libgeos-dev libgeos++-dev libproj-dev libudunits2-dev \
           libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev libglpk-dev \
           libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev libgit2-dev \
-          libxml2-dev
+          libxml2-dev libxml-dev
 
       - name: Prepare for running workflow
         env:
