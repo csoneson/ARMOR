@@ -5,3 +5,4 @@ dependencies:
 - pandoc=2.11
 - r-curl=5.1.0
 - r-rsqlite=2.3.4
+- r-xml=v3.98_1.20
