@@ -10,6 +10,9 @@ name: snakemake-run
 
 jobs:
   snakemake-run:
+    defaults:
+      run:
+        shell: bash -l {0}
     name: run snakemake
     runs-on: ${{ matrix.os }}
     strategy:
@@ -51,6 +54,7 @@ jobs:
         with:
           auto-update-conda: true
           channels: bioconda,conda-forge,defaults
+          auto-activate-base: true
 
       - name: Install system dependencies (Linux)
         if: runner.os == 'Linux'
@@ -74,11 +78,12 @@ jobs:
       - name: Install Snakemake (macOS)
         if: runner.os == 'macOS'
         run: |
-          conda install bioconda::snakemake
-      
+          conda create -c conda-forge -c bioconda -n snakemake snakemake
+
       - name: Run Snakemake (macOS)
         if: runner.os == 'macOS'
         run: |
+          conda activate snakemake
           snakemake --use-conda --cores 4
         
       - name: Run Snakemake (Linux)
