@@ -75,26 +75,16 @@ jobs:
           echo 'options(Ncpus = 8)' > $HOME/.Rprofile
           echo 'Sys.setenv(BIOCONDUCTOR_USE_CONTAINER_REPOSITORY=TRUE)' >> $HOME/.Rprofile
       
-      - name: Install Snakemake (macOS)
-        if: runner.os == 'macOS'
+      - name: Install Snakemake
         run: |
           conda create -c conda-forge -c bioconda -n snakemake snakemake
 
-      - name: Run Snakemake (macOS)
-        if: runner.os == 'macOS'
+      - name: Run Snakemake
+        env:
+          BIOCONDUCTOR_USE_CONTAINER_REPOSITORY: true
         run: |
           conda activate snakemake
           snakemake --use-conda --cores 4
-        
-      - name: Run Snakemake (Linux)
-        if: runner.os == 'Linux'
-        env:
-          BIOCONDUCTOR_USE_CONTAINER_REPOSITORY: true
-        uses: snakemake/snakemake-github-action@v1
-        with:
-          directory: '.'
-          snakefile: 'Snakefile'
-          args: '--cores 4 --use-conda'
         
       - name: Upload artifact
         uses: actions/upload-artifact@v2
