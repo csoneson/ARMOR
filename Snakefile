@@ -619,7 +619,7 @@ rule edgeR:
 ## DRIMSeq
 rule DRIMSeq:
 	input:
-	    os.path.join(outputdir, "Rout", "pkginstall_state.txt"),
+		os.path.join(outputdir, "Rout", "pkginstall_state.txt"),
 		rds = os.path.join(outputdir, "outputR", "edgeR_dge.rds"),
 		script = "scripts/run_render.R",
 		template = "scripts/DRIMSeq_dtu.Rmd"
