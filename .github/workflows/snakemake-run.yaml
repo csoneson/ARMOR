@@ -88,7 +88,7 @@ jobs:
           snakemake --use-conda --cores 4
         
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: all_rout
