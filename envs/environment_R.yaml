@@ -1,11 +1,11 @@
 channels:
 - conda-forge
 dependencies:
-- r-base=4.3.2
-- pandoc=2.11
-- r-curl=5.1.0
-- r-rsqlite=2.3.4
+- r-base=4.4.1
+- pandoc=3.4
+- r-curl=5.2.1
+- r-rsqlite=2.3.7
 - r-xml2=1.3.6
-- r-httpuv=1.6.14
-- r-mass=7.3_60
+- r-httpuv=1.6.15
+- r-mass=7.3_60.0.1
 - r-matrix=1.6_5
