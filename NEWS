@@ -1,3 +1,7 @@
+v1.5.10
+======
+o Update R to v4.4.1
+
 v1.5.9
 ======
 o Add r-mass and r-matrix to conda R environment
