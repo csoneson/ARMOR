@@ -49,12 +49,14 @@ jobs:
           cat .Renviron
           Rscript -e "install.packages('BiocManager'); BiocManager::install('GenomeInfoDbData')"
           
-      - name: Set up Miniconda
+      - name: Set up conda
         uses: conda-incubator/setup-miniconda@v3
         with:
           auto-update-conda: true
-          channels: bioconda,conda-forge,defaults
+          channels: bioconda,conda-forge,nodefaults
+          channel-priority: strict
           auto-activate-base: true
+          miniforge-version: latest
 
       - name: Install system dependencies (Linux)
         if: runner.os == 'Linux'
