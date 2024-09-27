@@ -54,7 +54,6 @@ jobs:
         with:
           auto-update-conda: true
           channels: bioconda,conda-forge,nodefaults
-          channel-priority: strict
           auto-activate-base: true
           miniforge-version: latest
 
