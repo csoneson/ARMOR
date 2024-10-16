@@ -19,6 +19,11 @@ git clone https://github.com/csoneson/ARMOR.git
 cd ARMOR && snakemake --use-conda
 ```
 
+Or using docker:
+```
+docker-compose up
+```
+
 To use the ARMOR workflow on your own data, follow the steps outlined in the [wiki](https://github.com/csoneson/ARMOR/wiki).
 
 ## Workflow graph
