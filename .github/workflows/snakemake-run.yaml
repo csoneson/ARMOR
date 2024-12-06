@@ -18,9 +18,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-13, ubuntu-latest]
         include:
-        - os: macos-latest
+        - os: macos-13
           rversion: '4.4'
         - os: ubuntu-latest
           rversion: '4.4'
