@@ -1,0 +1,4 @@
+.snakemake/
+example_data/output/
+example_data/reference/STARIndex/
+example_data/reference/SalmonIndex/
