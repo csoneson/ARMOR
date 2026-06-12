@@ -21,9 +21,9 @@ jobs:
         os: [macos-latest, ubuntu-latest]
         include:
         - os: macos-latest
-          rversion: '4.6'
+          rversion: '4.5'
         - os: ubuntu-latest
-          rversion: '4.6'
+          rversion: '4.5'
     steps:
       - name: Check out repository
         uses: actions/checkout@v2

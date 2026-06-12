@@ -2,7 +2,7 @@ channels:
 - bioconda
 - conda-forge
 dependencies:
-- samtools=1.23.1
+- samtools=1.21
 - salmon=1.11.4
 - star=2.7.11b
 - fastqc=0.12.1
