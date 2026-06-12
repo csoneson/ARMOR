@@ -13,3 +13,4 @@ dependencies:
 - ucsc-bedgraphtobigwig=482
 - pandoc=3.10
 - tbb=2023.0.0
+- gzip=1.14

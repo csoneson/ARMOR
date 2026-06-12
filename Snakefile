@@ -444,7 +444,7 @@ rule starSE:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
 		"STAR --genomeDir {params.STARindex} --readFilesIn {input.fastq} "
 		"--runThreadN {threads} --outFileNamePrefix {params.STARdir}/{wildcards.sample}/{wildcards.sample}_ "
-		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gunzip -c "
+		"--outSAMtype BAM SortedByCoordinate --readFilesCommand zcat "
 		"{params.starextraparams}"
 
 rule starPE:
