@@ -2,14 +2,14 @@ channels:
 - bioconda
 - conda-forge
 dependencies:
-- samtools=1.11
-- salmon=1.4.0
-- star=2.7.7a
-- fastqc=0.11.9
-- multiqc=1.9
-- trim-galore=0.6.6
-- cutadapt=3.2
-- bedtools=2.30.0
-- ucsc-bedgraphtobigwig=377
-- pandoc=2.11
-- tbb=2020.2
+- samtools=1.23.1
+- salmon=1.11.4
+- star=2.7.11b
+- fastqc=0.12.1
+- multiqc=1.35
+- trim-galore=2.2.0
+- cutadapt=5.2
+- bedtools=2.31.1
+- ucsc-bedgraphtobigwig=482
+- pandoc=3.10
+- tbb=2023.0.0
