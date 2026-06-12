@@ -18,12 +18,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-15-intel, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest]
         include:
-        - os: macos-15-intel
-          rversion: '4.5'
+        - os: macos-latest
+          rversion: '4.6'
         - os: ubuntu-latest
-          rversion: '4.5'
+          rversion: '4.6'
     steps:
       - name: Check out repository
         uses: actions/checkout@v2

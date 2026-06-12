@@ -4,7 +4,6 @@ dependencies:
 - r-base=4.6.0
 - pandoc=3.4
 - r-curl=7.1.0
-- r-rsqlite=3.53.1
 - r-xml2=1.5.2
 - r-httpuv=1.6.17
 - r-mass=7.3_65
