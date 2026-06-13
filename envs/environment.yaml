@@ -4,7 +4,7 @@ channels:
 dependencies:
 - samtools=1.22
 - salmon=1.10.3
-- star=2.7.11b
+- star=2.7.10b
 - fastqc=0.12.1
 - multiqc=1.35
 - trim-galore=2.2.0

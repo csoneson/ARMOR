@@ -449,7 +449,7 @@ rule starSE:
 		     --runThreadN {threads} \
 		     --outFileNamePrefix {params.STARdir}/{wildcards.sample}/{wildcards.sample}_ \
 		     --outSAMtype BAM SortedByCoordinate \
-		     --readFilesCommand "gzip -d -c" \
+		     --readFilesCommand "gunzip -c" \
 		     {params.starextraparams}
 		"""
 
@@ -481,7 +481,7 @@ rule starPE:
 		     --runThreadN {threads} \
 		     --outFileNamePrefix {params.STARdir}/{wildcards.sample}/{wildcards.sample}_ \
 		     --outSAMtype BAM SortedByCoordinate \
-		     --readFilesCommand "gzip -d -c" \
+		     --readFilesCommand "gunzip -c" \
 		     {params.starextraparams}
 		"""
 
