@@ -444,7 +444,7 @@ rule starSE:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
 		"STAR --genomeDir {params.STARindex} --readFilesIn {input.fastq} "
 		"--runThreadN {threads} --outFileNamePrefix {params.STARdir}/{wildcards.sample}/{wildcards.sample}_ "
-		"--outSAMtype BAM SortedByCoordinate --readFilesCommand zcat "
+		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gzip -d -c "
 		"{params.starextraparams}"
 
 rule starPE:
@@ -470,7 +470,7 @@ rule starPE:
 		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
 		"STAR --genomeDir {params.STARindex} --readFilesIn {input.fastq1} {input.fastq2} "
 		"--runThreadN {threads} --outFileNamePrefix {params.STARdir}/{wildcards.sample}/{wildcards.sample}_ "
-		"--outSAMtype BAM SortedByCoordinate --readFilesCommand zcat "
+		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gzip -d -c "
 		"{params.starextraparams}"
 
 ## Index bam files

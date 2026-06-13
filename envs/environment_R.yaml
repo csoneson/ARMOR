@@ -11,3 +11,4 @@ dependencies:
 - r-mass=7.3_65
 - r-matrix=1.7_5
 - zlib=1.3.2
+- bioconductor-rhtslib=3.6.0
