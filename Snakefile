@@ -441,11 +441,17 @@ rule starSE:
 	conda:
 		"envs/environment.yaml"
 	shell:
-		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
-		"STAR --genomeDir {params.STARindex} --readFilesIn {input.fastq} "
-		"--runThreadN {threads} --outFileNamePrefix {params.STARdir}/{wildcards.sample}/{wildcards.sample}_ "
-		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gzip -d -c "
-		"{params.starextraparams}"
+	    """
+		echo 'STAR version:\n' > {log}; 
+		STAR --version >> {log}; 
+		STAR --genomeDir {params.STARindex} \
+		     --readFilesIn {input.fastq} \
+		     --runThreadN {threads} \
+		     --outFileNamePrefix {params.STARdir}/{wildcards.sample}/{wildcards.sample}_ \
+		     --outSAMtype BAM SortedByCoordinate \
+		     --readFilesCommand "gunzip -c" \
+		     {params.starextraparams}
+		"""
 
 rule starPE:
 	input:
@@ -467,11 +473,17 @@ rule starPE:
 	conda:
 		"envs/environment.yaml"
 	shell:
-		"echo 'STAR version:\n' > {log}; STAR --version >> {log}; "
-		"STAR --genomeDir {params.STARindex} --readFilesIn {input.fastq1} {input.fastq2} "
-		"--runThreadN {threads} --outFileNamePrefix {params.STARdir}/{wildcards.sample}/{wildcards.sample}_ "
-		"--outSAMtype BAM SortedByCoordinate --readFilesCommand gzip -d -c "
-		"{params.starextraparams}"
+	    """
+		echo 'STAR version:\n' > {log}; 
+		STAR --version >> {log}; 
+		STAR --genomeDir {params.STARindex} \
+		     --readFilesIn {input.fastq1} {input.fastq2} \
+		     --runThreadN {threads} \
+		     --outFileNamePrefix {params.STARdir}/{wildcards.sample}/{wildcards.sample}_ \
+		     --outSAMtype BAM SortedByCoordinate \
+		     --readFilesCommand "gunzip -c" \
+		     {params.starextraparams}
+		"""
 
 ## Index bam files
 rule bamindex:
