@@ -2,7 +2,7 @@ on:
   push:
   pull_request:
     branches:
-      - master
+      - main
   schedule:
     - cron: '0 9 * * 5'
 
