@@ -6,6 +6,7 @@ dependencies:
 - r-curl=7.1.0
 - r-rsqlite=3.53.1
 - r-xml2=1.5.2
+- r-xml=3.99_0.23
 - r-rcurl=1.98_1.19
 - r-httpuv=1.6.17
 - r-mass=7.3_65
