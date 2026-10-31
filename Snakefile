@@ -439,7 +439,7 @@ rule starSE:
 		STARdir = lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),   ## dirname of first output
 		starextraparams = config["additional_star_align"]
 	conda:
-		"envs/environment.yaml"
+		"envs/environment_STAR.yaml"
 	shell:
 	    """
 		echo 'STAR version:\n' > {log}; 
@@ -471,7 +471,7 @@ rule starPE:
 		STARdir = lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),   ## dirname of first output
 		starextraparams = config["additional_star_align"]
 	conda:
-		"envs/environment.yaml"
+		"envs/environment_STAR.yaml"
 	shell:
 	    """
 		echo 'STAR version:\n' > {log}; 
