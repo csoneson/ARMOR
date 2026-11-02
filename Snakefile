@@ -148,7 +148,7 @@ rule softwareversions:
 		"echo -n 'ARMOR version ' && cat version; "
 		"salmon --version; trim_galore --version; "
 		"echo -n 'cutadapt ' && cutadapt --version; "
-		"fastqc --version; STAR --version; samtools --version; multiqc --version; "
+		"fastqc --version; samtools --version; multiqc --version; "
 		"bedtools --version"
 
 ## ------------------------------------------------------------------------------------ ##
@@ -224,7 +224,7 @@ rule starindex:
 		readlength = config["readlength"],
 		starextraparams = config["additional_star_index"]
 	conda:
-		"envs/environment.yaml"
+		"envs/environment_STAR.yaml"
 	threads:
 		config["ncores"]
 	shell:
@@ -439,7 +439,7 @@ rule starSE:
 		STARdir = lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),   ## dirname of first output
 		starextraparams = config["additional_star_align"]
 	conda:
-		"envs/environment.yaml"
+		"envs/environment_STAR.yaml"
 	shell:
 	    """
 		echo 'STAR version:\n' > {log}; 
@@ -471,7 +471,7 @@ rule starPE:
 		STARdir = lambda wildcards, output: os.path.dirname(os.path.dirname(output[0])),   ## dirname of first output
 		starextraparams = config["additional_star_align"]
 	conda:
-		"envs/environment.yaml"
+		"envs/environment_STAR.yaml"
 	shell:
 	    """
 		echo 'STAR version:\n' > {log}; 

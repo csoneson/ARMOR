@@ -37,7 +37,7 @@ STARindex: example_data/reference/STARIndex/Homo_sapiens.GRCh38.93.STAR.idx
 ##--------------------------------------------------------------------------------------------
 ## Add or remove parameters inside the ""
 additional_star_index: ""
-additional_star_align: ""
+additional_star_align: "--sysShell /bin/sh"
 
 ## Additional Salmon parameters
 ## Here, you can specify any optional parameters for the index building and/or 
